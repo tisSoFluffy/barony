@@ -33,6 +33,17 @@
     pointer-events:auto;background:#1c140a55;touch-action:none;}
   #joyKnob{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:#8a6d2faa;}
   #lookpad{position:absolute;right:0;top:0;width:55%;height:60%;pointer-events:auto;touch-action:none;}
+  /* lobby */
+  .lobbybox{display:flex;flex-direction:column;align-items:center;gap:12px;margin:14px;}
+  .rowmini{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;}
+  .minibtn{background:linear-gradient(#3a2c14,#241a0c);border:2px solid #8a6d2f;border-radius:6px;color:#ffe9a8;
+    padding:9px 16px;font-family:inherit;font-size:15px;cursor:pointer;}
+  .minibtn:hover{border-color:#ffce42;background:linear-gradient(#4a3a1c,#2c2010);}
+  .minibtn.selected{border-color:#ffce42;background:linear-gradient(#5a4420,#3a2c14);box-shadow:0 0 10px #b8860b66;}
+  .lobbybox input{background:#16100a;border:2px solid #8a6d2f;border-radius:6px;color:#ffe9a8;font-family:inherit;
+    font-size:15px;padding:9px 10px;width:150px;text-align:center;}
+  #lobbyMsg{color:#9ad870;font-size:15px;min-height:22px;line-height:1.5;}
+  #lobbyMsg b{color:#ffce42;font-size:24px;letter-spacing:7px;}
 </style>
 </head>
 <body>
@@ -53,13 +64,25 @@
     <h2>a dungeon crawl through the Horde-held deeps</h2>
     <p>The old barony fell when the Horde tunneled beneath it. Five floors down, the Ogre Warlord
        <b style="color:#ffce42">Gor'maul</b> squats on the baron's throne. Descend, survive your hunger, and take it back.</p>
-    <div class="btnrow">
-      <button class="classbtn" id="pickWar"><b>&#9876; Footman</b><span>Human warrior of Stormwind. Heavy armor, brutal sword arm, little talent for magic.</span></button>
-      <button class="classbtn" id="pickMage"><b>&#10038; Mage</b><span>Scholar of Dalaran. Frail in melee, but hurls devastating fireballs and brims with mana.</span></button>
+    <div class="lobbybox">
+      <div class="rowmini">
+        <input id="nameIn" maxlength="12" placeholder="Your name">
+        <button class="minibtn selected" id="clsWar" title="Human warrior of Stormwind. Heavy armor, brutal sword arm, little talent for magic.">&#9876; Footman</button>
+        <button class="minibtn" id="clsMage" title="Scholar of Dalaran. Frail in melee, but hurls devastating fireballs and brims with mana.">&#10038; Mage</button>
+      </div>
+      <div class="rowmini">
+        <button class="minibtn" id="soloBtn">Play Solo</button>
+        <button class="minibtn" id="hostBtn">Host Co-op</button>
+        <input id="codeIn" maxlength="4" placeholder="CODE" style="width:80px;text-transform:uppercase;">
+        <button class="minibtn" id="joinBtn">Join Friend</button>
+      </div>
+      <div id="lobbyMsg"></div>
+      <button class="minibtn hidden" id="startBtn" style="font-size:18px;border-color:#ffce42;">&#9876; Begin the Descent &#9876;</button>
     </div>
     <div class="keys">
       <b>WASD</b> move &nbsp;•&nbsp; <b>Mouse / &larr;&rarr;</b> look &nbsp;•&nbsp; <b>Click / Space</b> attack &nbsp;•&nbsp; <b>Right-click / F</b> fireball<br>
-      <b>E</b> use doors &amp; stairs &nbsp;•&nbsp; <b>H</b> health potion &nbsp;•&nbsp; <b>M</b> mana potion &nbsp;•&nbsp; <b>G</b> eat &nbsp;•&nbsp; food is scarce — keep eating or starve
+      <b>E</b> use doors &amp; stairs &nbsp;•&nbsp; <b>H</b> health potion &nbsp;•&nbsp; <b>M</b> mana potion &nbsp;•&nbsp; <b>G</b> eat &nbsp;•&nbsp; food is scarce — keep eating or starve<br>
+      <b>Co-op:</b> one of you hosts and shares the 4-letter code — up to 3 heroes, shared XP, the fallen rise at the next floor
     </div>
   </div>
 
@@ -76,6 +99,7 @@
   </div>
 </div>
 
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 //<JS>
 'use strict';
@@ -378,6 +402,64 @@ function drawPortal() {
     ell(g, '#dff4ff', 28, 35, 4, 8);
   });
 }
+// player avatars (what your party members look like)
+function drawFootman() {
+  return S(64, 84, g => {
+    // sword held up, right side
+    g.save(); g.lineWidth = 3.4; g.strokeStyle = '#9aa6b4';
+    g.beginPath(); g.moveTo(55, 10); g.lineTo(55, 40); g.stroke(); g.restore();
+    tri(g, '#ccd6e0', 52, 12, 55, 2, 58, 12);
+    // legs + boots
+    rrect(g, '#5a6674', 23, 58, 9, 16, 3); rrect(g, '#5a6674', 33, 58, 9, 16, 3);
+    rrect(g, '#2c3038', 21, 71, 12, 9, 3); rrect(g, '#2c3038', 32, 71, 12, 9, 3);
+    // plate torso with blue tabard
+    rrect(g, '#8a96a4', 18, 32, 29, 29, 6);
+    rrect(g, '#2858c8', 25, 34, 15, 26, 3);
+    ell(g, '#d8b050', 32, 45, 4, 5);
+    // arms + gauntlets
+    rrect(g, '#7a8694', 10, 34, 10, 22, 4); rrect(g, '#7a8694', 45, 34, 10, 22, 4);
+    ell(g, '#6a7684', 14, 57, 5, 5); ell(g, '#6a7684', 50, 57, 5, 5);
+    // shield, left
+    shp(g, '#3a66c8', () => { g.moveTo(2, 36); g.lineTo(22, 36); g.lineTo(20, 56); g.lineTo(12, 64); g.lineTo(4, 56); });
+    ell(g, '#d8b050', 12, 46, 4, 5);
+    // pauldrons
+    ell(g, '#9aa6b4', 15, 31, 10, 7); ell(g, '#9aa6b4', 50, 31, 10, 7);
+    // head + open helm
+    ell(g, '#d8b890', 32, 18, 9, 9);
+    g.fillStyle = '#170f06'; g.fillRect(28, 17, 3, 3); g.fillRect(35, 17, 3, 3);
+    g.fillStyle = '#a86838'; g.fillRect(28, 23, 9, 2.5);
+    shp(g, '#9aa6b4', () => {
+      g.moveTo(22, 16); g.quadraticCurveTo(22, 5, 32, 4); g.quadraticCurveTo(42, 5, 42, 16);
+      g.lineTo(38, 16); g.quadraticCurveTo(38, 9, 32, 9); g.quadraticCurveTo(26, 9, 26, 16);
+    });
+    tri(g, '#d8b050', 30, 5, 32, 0, 34, 5);
+  });
+}
+function drawMageHero() {
+  return S(64, 84, g => {
+    // staff
+    g.save(); g.lineWidth = 3.4; g.strokeStyle = '#6a4c2c';
+    g.beginPath(); g.moveTo(52, 14); g.lineTo(52, 72); g.stroke(); g.restore();
+    dot(g, '#70d8ff', 52, 10, 5); dot(g, '#e8fbff', 52, 10, 2);
+    // robe
+    shp(g, '#4a3a78', () => { g.moveTo(20, 32); g.lineTo(44, 32); g.lineTo(50, 76); g.lineTo(14, 76); });
+    rrect(g, '#3a2c60', 14, 70, 36, 7, 3);
+    rrect(g, '#d8b050', 22, 48, 20, 5, 2);
+    // sleeves + hands
+    rrect(g, '#3a2c60', 10, 34, 10, 22, 4); rrect(g, '#3a2c60', 44, 34, 10, 22, 4);
+    ell(g, '#d8b890', 14, 57, 4, 4); ell(g, '#d8b890', 49, 57, 4, 4);
+    // head, beard, hood
+    ell(g, '#e0c0a0', 32, 20, 8, 9);
+    g.fillStyle = '#e8e8e8'; g.fillRect(26, 24, 12, 7);
+    ell(g, '#e8e8e8', 32, 30, 7, 6);
+    dot(g, '#40c8ff', 29, 18, 1.6); dot(g, '#40c8ff', 36, 18, 1.6);
+    shp(g, '#4a3a78', () => {
+      g.moveTo(20, 22); g.quadraticCurveTo(20, 4, 32, 3); g.quadraticCurveTo(44, 4, 44, 22);
+      g.quadraticCurveTo(38, 14, 32, 14); g.quadraticCurveTo(26, 14, 20, 22);
+    });
+    tri(g, '#4a3a78', 40, 8, 52, 2, 44, 14);
+  });
+}
 function whiteVersion(c) {
   const w = mkCanvas(c.width, c.height), g = w.getContext('2d');
   g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-in';
@@ -390,6 +472,7 @@ const SPR = {
   hpot: drawPotion('#d83030', '#ff9a8a'), mpot: drawPotion('#3060d8', '#8ab8ff'),
   meat: drawMeat(), gold: drawGold(), sword: drawSwordItem(), staff: drawStaffItem(),
   stairs: drawStairs(), portal: drawPortal(),
+  pfoot: drawFootman(), pmage: drawMageHero(),
 };
 const SPRW = {}; for (const k of ['orc', 'kobold', 'murloc', 'skeleton', 'ogre']) SPRW[k] = whiteVersion(SPR[k]);
 
@@ -413,11 +496,20 @@ const SPAWNS = {
 let map, seen, rooms, enemies, items, shots, particles;
 let depth, p, state = 'title', msgs = [], time = 0, dmgFlash = 0, healFlash = 0, shakeT = 0;
 let kills = 0, bossAwake = false;
+// multiplayer state
+let role = 'solo';            // 'solo' | 'host' | 'client'
+let remotes = {};             // id -> party member avatar (lerped for display)
+let roster = {};              // id -> {name, cls}, filled in the lobby
+let selfId = null, currentCode = '';
+let myName = 'Hero', myCls = 'war';
+let nextItemId = 1, nextEid = 1, snapAcc = 0, inpAcc = 0, localMoving = false;
+let pendingPicks = {};        // item ids we've asked the host for
+const myId = 'P' + Math.random().toString(36).slice(2, 8);
 
 function newPlayer(cls) {
   const war = cls === 'war';
   return {
-    cls, x: 0, y: 0, dir: 0,
+    cls, x: 0, y: 0, dir: 0, dead: false, name: '',
     hp: war ? 110 : 75, maxhp: war ? 110 : 75,
     mana: war ? 25 : 80, maxmana: war ? 25 : 80,
     dmg: war ? 16 : 8, spell: war ? 24 : 42,
@@ -429,6 +521,7 @@ function newPlayer(cls) {
 }
 
 function msg(t, col) { msgs.push({ t, col: col || '#d8c896', age: 0 }); if (msgs.length > 5) msgs.shift(); }
+function addItem(it) { it.id = nextItemId++; items.push(it); return it; }
 
 // ---------- dungeon generation ----------
 function tile(x, y) { return map[(y | 0) * MS + (x | 0)]; }
@@ -438,7 +531,7 @@ function solid(x, y) { const t = tile(x, y); return t > 0; }
 function genLevel() {
   map = new Uint8Array(MS * MS).fill(1);
   seen = new Uint8Array(MS * MS);
-  rooms = []; enemies = []; items = []; shots = []; particles = [];
+  rooms = []; enemies = []; items = []; shots = []; particles = []; pendingPicks = {};
   // carve rooms
   for (let i = 0; i < 60 && rooms.length < 9; i++) {
     const w = rndi(4, 8), h = rndi(4, 8), x = rndi(2, MS - w - 3), y = rndi(2, MS - h - 3);
@@ -473,7 +566,7 @@ function genLevel() {
   p.x = r0.cx; p.y = r0.cy;
   // stairs or boss in the last room
   const rl = rooms[rooms.length - 1];
-  if (depth < 5) items.push({ type: 'stairs', x: rl.cx, y: rl.cy });
+  if (depth < 5) addItem({ type: 'stairs', x: rl.cx, y: rl.cy });
   else { spawnEnemy('ogre', rl.cx, rl.cy); bossAwake = false; }
   // enemies
   const sp = SPAWNS[Math.min(depth, 5)];
@@ -491,18 +584,19 @@ function genLevel() {
     const r = rooms[rndi(0, rooms.length - 1)];
     const lx = rnd(r.x + .6, r.x + r.w - .6), ly = rnd(r.y + .6, r.y + r.h - .6);
     const roll = Math.random();
-    items.push({ type: roll < .3 ? 'meat' : roll < .5 ? 'hpot' : roll < .62 ? 'mpot' : 'gold', x: lx, y: ly, amt: rndi(6, 14) * depth });
+    addItem({ type: roll < .3 ? 'meat' : roll < .5 ? 'hpot' : roll < .62 ? 'mpot' : 'gold', x: lx, y: ly, amt: rndi(6, 14) * depth });
   }
   // weapon upgrade on floors 2 and 4
   if (depth === 2 || depth === 4) {
     const r = rooms[rndi(1, rooms.length - 1)];
-    items.push({ type: 'weapon', x: r.cx + .5, y: r.cy + .5 });
+    addItem({ type: 'weapon', x: r.cx + .5, y: r.cy + .5 });
   }
 }
 function spawnEnemy(type, x, y) {
   const t = ETYPES[type];
   const mult = 1 + .13 * (depth - 1);
   enemies.push({
+    eid: nextEid++,
     type, x, y, hp: t.hp * (t.boss ? 1 : mult), maxhp: t.hp * (t.boss ? 1 : mult),
     dmg: Math.round(t.dmg * (t.boss ? 1 : mult)),
     awake: false, atkT: rnd(0, .5), hitT: 0, moving: false, lunge: 0,
@@ -592,33 +686,69 @@ if (isTouch) {
 
 // ---------- player actions ----------
 function useAction() {
-  if (state !== 'play') return;
-  // doors
+  if (state !== 'play' || p.dead) return;
+  // doors (clients ask the host; host applies and broadcasts)
   const fx = p.x + Math.cos(p.dir), fy = p.y + Math.sin(p.dir);
   for (const [cx, cy] of [[fx, fy], [p.x + Math.cos(p.dir) * .6, p.y + Math.sin(p.dir) * .6]]) {
-    if (tile(cx, cy) === 8) { setTile(cx, cy, 0); sfx.door(); msg('You shoulder the door open.'); return; }
+    if (tile(cx, cy) === 8) {
+      if (role === 'client') NET.send('HOST', { t: 'door', x: cx | 0, y: cy | 0 });
+      else openDoorAt(cx | 0, cy | 0);
+      return;
+    }
   }
-  // stairs / portal
+  // stairs / portal — the whole party travels together
   for (const it of items) {
     if ((it.type === 'stairs' || it.type === 'portal') && dist2(p.x, p.y, it.x, it.y) < 1.7) {
       if (it.type === 'stairs') {
-        depth++; sfx.stairs();
-        genLevel();
-        msg(`You descend to depth ${depth}...`, '#ffce42');
-        if (depth === 5) msg("The air reeks of ogre. Gor'maul is near.", '#ff7050');
+        if (role === 'client') NET.send('HOST', { t: 'stairs' });
+        else descend();
       } else {
-        state = 'win';
-        document.getElementById('winText').textContent =
-          `${p.cls === 'war' ? 'Footman' : 'Mage'} of level ${p.level} — you slew Gor'maul, claimed ${p.gold} gold and ${kills} kills, and took back the barony. For the Alliance!`;
-        document.getElementById('win').classList.remove('hidden');
-        document.exitPointerLock && document.exitPointerLock();
+        if (role === 'client') NET.send('HOST', { t: 'portal' });
+        else doWin();
       }
       return;
     }
   }
 }
+function openDoorAt(x, y) {
+  setTile(x, y, 0);
+  NET.broadcast({ t: 'door', x, y });
+  if (dist2(p.x, p.y, x + .5, y + .5) < 49) { sfx.door(); msg('The door creaks open.'); }
+}
+let lastLvlT = -9;
+function descend() {
+  if (time - lastLvlT < 1.5) return;   // two heroes pressing E at once = one floor
+  lastLvlT = time;
+  depth++; sfx.stairs();
+  genLevel();
+  reviveLocal();
+  broadcastLevel('lvl');
+  msg(`You descend to depth ${depth}...`, '#ffce42');
+  if (depth === 5) msg("The air reeks of ogre. Gor'maul is near.", '#ff7050');
+}
+function reviveLocal() {
+  if (p.dead) { p.dead = false; p.hp = Math.ceil(p.maxhp / 2); msg('You rise again, half-mended.', '#9ad870'); }
+}
+function doWin() {
+  NET.broadcast({ t: 'win' });
+  showWin();
+}
+function showWin() {
+  state = 'win';
+  document.getElementById('winText').textContent =
+    `${p.cls === 'war' ? 'Footman' : 'Mage'} of level ${p.level} — you slew Gor'maul, claimed ${p.gold} gold and ${kills} kills, and took back the barony. For the Alliance!`;
+  document.getElementById('win').classList.remove('hidden');
+  document.exitPointerLock && document.exitPointerLock();
+}
+function showLose() {
+  state = 'dead'; sfx.die();
+  document.getElementById('deathText').textContent =
+    `Your party has fallen on depth ${depth}, after ${kills} kills. The barony remains in darkness.`;
+  document.getElementById('death').classList.remove('hidden');
+  document.exitPointerLock && document.exitPointerLock();
+}
 function drink(kind) {
-  if (state !== 'play') return;
+  if (state !== 'play' || p.dead) return;
   if (kind === 'hp') {
     if (p.hpots <= 0) { msg('No health potions left!', '#ff7050'); return; }
     p.hpots--; p.hp = Math.min(p.maxhp, p.hp + 45); healFlash = .5; sfx.pickup();
@@ -630,7 +760,7 @@ function drink(kind) {
   }
 }
 function eat() {
-  if (state !== 'play') return;
+  if (state !== 'play' || p.dead) return;
   if (p.meat <= 0) { msg('You have nothing to eat!', '#ff7050'); return; }
   p.meat--; p.food = Math.min(100, p.food + 38); sfx.eat();
   msg('You devour a haunch of meat. Mm, boar.', '#d8a868');
@@ -638,13 +768,16 @@ function eat() {
 function meleeAttack() {
   p.atkT = p.cls === 'war' ? .42 : .5;
   sfx.swing();
+  if (role === 'client') { NET.send('HOST', { t: 'melee', x: p.x, y: p.y, dir: p.dir, dmg: p.dmg }); return; }
+  resolveMelee(p.x, p.y, p.dir, p.dmg);
+}
+function resolveMelee(x, y, dir, dmg) {
   let hitAny = false;
-  for (const e of enemies) {
-    const d = Math.sqrt(dist2(p.x, p.y, e.x, e.y));
-    if (d > 1.45) continue;
-    const ang = Math.atan2(e.y - p.y, e.x - p.x);
-    let da = ang - p.dir; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
-    if (Math.abs(da) < .8) { damageEnemy(e, p.dmg + rndi(0, 4)); hitAny = true; }
+  for (const e of [...enemies]) {
+    if (dist2(x, y, e.x, e.y) > 1.45 * 1.45) continue;
+    const ang = Math.atan2(e.y - y, e.x - x);
+    let da = ang - dir; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
+    if (Math.abs(da) < .8) { damageEnemy(e, dmg + rndi(0, 4)); hitAny = true; }
   }
   if (hitAny) sfx.hit();
 }
@@ -653,7 +786,9 @@ function castFireball() {
   if (p.mana < cost) { msg('Not enough mana!', '#8ab8ff'); return; }
   p.mana -= cost; p.castT = .45;
   sfx.fire();
-  shots.push({ x: p.x + Math.cos(p.dir) * .4, y: p.y + Math.sin(p.dir) * .4, dx: Math.cos(p.dir) * 9, dy: Math.sin(p.dir) * 9, ttl: 2.2 });
+  const sx = p.x + Math.cos(p.dir) * .4, sy = p.y + Math.sin(p.dir) * .4;
+  if (role === 'client') { NET.send('HOST', { t: 'fire', x: sx, y: sy, dir: p.dir, spell: p.spell }); return; }
+  shots.push({ x: sx, y: sy, dx: Math.cos(p.dir) * 9, dy: Math.sin(p.dir) * 9, ttl: 2.2, dmg: p.spell });
 }
 function damageEnemy(e, dmg) {
   e.hp -= dmg; e.hitT = .18; e.awake = true;
@@ -664,17 +799,18 @@ function killEnemy(e) {
   enemies.splice(enemies.indexOf(e), 1);
   kills++;
   const t = ETYPES[e.type];
-  gainXP(t.xp);
+  gainXP(t.xp);                                        // party-shared XP:
+  NET.broadcast({ t: 'kill', xp: t.xp, victim: t.name }); // everyone levels together
   msg(`${t.name} dies!`, '#9ad870');
   // drops
   const roll = Math.random();
-  if (roll < .3) items.push({ type: 'gold', x: e.x, y: e.y, amt: rndi(4, 10) * depth });
-  else if (roll < .42) items.push({ type: 'meat', x: e.x, y: e.y });
-  else if (roll < .5) items.push({ type: Math.random() < .6 ? 'hpot' : 'mpot', x: e.x, y: e.y });
+  if (roll < .3) addItem({ type: 'gold', x: e.x, y: e.y, amt: rndi(4, 10) * depth });
+  else if (roll < .42) addItem({ type: 'meat', x: e.x, y: e.y });
+  else if (roll < .5) addItem({ type: Math.random() < .6 ? 'hpot' : 'mpot', x: e.x, y: e.y });
   if (t.boss) {
     msg("GOR'MAUL FALLS! A portal home tears open!", '#62d8ff');
     sfx.level();
-    items.push({ type: 'portal', x: e.x, y: e.y });
+    addItem({ type: 'portal', x: e.x, y: e.y });
   }
 }
 function gainXP(amt) {
@@ -689,14 +825,22 @@ function gainXP(amt) {
   }
 }
 function hurtPlayer(dmg, src) {
+  if (p.dead || state !== 'play') return;
   p.hp -= dmg; dmgFlash = .55; shakeT = .25; p.hurtT = .4;
   sfx.hurt();
   if (p.hp <= 0) {
-    p.hp = 0; state = 'dead'; sfx.die();
-    document.getElementById('deathText').textContent =
-      `Slain by ${src} on depth ${depth}, at level ${p.level} with ${p.gold} gold and ${kills} kills. The barony remains in darkness.`;
-    document.getElementById('death').classList.remove('hidden');
-    document.exitPointerLock && document.exitPointerLock();
+    p.hp = 0;
+    if (role === 'solo') {
+      state = 'dead'; sfx.die();
+      document.getElementById('deathText').textContent =
+        `Slain by ${src} on depth ${depth}, at level ${p.level} with ${p.gold} gold and ${kills} kills. The barony remains in darkness.`;
+      document.getElementById('death').classList.remove('hidden');
+      document.exitPointerLock && document.exitPointerLock();
+    } else {
+      // in co-op you become a ghost until the party reaches the next floor
+      p.dead = true; sfx.die();
+      msg(`${src} has slain you! You will rise on the next floor.`, '#ff5040');
+    }
   }
 }
 function spawnBlood(x, y, col) {
@@ -707,7 +851,19 @@ function spawnBlood(x, y, col) {
 let hungerAcc = 0;
 function update(dt) {
   time += dt;
-  // --- player movement ---
+  updateLocal(dt);
+  if (role === 'client') updateClient(dt);
+  else updateHost(dt);
+  // flashes & message aging
+  if (dmgFlash > 0) dmgFlash -= dt;
+  if (healFlash > 0) healFlash -= dt;
+  if (shakeT > 0) shakeT -= dt;
+  for (const m of msgs) m.age += dt;
+  while (msgs.length && msgs[0].age > 6) msgs.shift();
+}
+
+// runs on every machine: own movement, hunger, cosmetics
+function updateLocal(dt) {
   let mvF = 0, mvS = 0;
   if (keys.KeyW || keys.ArrowUp) mvF += 1;
   if (keys.KeyS || keys.ArrowDown) mvF -= 1;
@@ -719,24 +875,26 @@ function update(dt) {
   const spd = 3.1 * dt, c = Math.cos(p.dir), s = Math.sin(p.dir);
   const len = Math.hypot(mvF, mvS) || 1;
   mvF /= Math.max(1, len); mvS /= Math.max(1, len);
-  if (mvF || mvS) {
+  localMoving = !!(mvF || mvS);
+  if (localMoving) {
     tryMove(p, p.x + (c * mvF - s * mvS) * spd, p.y + (s * mvF + c * mvS) * spd, .24);
     p.bob += dt * 9;
   }
-  // attacks
   if (p.atkT > 0) p.atkT -= dt;
   if (p.castT > 0) p.castT -= dt;
   if (p.hurtT > 0) p.hurtT -= dt;
-  if ((mouseAtk || keys.Space || touchAtk) && p.atkT <= 0) meleeAttack();
-  if ((mouseFire || keys.KeyF || touchFire) && p.castT <= 0) castFireball();
-  // mana & hunger
-  p.mana = Math.min(p.maxmana, p.mana + p.manaRegen * dt);
-  hungerAcc += dt;
-  if (hungerAcc > 3) {
-    hungerAcc -= 3; p.food = Math.max(0, p.food - 1);
-    if (p.food === 30) msg('Your stomach growls. (G to eat)', '#d8a868');
-    if (p.food === 10) msg('You are famished!', '#ff7050');
-    if (p.food <= 0) { p.hp -= 3; dmgFlash = .3; msg('You are STARVING!', '#ff4030'); if (p.hp <= 0) hurtPlayer(0, 'starvation'); }
+  if (!p.dead) {
+    if ((mouseAtk || keys.Space || touchAtk) && p.atkT <= 0) meleeAttack();
+    if ((mouseFire || keys.KeyF || touchFire) && p.castT <= 0) castFireball();
+    // mana & hunger
+    p.mana = Math.min(p.maxmana, p.mana + p.manaRegen * dt);
+    hungerAcc += dt;
+    if (hungerAcc > 3) {
+      hungerAcc -= 3; p.food = Math.max(0, p.food - 1);
+      if (p.food === 30) msg('Your stomach growls. (G to eat)', '#d8a868');
+      if (p.food === 10) msg('You are famished!', '#ff7050');
+      if (p.food <= 0) { dmgFlash = .3; msg('You are STARVING!', '#ff4030'); hurtPlayer(3, 'starvation'); }
+    }
   }
   // reveal minimap
   const px = p.x | 0, py = p.y | 0;
@@ -744,20 +902,37 @@ function update(dt) {
     const x = px + dx, y = py + dy;
     if (x >= 0 && y >= 0 && x < MS && y < MS && dx * dx + dy * dy <= 26) seen[y * MS + x] = 1;
   }
-  // --- pickups ---
-  for (let i = items.length - 1; i >= 0; i--) {
+  // particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pa = particles[i];
+    pa.x += pa.dx * dt; pa.y += pa.dy * dt; pa.ttl -= dt;
+    if (pa.ttl <= 0) particles.splice(i, 1);
+  }
+  // smooth party member motion between network updates
+  const k = Math.min(1, dt * 10);
+  for (const id in remotes) { const r = remotes[id]; r.x += (r.tx - r.x) * k; r.y += (r.ty - r.y) * k; }
+}
+
+function grantItem(kind, amt) {
+  if (kind === 'gold') { p.gold += amt; sfx.gold(); msg(`+${amt} gold`, '#ffd84a'); }
+  else if (kind === 'hpot') { p.hpots++; sfx.pickup(); msg('Picked up a health potion. (H)', '#ff9a8a'); }
+  else if (kind === 'mpot') { p.mpots++; sfx.pickup(); msg('Picked up a mana potion. (M)', '#8ab8ff'); }
+  else if (kind === 'meat') { p.meat++; sfx.pickup(); msg('Picked up a haunch of meat. (G)', '#d8a868'); }
+  else if (kind === 'weapon') {
+    sfx.level();
+    if (p.cls === 'war') { p.dmg += 7; msg('An enchanted blade! Melee damage +7.', '#62d8ff'); }
+    else { p.spell += 14; msg('An archmage\'s staff! Fireball damage +14.', '#62d8ff'); }
+  }
+}
+
+// authoritative simulation: enemies, shots, world items (host & solo)
+function updateHost(dt) {
+  // --- own pickups ---
+  if (!p.dead) for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     if (it.type === 'stairs' || it.type === 'portal') continue;
     if (dist2(p.x, p.y, it.x, it.y) > .42) continue;
-    if (it.type === 'gold') { p.gold += it.amt; sfx.gold(); msg(`+${it.amt} gold`, '#ffd84a'); }
-    else if (it.type === 'hpot') { p.hpots++; sfx.pickup(); msg('Picked up a health potion. (H)', '#ff9a8a'); }
-    else if (it.type === 'mpot') { p.mpots++; sfx.pickup(); msg('Picked up a mana potion. (M)', '#8ab8ff'); }
-    else if (it.type === 'meat') { p.meat++; sfx.pickup(); msg('Picked up a haunch of meat. (G)', '#d8a868'); }
-    else if (it.type === 'weapon') {
-      sfx.level();
-      if (p.cls === 'war') { p.dmg += 7; msg('An enchanted blade! Melee damage +7.', '#62d8ff'); }
-      else { p.spell += 14; msg('An archmage\'s staff! Fireball damage +14.', '#62d8ff'); }
-    }
+    grantItem(it.type, it.amt || 0);
     items.splice(i, 1);
   }
   // --- fireballs ---
@@ -768,35 +943,38 @@ function update(dt) {
     let dead = sh.ttl <= 0 || solid(sh.x, sh.y);
     if (!dead) for (const e of enemies) {
       if (dist2(sh.x, sh.y, e.x, e.y) < .36) {
-        damageEnemy(e, p.spell + rndi(0, 8)); sfx.hit(); dead = true; break;
+        damageEnemy(e, (sh.dmg || p.spell) + rndi(0, 8)); sfx.hit(); dead = true; break;
       }
     }
     if (dead) { spawnBlood(sh.x, sh.y, '#ff9020'); shots.splice(i, 1); }
   }
-  // --- particles ---
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const pa = particles[i];
-    pa.x += pa.dx * dt; pa.y += pa.dy * dt; pa.ttl -= dt;
-    if (pa.ttl <= 0) particles.splice(i, 1);
-  }
-  // --- enemies ---
+  // --- enemies: hunt the nearest living hero ---
   for (const e of enemies) {
     const t = ETYPES[e.type];
     if (e.hitT > 0) e.hitT -= dt;
     if (e.lunge > 0) e.lunge -= dt;
-    const d = Math.sqrt(dist2(p.x, p.y, e.x, e.y));
+    let tg = null, td = 1e9;
+    if (!p.dead) { const d = dist2(p.x, p.y, e.x, e.y); if (d < td) { td = d; tg = { x: p.x, y: p.y, local: true }; } }
+    for (const id in remotes) {
+      const r = remotes[id];
+      if (r.dead) continue;
+      const d = dist2(r.x, r.y, e.x, e.y);
+      if (d < td) { td = d; tg = { x: r.x, y: r.y, id }; }
+    }
+    e.moving = false;
+    if (!tg) continue;
+    const d = Math.sqrt(td);
     if (!e.awake) {
-      if (d < t.sight && hasLOS(e.x, e.y, p.x, p.y)) {
+      if (d < t.sight && hasLOS(e.x, e.y, tg.x, tg.y)) {
         e.awake = true;
         if (t.boss && !bossAwake) { bossAwake = true; sfx.boss(); msg('"WHO DARES?!" Gor\'maul rises from the throne!', '#ff5040'); }
       }
-      e.moving = false;
       continue;
     }
     e.atkT -= dt;
     if (d > t.range) {
       // chase
-      const ang = Math.atan2(p.y - e.y, p.x - e.x);
+      const ang = Math.atan2(tg.y - e.y, tg.x - e.x);
       const sp2 = t.speed * dt;
       const ox = e.x, oy = e.y;
       tryMove(e, e.x + Math.cos(ang) * sp2, e.y + Math.sin(ang) * sp2, .26);
@@ -810,20 +988,247 @@ function update(dt) {
         }
       }
       e.moving = (Math.abs(e.x - ox) + Math.abs(e.y - oy)) > .001;
-    } else {
-      e.moving = false;
-      if (e.atkT <= 0 && hasLOS(e.x, e.y, p.x, p.y)) {
-        e.atkT = t.atkCd; e.lunge = .2;
-        hurtPlayer(e.dmg + rndi(0, 3), t.name);
-      }
+    } else if (e.atkT <= 0 && hasLOS(e.x, e.y, tg.x, tg.y)) {
+      e.atkT = t.atkCd; e.lunge = .2;
+      const dmg = e.dmg + rndi(0, 3);
+      if (tg.local) hurtPlayer(dmg, t.name);
+      else NET.send(tg.id, { t: 'hurt', dmg, src: t.name });
     }
   }
-  // flashes
-  if (dmgFlash > 0) dmgFlash -= dt;
-  if (healFlash > 0) healFlash -= dt;
-  if (shakeT > 0) shakeT -= dt;
-  for (const m of msgs) m.age += dt;
-  while (msgs.length && msgs[0].age > 6) msgs.shift();
+  // --- network: state snapshots & party-wipe check ---
+  if (role === 'host' && NET.hasPeers()) {
+    snapAcc += dt;
+    if (snapAcc > .08) { snapAcc = 0; NET.broadcast(buildSnap()); }
+    if (p.dead && Object.values(remotes).every(r => r.dead)) {
+      NET.broadcast({ t: 'lose' });
+      showLose();
+    }
+  }
+}
+
+// thin client: render-side smoothing + requests to the host
+function updateClient(dt) {
+  const k = Math.min(1, dt * 10);
+  for (const e of enemies) {
+    e.x += (e.tx - e.x) * k; e.y += (e.ty - e.y) * k;
+    if (e.hitT > 0) e.hitT -= dt;
+    if (e.lunge > 0) e.lunge -= dt;
+  }
+  for (const sh of shots) {
+    sh.x += sh.dx * dt; sh.y += sh.dy * dt;
+    particles.push({ x: sh.x, y: sh.y, dx: rnd(-.5, .5), dy: rnd(-.5, .5), ttl: .25, col: '#ff9020' });
+  }
+  // ask the host for items we walk over
+  if (!p.dead) for (const it of items) {
+    if (it.type === 'stairs' || it.type === 'portal' || pendingPicks[it.id]) continue;
+    if (dist2(p.x, p.y, it.x, it.y) < .42) { pendingPicks[it.id] = 1; NET.send('HOST', { t: 'pick', id: it.id }); }
+  }
+  // stream our position to the host
+  inpAcc += dt;
+  if (inpAcc > .08) {
+    inpAcc = 0;
+    NET.send('HOST', {
+      t: 'inp', x: +p.x.toFixed(2), y: +p.y.toFixed(2), dir: +p.dir.toFixed(2),
+      hp: Math.ceil(p.hp), maxhp: p.maxhp, dead: !!p.dead, mv: localMoving, atk: p.atkT > 0,
+    });
+  }
+}
+
+// ---------- networking (host-authoritative co-op) ----------
+// Production transport: WebRTC datachannels brokered by the public PeerJS
+// cloud (host shares a 4-letter room code). Test transport (?testnet in the
+// URL): BroadcastChannel loopback, so the sync logic is testable offline.
+const TESTNET = new URLSearchParams(location.search).get('testnet') !== null;
+const NET = {
+  conns: {},
+  send(id, o) {}, broadcast(o) {},   // bound when a session starts; no-ops in solo
+  hasPeers() { return Object.keys(this.conns).length > 0; },
+};
+function makeCode() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; let s = ''; for (let i = 0; i < 4; i++) s += A[rndi(0, A.length - 1)]; return s; }
+
+function netHost(code, onReady, onErr) {
+  if (TESTNET) {
+    const ch = new BroadcastChannel('boa-' + code);
+    ch.onmessage = ev => {
+      const { from, to, d } = ev.data;
+      if (to !== 'HOST') return;
+      NET.conns[from] = 1;
+      onNetData(from, d);
+    };
+    NET.send = (id, o) => ch.postMessage({ from: 'HOST', to: id, d: o });
+    NET.broadcast = o => ch.postMessage({ from: 'HOST', to: '*', d: o });
+    setTimeout(onReady, 30);
+    return;
+  }
+  if (typeof Peer === 'undefined') { onErr('no-peerjs'); return; }
+  const peer = new Peer('boa-azeroth-' + code, { debug: 0 });
+  peer.on('open', () => onReady());
+  peer.on('connection', c => {
+    c.on('open', () => { NET.conns[c.peer] = c; });
+    c.on('data', d => onNetData(c.peer, d));
+    c.on('close', () => { delete NET.conns[c.peer]; hostDropPlayer(c.peer); });
+  });
+  peer.on('error', e => onErr && onErr(e.type));
+  NET.send = (id, o) => { const c = NET.conns[id]; if (c) c.send(o); };
+  NET.broadcast = o => { for (const id in NET.conns) NET.conns[id].send(o); };
+}
+function netJoin(code, onReady, onErr) {
+  if (TESTNET) {
+    const ch = new BroadcastChannel('boa-' + code);
+    ch.onmessage = ev => {
+      const { from, to, d } = ev.data;
+      if (from !== 'HOST' || (to !== '*' && to !== myId)) return;
+      onNetData('HOST', d);
+    };
+    NET.conns.HOST = 1;
+    NET.send = (id, o) => ch.postMessage({ from: myId, to: 'HOST', d: o });
+    NET.broadcast = o => NET.send('HOST', o);
+    setTimeout(onReady, 30);
+    return;
+  }
+  if (typeof Peer === 'undefined') { onErr('no-peerjs'); return; }
+  const peer = new Peer({ debug: 0 });
+  peer.on('open', () => {
+    const c = peer.connect('boa-azeroth-' + code, { reliable: true });
+    c.on('open', () => { NET.conns.HOST = c; onReady(); });
+    c.on('data', d => onNetData('HOST', d));
+    c.on('close', () => hostLost());
+  });
+  peer.on('error', e => onErr && onErr(e.type));
+  NET.send = (id, o) => { const c = NET.conns.HOST; if (c && c !== 1) c.send(o); };
+  NET.broadcast = o => NET.send('HOST', o);
+}
+function hostDropPlayer(id) {
+  if (remotes[id]) msg(`${remotes[id].name || 'A hero'} has left the dungeon.`, '#ff7050');
+  delete remotes[id]; delete roster[id];
+  if (state === 'title') updateHostLobby();
+}
+function hostLost() {
+  if (state === 'play') { alert('The host has left the dungeon.'); location.reload(); }
+}
+
+function buildSnap() {
+  const pl = {};
+  pl[myId] = {
+    x: +p.x.toFixed(2), y: +p.y.toFixed(2), dir: +p.dir.toFixed(2), cls: p.cls, name: myName,
+    hp: Math.ceil(p.hp), maxhp: p.maxhp, dead: !!p.dead, mv: localMoving, atk: p.atkT > 0,
+  };
+  for (const id in remotes) {
+    const r = remotes[id];
+    pl[id] = {
+      x: +r.tx.toFixed(2), y: +r.ty.toFixed(2), dir: +(r.dir || 0).toFixed(2), cls: r.cls, name: r.name,
+      hp: r.hp, maxhp: r.maxhp, dead: !!r.dead, mv: !!r.mv, atk: !!r.atk,
+    };
+  }
+  return {
+    t: 'snap', depth, bossAwake,
+    e: enemies.map(e => [e.eid, e.type, +e.x.toFixed(2), +e.y.toFixed(2), Math.ceil(e.hp), Math.ceil(e.maxhp), e.moving ? 1 : 0, e.awake ? 1 : 0]),
+    it: items.map(i => [i.id, i.type, +i.x.toFixed(2), +i.y.toFixed(2), i.amt || 0]),
+    sh: shots.map(s => [+s.x.toFixed(2), +s.y.toFixed(2), +s.dx.toFixed(2), +s.dy.toFixed(2)]),
+    pl,
+  };
+}
+function applySnap(m) {
+  depth = m.depth;
+  if (m.bossAwake && !bossAwake) {
+    bossAwake = true; sfx.boss();
+    msg('"WHO DARES?!" Gor\'maul rises from the throne!', '#ff5040');
+  }
+  const old = {};
+  for (const e of enemies) old[e.eid] = e;
+  enemies = m.e.map(a => {
+    const [eid, type, x, y, hp, maxhp, mv, awake] = a;
+    const e = old[eid];
+    if (e) {
+      if (hp < e.hp) { e.hitT = .16; e.lunge = 0; spawnBlood(x, y, type === 'skeleton' ? '#d8d2c0' : '#a01818'); }
+      e.tx = x; e.ty = y; e.hp = hp; e.maxhp = maxhp; e.moving = !!mv; e.awake = !!awake;
+      return e;
+    }
+    return { eid, type, x, y, tx: x, ty: y, hp, maxhp, moving: !!mv, awake: !!awake, hitT: 0, lunge: 0 };
+  });
+  items = m.it.map(a => ({ id: a[0], type: a[1], x: a[2], y: a[3], amt: a[4] }));
+  shots = m.sh.map(a => ({ x: a[0], y: a[1], dx: a[2], dy: a[3], ttl: 1 }));
+  for (const id in m.pl) {
+    if (id === selfId) continue;
+    const s = m.pl[id];
+    let r = remotes[id];
+    if (!r) r = remotes[id] = { x: s.x, y: s.y };
+    Object.assign(r, { tx: s.x, ty: s.y, dir: s.dir, cls: s.cls, name: s.name, hp: s.hp, maxhp: s.maxhp, dead: s.dead, mv: s.mv, atk: s.atk });
+  }
+  for (const id in remotes) if (!m.pl[id]) { msg(`${remotes[id].name || 'A hero'} has left the dungeon.`, '#ff7050'); delete remotes[id]; }
+}
+function broadcastLevel(type) {
+  if (!NET.hasPeers()) return;
+  NET.broadcast({ t: type, depth, map: Array.from(map), items, spawn: { x: rooms[0].cx, y: rooms[0].cy }, roster });
+}
+function applyLevel(m) {
+  depth = m.depth;
+  map = Uint8Array.from(m.map);
+  seen = new Uint8Array(MS * MS);
+  items = m.items; enemies = []; shots = []; particles = []; pendingPicks = {};
+  p.x = m.spawn.x + rnd(-.35, .35); p.y = m.spawn.y + rnd(-.35, .35);
+  reviveLocal();
+}
+
+function onNetData(id, m) { if (role === 'client') clientMsg(m); else hostMsg(id, m); }
+function rosterNames() { const n = [myName]; for (const id in roster) n.push(roster[id].name); return n; }
+function hostMsg(id, m) {
+  switch (m.t) {
+    case 'join': {
+      if (state !== 'title') { NET.send(id, { t: 'busy' }); break; }
+      roster[id] = { name: m.name, cls: m.cls };
+      remotes[id] = { name: m.name, cls: m.cls, x: 0, y: 0, tx: 0, ty: 0, dir: 0, hp: 1, maxhp: 1, dead: false, mv: false, atk: false };
+      NET.send(id, { t: 'welcome', yourId: id });
+      NET.broadcast({ t: 'lobby', names: rosterNames() });
+      updateHostLobby();
+      break;
+    }
+    case 'inp': {
+      const r = remotes[id]; if (!r) break;
+      r.tx = m.x; r.ty = m.y; r.dir = m.dir; r.hp = m.hp; r.maxhp = m.maxhp; r.dead = m.dead; r.mv = m.mv; r.atk = m.atk;
+      break;
+    }
+    case 'melee': resolveMelee(m.x, m.y, m.dir, m.dmg); break;
+    case 'fire': shots.push({ x: m.x, y: m.y, dx: Math.cos(m.dir) * 9, dy: Math.sin(m.dir) * 9, ttl: 2.2, dmg: m.spell }); break;
+    case 'pick': {
+      const i = items.findIndex(o => o.id === m.id && o.type !== 'stairs' && o.type !== 'portal');
+      if (i >= 0) { const it = items[i]; items.splice(i, 1); NET.send(id, { t: 'grant', kind: it.type, amt: it.amt || 0 }); }
+      break;
+    }
+    case 'door': if (tile(m.x, m.y) === 8) openDoorAt(m.x, m.y); break;
+    case 'stairs': if (items.some(o => o.type === 'stairs')) descend(); break;
+    case 'portal': if (items.some(o => o.type === 'portal')) doWin(); break;
+  }
+}
+function clientMsg(m) {
+  switch (m.t) {
+    case 'welcome': selfId = m.yourId; break;
+    case 'busy': lobbySet('That game has already started — ask the host for a fresh room.'); role = 'solo'; break;
+    case 'lobby': if (state === 'title') lobbySet(`Party: ${m.names.join(', ')}<br>Waiting for the host to begin...`); break;
+    case 'start': {
+      p = newPlayer(myCls); p.name = myName;
+      kills = 0; bossAwake = false; msgs = [];
+      applyLevel(m);
+      state = 'play';
+      document.getElementById('title').classList.add('hidden');
+      msg('Your party enters the fallen barony. Depth 1.', '#ffce42');
+      msg('Click the view to capture your mouse.', '#9ad870');
+      break;
+    }
+    case 'lvl': {
+      applyLevel(m); sfx.stairs();
+      msg(`You descend to depth ${depth}...`, '#ffce42');
+      if (depth === 5) msg("The air reeks of ogre. Gor'maul is near.", '#ff7050');
+      break;
+    }
+    case 'snap': if (state === 'play') applySnap(m); break;
+    case 'grant': grantItem(m.kind, m.amt); break;
+    case 'hurt': hurtPlayer(m.dmg, m.src); break;
+    case 'door': setTile(m.x, m.y, 0); if (dist2(p.x, p.y, m.x + .5, m.y + .5) < 49) sfx.door(); break;
+    case 'kill': kills++; gainXP(m.xp); msg(`${m.victim} dies!`, '#9ad870'); break;
+    case 'win': showWin(); break;
+    case 'lose': showLose(); break;
+  }
 }
 
 // ---------- rendering ----------
@@ -880,6 +1285,7 @@ function render() {
   const invDet = 1 / (planeX * dirY - dirX * planeY);
   const list = [];
   for (const e of enemies) list.push({ kind: 'e', o: e, x: e.x, y: e.y });
+  for (const id in remotes) { const r = remotes[id]; list.push({ kind: 'r', o: r, x: r.x, y: r.y }); }
   for (const it of items) list.push({ kind: 'i', o: it, x: it.x, y: it.y });
   for (const sh of shots) list.push({ kind: 's', o: sh, x: sh.x, y: sh.y });
   for (const pa of particles) list.push({ kind: 'p', o: pa, x: pa.x, y: pa.y });
@@ -915,12 +1321,19 @@ function render() {
       continue;
     }
 
-    let img, scale, bobY = 0;
+    let img, scale, bobY = 0, alpha = 1, label = null;
     if (sp.kind === 'e') {
       const e = sp.o, t = ETYPES[e.type];
       img = e.hitT > 0 ? SPRW[t.spr] : SPR[t.spr];
       scale = t.scale * (e.lunge > 0 ? 1.07 : 1);
       if (e.moving) bobY = Math.abs(Math.sin(time * 8 + e.x * 7)) * hFull * .03;
+    } else if (sp.kind === 'r') {
+      const r = sp.o;
+      img = SPR[r.cls === 'mage' ? 'pmage' : 'pfoot'];
+      scale = .95 * (r.atk ? 1.05 : 1);
+      if (r.mv) bobY = Math.abs(Math.sin(time * 8 + r.x * 7)) * hFull * .03;
+      alpha = r.dead ? .35 : 1;
+      label = r.name || 'hero';
     } else {
       const it = sp.o;
       img = SPR[it.type === 'weapon' ? (p.cls === 'war' ? 'sword' : 'staff') : it.type];
@@ -933,10 +1346,22 @@ function render() {
     const left = screenX - sw / 2;
     const x0 = Math.max(0, Math.round(left)), x1 = Math.min(W, Math.round(left + sw));
     if (x1 <= x0) continue;
+    if (alpha < 1) ctx.globalAlpha = alpha;
     for (let x = x0; x < x1; x++) {
       if (trY >= zbuf[x]) continue;
       const texX = ((x - left) / sw) * img.width;
       ctx.drawImage(img, texX, 0, 1.01, img.height, x, top, 1, sh);
+    }
+    if (alpha < 1) ctx.globalAlpha = 1;
+    // party member name tag
+    if (label) {
+      const cc = Math.round(clamp(screenX, 0, W - 1));
+      if (trY < zbuf[cc]) {
+        ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
+        ctx.fillStyle = sp.o.dead ? '#99a4c8' : '#aef09a';
+        ctx.fillText(label + (sp.o.dead ? ' (ghost)' : ''), screenX, top - 4);
+        ctx.textAlign = 'left';
+      }
     }
     // enemy health bar
     if (sp.kind === 'e' && sp.o.awake && sp.o.hp < sp.o.maxhp && !ETYPES[sp.o.type].boss) {
@@ -946,13 +1371,22 @@ function render() {
     }
   }
 
-  drawWeapon();
+  if (!p.dead) drawWeapon();
   ctx.restore();
 
   // screen flashes
   if (dmgFlash > 0) { ctx.fillStyle = `rgba(190,10,10,${clamp(dmgFlash, 0, .45)})`; ctx.fillRect(0, 0, W, VIEWH); }
   if (healFlash > 0) { ctx.fillStyle = `rgba(80,200,90,${clamp(healFlash * .3, 0, .25)})`; ctx.fillRect(0, 0, W, VIEWH); }
   if (p.food <= 10) { ctx.fillStyle = `rgba(120,60,0,${.12 + Math.sin(time * 3) * .05})`; ctx.fillRect(0, 0, W, VIEWH); }
+  if (p.dead) {
+    ctx.fillStyle = 'rgba(30,34,70,.45)'; ctx.fillRect(0, 0, W, VIEWH);
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 13px monospace'; ctx.fillStyle = '#aab4d8';
+    ctx.fillText('YOU ARE A GHOST', W / 2, VIEWH / 2 - 18);
+    ctx.font = '9px monospace';
+    ctx.fillText('you will rise when the party reaches the next floor', W / 2, VIEWH / 2 - 4);
+    ctx.textAlign = 'left';
+  }
 
   // crosshair
   ctx.fillStyle = '#ffffffaa';
@@ -961,8 +1395,22 @@ function render() {
 
   drawBossBar();
   drawMinimap();
+  drawParty();
   drawMessages();
   drawHUD();
+}
+
+function drawParty() {
+  let y = 40;
+  ctx.font = 'bold 8px monospace'; ctx.textAlign = 'left';
+  for (const id in remotes) {
+    const r = remotes[id];
+    ctx.fillStyle = 'rgba(8,6,4,.55)'; ctx.fillRect(4, y - 8, 60, 16);
+    ctx.fillStyle = r.dead ? '#8a93b8' : '#9ad870';
+    ctx.fillText((r.name || 'hero') + (r.dead ? ' †' : ''), 6, y);
+    bar(6, y + 2, 52, 3, (r.hp || 0) / (r.maxhp || 1), r.dead ? '#555' : '#c82818');
+    y += 18;
+  }
 }
 
 // first-person arms / weapons
@@ -1037,6 +1485,12 @@ function drawMinimap() {
         ctx.fillRect(ox + it.x * ts - 1.5, oy + it.y * ts - 1.5, 3, 3);
       }
     }
+  }
+  // party members
+  for (const id in remotes) {
+    const r = remotes[id];
+    ctx.fillStyle = r.dead ? '#8899bb' : '#5ec8ff';
+    ctx.fillRect(ox + r.x * ts - 1, oy + r.y * ts - 1, 2.5, 2.5);
   }
   // player arrow
   ctx.fillStyle = '#70e860';
@@ -1131,25 +1585,73 @@ function drawHUD() {
   ctx.textAlign = 'left';
 }
 
-// ---------- game flow ----------
+// ---------- game flow & lobby ----------
 function startGame(cls) {
-  p = newPlayer(cls);
+  p = newPlayer(cls); p.name = myName;
   depth = 1; kills = 0; bossAwake = false; msgs = [];
+  if (role === 'solo') remotes = {};
   genLevel();
   state = 'play';
   document.getElementById('title').classList.add('hidden');
   document.getElementById('death').classList.add('hidden');
   document.getElementById('win').classList.add('hidden');
-  msg('You enter the fallen barony. Depth 1.', '#ffce42');
+  msg(role === 'solo' ? 'You enter the fallen barony. Depth 1.' : 'Your party enters the fallen barony. Depth 1.', '#ffce42');
   msg(cls === 'war' ? 'Steel and courage. For Stormwind!' : 'Knowledge is power. And fireballs.', '#9ad870');
   if (!isTouch) cv.requestPointerLock && cv.requestPointerLock();
 }
-function restart() { startGame(p ? p.cls : 'war'); }
+function restart() {
+  if (role !== 'solo') { location.reload(); return; }
+  startGame(p ? p.cls : 'war');
+}
+function hostBegin() {
+  startGame(myCls);
+  broadcastLevel('start');
+}
 
-document.getElementById('pickWar').addEventListener('click', () => { audio(); startGame('war'); });
-document.getElementById('pickMage').addEventListener('click', () => { audio(); startGame('mage'); });
+function lobbySet(html) { document.getElementById('lobbyMsg').innerHTML = html; }
+function grabName() {
+  const v = document.getElementById('nameIn').value.trim();
+  myName = v || (myCls === 'war' ? 'Footman' : 'Mage');
+}
+function setCls(c) {
+  myCls = c;
+  document.getElementById('clsWar').classList.toggle('selected', c === 'war');
+  document.getElementById('clsMage').classList.toggle('selected', c === 'mage');
+}
+function updateHostLobby() {
+  const names = Object.values(roster).map(r => r.name).join(', ');
+  lobbySet(`Room code: <b>${currentCode}</b><br>` +
+    (names ? `Party: you, ${names}` : 'Waiting for your friends — send them this file and the code.'));
+  document.getElementById('startBtn').classList.remove('hidden');
+}
+document.getElementById('clsWar').addEventListener('click', () => { audio(); setCls('war'); });
+document.getElementById('clsMage').addEventListener('click', () => { audio(); setCls('mage'); });
+document.getElementById('soloBtn').addEventListener('click', () => { audio(); grabName(); role = 'solo'; startGame(myCls); });
+document.getElementById('hostBtn').addEventListener('click', () => {
+  audio();
+  if (role !== 'solo') return;       // already hosting or joining
+  grabName();
+  role = 'host'; currentCode = makeCode();
+  lobbySet('Opening the dungeon gates...');
+  netHost(currentCode, () => updateHostLobby(),
+    () => { role = 'solo'; lobbySet('Could not start co-op — check your internet connection.'); });
+});
+document.getElementById('joinBtn').addEventListener('click', () => {
+  audio();
+  if (role !== 'solo') return;
+  grabName();
+  const code = document.getElementById('codeIn').value.trim().toUpperCase();
+  if (code.length !== 4) { lobbySet('Enter the 4-letter room code first.'); return; }
+  role = 'client';
+  lobbySet('Knocking on the dungeon gates...');
+  netJoin(code,
+    () => { NET.send('HOST', { t: 'join', name: myName, cls: myCls }); lobbySet('Connected! Waiting for the host to begin...'); },
+    () => { role = 'solo'; lobbySet('Could not find that room. Check the code (and your internet).'); });
+});
+document.getElementById('startBtn').addEventListener('click', () => { audio(); hostBegin(); });
 document.getElementById('retryBtn').addEventListener('click', () => restart());
 document.getElementById('againBtn').addEventListener('click', () => {
+  if (role !== 'solo') { location.reload(); return; }
   document.getElementById('win').classList.add('hidden');
   document.getElementById('title').classList.remove('hidden');
   state = 'title';

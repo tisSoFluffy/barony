@@ -15,6 +15,22 @@ and touch devices (on-screen controls).
 - Bestiary: Kobold Tunnelers, Murloc Raiders, Scourge Skeletons, Orc Grunts —
   and **Gor'maul the Ogre Warlord** on the throne at depth 5
 
+## Co-op (up to 3 heroes)
+Online multiplayer over WebRTC, peer-to-peer — no server to run:
+
+1. Send each friend a copy of `index.html`.
+2. One player clicks **Host Co-op** and shares the 4-letter room code.
+3. The others enter the code and click **Join Friend**, then the host clicks
+   **Begin the Descent**.
+
+The host's machine runs the world (enemies, loot); everyone else streams
+inputs. XP is shared by the whole party, the dead haunt the dungeon as
+ghosts and rise again at the next floor, and the run only ends when the
+whole party falls. Matchmaking uses the free PeerJS broker, so everyone
+needs internet; if a friend can't connect (strict NAT), have them host
+instead. Append `?testnet=1` to the URL to run all players as tabs in one
+browser via a loopback transport (used by the automated tests).
+
 ## Controls
 | Input | Action |
 |---|---|
