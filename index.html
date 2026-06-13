@@ -528,6 +528,36 @@ function drawShrine() {
     dot(g, '#bdf0ff', 14, 8, 1.5); dot(g, '#bdf0ff', 28, 5, 1.8); dot(g, '#bdf0ff', 22, 10, 1.2);
   });
 }
+// Goblin Merchant — green, big-eared trader behind a counter of wares
+function drawGoblin() {
+  return S(60, 74, g => {
+    // counter of wares
+    rrect(g, '#5e4226', 5, 54, 50, 18, 3);
+    g.fillStyle = '#3a2614'; g.fillRect(5, 60, 50, 2);
+    ell(g, '#d83030', 13, 52, 3, 4); ell(g, '#3060d8', 21, 52, 3, 4);   // mini potions
+    dot(g, '#ffd84a', 46, 53, 3); dot(g, '#fff0a0', 45, 52, 1.2);       // coin
+    // arms resting on counter
+    rrect(g, '#7a9a3a', 15, 34, 8, 18, 3); rrect(g, '#7a9a3a', 37, 34, 8, 18, 3);
+    ell(g, '#6a8a30', 18, 50, 4, 3); ell(g, '#6a8a30', 41, 50, 4, 3);
+    // torso + leather apron
+    rrect(g, '#7a9a3a', 21, 30, 18, 24, 5);
+    rrect(g, '#6a4c2c', 24, 33, 12, 19, 2);
+    dot(g, '#d8b050', 30, 43, 2.2);
+    // head: green, big nose, big ears, beady eyes
+    ell(g, '#7a9a3a', 30, 19, 12, 10);
+    ell(g, '#8aaa44', 30, 23, 4, 5);                                    // bulbous nose
+    tri(g, '#7a9a3a', 17, 17, 7, 9, 19, 24);                            // left ear
+    tri(g, '#7a9a3a', 43, 17, 53, 9, 41, 24);                           // right ear
+    dot(g, '#ffd040', 25, 16, 2.2); dot(g, '#ffd040', 35, 16, 2.2);
+    dot(g, '#170f06', 25, 16, 1); dot(g, '#170f06', 35, 16, 1);
+    g.strokeStyle = '#170f06'; g.lineWidth = 1.6;
+    g.beginPath(); g.moveTo(24, 27); g.quadraticCurveTo(30, 31, 36, 27); g.stroke();  // grin
+    g.fillStyle = '#f0ead8'; g.fillRect(27, 27, 2, 2); g.fillRect(31, 27, 2, 2);
+    // merchant cap
+    shp(g, '#9a2a2a', () => { g.moveTo(19, 11); g.quadraticCurveTo(30, 1, 41, 11); g.quadraticCurveTo(30, 8, 19, 11); });
+    dot(g, '#ffd84a', 30, 5, 2);
+  });
+}
 function drawKeyItem() {
   return S(24, 26, g => {
     ell(g, '#e8c050', 8, 8, 5.5, 5.5);
@@ -690,6 +720,7 @@ const SPR = {
   pfoot: drawFootman(), pmage: drawMageHero(),
   torch: drawBrazier(), trap: drawTrap(), shrine: drawShrine(), key: drawKeyItem(),
   armorI: drawArmorItem(), helmI: drawHelmItem(), ringI: drawRingItem(),
+  shop: drawGoblin(),
 };
 const SPRW = {}; for (const k of ['orc', 'kobold', 'murloc', 'skeleton', 'ogre', 'troll', 'necro']) SPRW[k] = whiteVersion(SPR[k]);
 
@@ -768,6 +799,7 @@ let nextItemId = 1, nextEid = 1, snapAcc = 0, inpAcc = 0, localMoving = false;
 let pendingPicks = {};        // item ids we've asked the host for
 let eshots = [];              // enemy projectiles (axes, shadow bolts)
 let invOpen = false, novaFlash = 0, lastTrapT = -9, mX = 0, mY = 0;
+let shopOpen = false, shopId = null, shopOffers = {};   // per-floor goblin merchant stock (local per player)
 const myId = 'P' + Math.random().toString(36).slice(2, 8);
 
 function newPlayer(cls) {
@@ -797,6 +829,7 @@ function genLevel() {
   map = new Uint8Array(MS * MS).fill(1);
   seen = new Uint8Array(MS * MS);
   rooms = []; enemies = []; items = []; shots = []; eshots = []; particles = []; pendingPicks = {};
+  shopOffers = {}; shopOpen = false;
   // carve rooms
   for (let i = 0; i < 60 && rooms.length < 9; i++) {
     const w = rndi(4, 8), h = rndi(4, 8), x = rndi(2, MS - w - 3), y = rndi(2, MS - h - 3);
@@ -889,6 +922,11 @@ function genLevel() {
       else if (enemies.length > 1) enemies[0].hasKey = true;
     }
   }
+  // Gazlowe the goblin merchant — a safe nook on every floor but the throne
+  if (depth < 5 && rooms.length > 2) {
+    const r = rooms[rndi(1, rooms.length - 2)];
+    addItem({ type: 'shop', x: r.cx + .4, y: r.cy });
+  }
   setTheme(depth);
 }
 function setTheme(d) {
@@ -949,6 +987,7 @@ function updMouse(e) {
 cv.addEventListener('pointermove', updMouse);
 function toggleInv() {
   if (state !== 'play') return;
+  if (shopOpen) shopOpen = false;
   invOpen = !invOpen;
   if (invOpen) { document.exitPointerLock && document.exitPointerLock(); }
   else if (!isTouch) cv.requestPointerLock && cv.requestPointerLock();
@@ -957,6 +996,7 @@ addEventListener('keyup', e => keys[e.code] = false);
 cv.addEventListener('mousedown', e => {
   audio();
   if (state !== 'play') return;
+  if (shopOpen) { updMouse(e); shopClick(e.button); return; }
   if (invOpen) { updMouse(e); invClick(e.button); return; }
   if (document.pointerLockElement !== cv && !isTouch) { cv.requestPointerLock(); }
   if (e.button === 0) mouseAtk = true;
@@ -1097,8 +1137,85 @@ function drawInv() {
   }
 }
 
+// ---------- goblin merchant (gold sink) ----------
+// Fully client-local: gold is personal, consumables are infinite, and the
+// featured gear is rolled locally — so no host arbitration is needed.
+function shopPrice(kind, gear) {
+  if (kind === 'meat') return 8 + depth * 5;
+  if (kind === 'hpot' || kind === 'mpot') return 14 + depth * 8;
+  return Math.round((40 + depth * 28) * (1 + (gear ? gear.tier : 0) * .8)); // gear
+}
+function shopRows() {
+  const off = shopOffers[shopId] || {};
+  return [
+    { kind: 'hpot', name: 'Health Potion', desc: 'restores 45 health', price: shopPrice('hpot') },
+    { kind: 'mpot', name: 'Mana Potion', desc: 'restores 40 mana', price: shopPrice('mpot') },
+    { kind: 'meat', name: 'Haunch of Meat', desc: 'restores 38 food', price: shopPrice('meat') },
+    { kind: 'gear', name: off.gear ? off.gear.name : '—', desc: off.gear ? gearDesc(off.gear) : 'sold out',
+      price: off.gear ? shopPrice('gear', off.gear) : 0, gear: off.gear || null, tier: off.gear ? off.gear.tier : 0 },
+  ];
+}
+function openShop(id) {
+  shopId = id; shopOpen = true; invOpen = false;
+  if (!shopOffers[id]) shopOffers[id] = { gear: rollGear(Math.min(depth + 1, 5)) };
+  document.exitPointerLock && document.exitPointerLock();
+  sfx.pickup();
+  msg('"Pleasure doin\' business!" — Gazlowe the goblin.', '#9ad870');
+}
+function closeShop() { shopOpen = false; if (!isTouch) cv.requestPointerLock && cv.requestPointerLock(); }
+function shopHovered() {
+  for (let i = 0; i < 4; i++) { const y = 66 + i * 30; if (mX >= 116 && mX < 364 && mY >= y && mY < y + 26) return i; }
+  return -1;
+}
+function shopBuy(i) {
+  const row = shopRows()[i];
+  if (!row || row.price <= 0) return;
+  if (p.gold < row.price) { msg('Not enough gold!', '#ff7050'); sfx.swing(); return; }
+  if (row.kind === 'gear') {
+    if (p.bag.length >= 6) { msg('Your pack is full!', '#ff7050'); return; }
+    p.gold -= row.price; p.bag.push(row.gear); sfx.gold();
+    msg(`Bought ${row.gear.name}.`, TIER_COL[row.gear.tier]);
+    shopOffers[shopId] = { gear: rollGear(Math.min(depth + 1, 5)) };   // restock with a fresh roll
+  } else {
+    p.gold -= row.price; sfx.gold();
+    if (row.kind === 'hpot') p.hpots++; else if (row.kind === 'mpot') p.mpots++; else p.meat++;
+    msg(`Bought a ${row.name}.`, '#ffd84a');
+  }
+}
+function shopClick(btn) { const i = shopHovered(); if (i >= 0) shopBuy(i); }
+function drawShop() {
+  ctx.fillStyle = 'rgba(6,4,2,.86)'; ctx.fillRect(104, 34, 272, 192);
+  ctx.strokeStyle = '#8a6d2f'; ctx.lineWidth = 2; ctx.strokeRect(105, 35, 270, 190);
+  ctx.drawImage(SPR.shop, 110, 40, 34, 42);
+  ctx.fillStyle = '#ffce42'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'left';
+  ctx.fillText("GAZLOWE'S WARES", 150, 49);
+  ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#ffd84a'; ctx.textAlign = 'right';
+  ctx.fillText(`${p.gold}g`, 366, 49);
+  const hov = shopHovered(), rows = shopRows();
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i], y = 66 + i * 30, afford = r.price > 0 && p.gold >= r.price;
+    ctx.fillStyle = hov === i ? '#3a2c14' : '#1c140a'; ctx.fillRect(116, y, 248, 26);
+    ctx.strokeStyle = r.kind === 'gear' && r.gear ? TIER_COL[r.tier] : '#5a4a34';
+    ctx.lineWidth = 1.2; ctx.strokeRect(116.5, y + .5, 247, 25);
+    const ic = r.kind === 'gear' ? (r.gear ? gearSprite(r.gear) : null) : SPR[r.kind];
+    if (ic) ctx.drawImage(ic, 120, y + 3, 20, 20);
+    ctx.font = 'bold 8px monospace';
+    ctx.fillStyle = r.kind === 'gear' && r.gear ? TIER_COL[r.tier] : '#e8d8a8';
+    ctx.fillText(r.name, 146, y + 11);
+    ctx.fillStyle = '#9a8a64'; ctx.font = '7px monospace'; ctx.fillText(r.desc, 146, y + 21);
+    ctx.textAlign = 'right'; ctx.font = 'bold 9px monospace';
+    ctx.fillStyle = r.price <= 0 ? '#5a4a34' : afford ? '#ffd84a' : '#a85050';
+    ctx.fillText(r.price > 0 ? r.price + 'g' : '—', 358, y + 16);
+    ctx.textAlign = 'left';
+  }
+  ctx.fillStyle = '#9a8a64'; ctx.font = '8px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('click to buy   ·   E or I to leave', 252, 218);
+  ctx.textAlign = 'left';
+}
+
 // ---------- player actions ----------
 function useAction() {
+  if (shopOpen) { closeShop(); return; }
   if (state !== 'play' || p.dead) return;
   // doors (clients ask the host; host applies and broadcasts)
   const fx = p.x + Math.cos(p.dir), fy = p.y + Math.sin(p.dir);
@@ -1117,6 +1234,10 @@ function useAction() {
       } else msg('Locked tight. Some monster must carry the key.', '#ff7050');
       return;
     }
+  }
+  // goblin merchant
+  for (const it of items) {
+    if (it.type === 'shop' && dist2(p.x, p.y, it.x, it.y) < 2.4) { openShop(it.id); return; }
   }
   // shrines: one blessing (or curse) per party
   for (const it of items) {
@@ -1375,7 +1496,7 @@ function update(dt) {
 
 // runs on every machine: own movement, hunger, cosmetics
 function updateLocal(dt) {
-  p.blocking = p.cls === 'war' && !p.dead && !invOpen && (mouseFire || keys.KeyF || touchFire);
+  p.blocking = p.cls === 'war' && !p.dead && !invOpen && !shopOpen && (mouseFire || keys.KeyF || touchFire);
   if (p.novaT > 0) p.novaT -= dt;
   let mvF = 0, mvS = 0;
   if (keys.KeyW || keys.ArrowUp) mvF += 1;
@@ -1396,7 +1517,7 @@ function updateLocal(dt) {
   if (p.atkT > 0) p.atkT -= dt;
   if (p.castT > 0) p.castT -= dt;
   if (p.hurtT > 0) p.hurtT -= dt;
-  if (!p.dead && !invOpen) {
+  if (!p.dead && !invOpen && !shopOpen) {
     if ((mouseAtk || keys.Space || touchAtk) && p.atkT <= 0) meleeAttack();
     if (p.cls === 'mage' && (mouseFire || keys.KeyF || touchFire) && p.castT <= 0) castFireball();
     // mana & hunger
@@ -1734,6 +1855,7 @@ function applyLevel(m) {
   map = Uint8Array.from(m.map);
   seen = new Uint8Array(MS * MS);
   items = m.items; enemies = []; shots = []; eshots = []; particles = []; pendingPicks = {};
+  shopOffers = {}; shopOpen = false;
   p.x = m.spawn.x + rnd(-.35, .35); p.y = m.spawn.y + rnd(-.35, .35);
   setTheme(depth);
   reviveLocal();
@@ -1916,7 +2038,7 @@ function render() {
       continue;
     }
 
-    let img, scale, bobY = 0, alpha = 1, label = null;
+    let img, scale, bobY = 0, alpha = 1, label = null, labelCol = null;
     if (sp.kind === 'e') {
       const e = sp.o, t = ETYPES[e.type];
       img = e.hitT > 0 ? SPRW[t.spr] : SPR[t.spr];
@@ -1937,9 +2059,11 @@ function render() {
         : it.type === 'portal' ? 1.1 + Math.sin(time * 4) * .05
         : it.type === 'torch' ? .62 + Math.sin(time * 11 + it.x * 9) * .015
         : it.type === 'shrine' ? .62
+        : it.type === 'shop' ? .92
         : it.type === 'trap' ? .34 : .26;
       if (it.type === 'hpot' || it.type === 'mpot' || it.type === 'gear' || it.type === 'key') bobY = Math.sin(time * 3 + it.x * 5) * hFull * .015;
       if (it.type === 'torch') glows.push({ sx: screenX, fy: floorLine, h: hFull, d: trY });
+      if (it.type === 'shop') { glows.push({ sx: screenX, fy: floorLine, h: hFull * .8, d: trY }); label = 'Gazlowe [E]'; labelCol = '#ffce42'; }
     }
     const sh = hFull * scale;
     const sw = sh * (img.width / img.height);
@@ -1959,7 +2083,7 @@ function render() {
       const cc = Math.round(clamp(screenX, 0, W - 1));
       if (trY < zbuf[cc]) {
         ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
-        ctx.fillStyle = sp.o.dead ? '#99a4c8' : '#aef09a';
+        ctx.fillStyle = labelCol || (sp.o.dead ? '#99a4c8' : '#aef09a');
         ctx.fillText(label + (sp.o.dead ? ' (ghost)' : ''), screenX, top - 4);
         ctx.textAlign = 'left';
       }
@@ -2017,6 +2141,7 @@ function render() {
   drawMessages();
   drawHUD();
   if (invOpen) drawInv();
+  if (shopOpen) drawShop();
 }
 
 function drawParty() {
