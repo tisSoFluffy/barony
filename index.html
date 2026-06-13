@@ -77,6 +77,10 @@
         <input id="codeIn" maxlength="4" placeholder="CODE" style="width:80px;text-transform:uppercase;">
         <button class="minibtn" id="joinBtn">Join Friend</button>
       </div>
+      <div class="rowmini">
+        <input id="seedIn" maxlength="10" placeholder="SEED (optional)" style="width:150px;text-transform:uppercase;">
+        <button class="minibtn" id="dailyBtn" title="Play today's shared dungeon">&#9728; Daily Challenge</button>
+      </div>
       <div id="lobbyMsg"></div>
       <button class="minibtn hidden" id="startBtn" style="font-size:18px;border-color:#ffce42;">&#9876; Begin the Descent &#9876;</button>
     </div>
@@ -84,7 +88,8 @@
       <b>WASD</b> move &nbsp;•&nbsp; <b>Mouse / &larr;&rarr;</b> look &nbsp;•&nbsp; <b>Click / Space</b> attack &nbsp;•&nbsp; <b>Right-click / F</b> fireball<br>
       <b>E</b> use doors &amp; stairs &nbsp;•&nbsp; <b>H</b> health potion &nbsp;•&nbsp; <b>M</b> mana potion &nbsp;•&nbsp; <b>G</b> eat &nbsp;•&nbsp; food is scarce — keep eating or starve<br>
       <b>Co-op:</b> one of you hosts and shares the 4-letter code — up to 3 heroes, shared XP, the fallen rise at the next floor<br>
-      <b>I</b> inventory &amp; gear &nbsp;•&nbsp; <b>Q</b> frost nova / <b>B</b> blink (mage) &nbsp;•&nbsp; hold <b>RMB</b> to block (footman)
+      <b>I</b> inventory &amp; gear &nbsp;•&nbsp; <b>Q</b> frost nova / <b>B</b> blink (mage) &nbsp;•&nbsp; hold <b>RMB</b> to block (footman)<br>
+      <b>Seed:</b> leave blank for a random crawl, or share a seed (or the Daily) so your whole party explores the same dungeon
     </div>
     <div id="scores" class="keys" style="margin-top:6px;"></div>
   </div>
@@ -126,7 +131,19 @@ const TXS = 64;                // texture size
 
 function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
-function rnd(a, b) { return a + Math.random() * (b - a); }
+// Randomness routes through RNG so level generation can be made deterministic
+// from a seed (set during genLevel, reset to Math.random for live play).
+let RNG = Math.random;
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function hashStr(s) { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rnd(a, b) { return a + RNG() * (b - a); }
 function rndi(a, b) { return Math.floor(rnd(a, b + 1)); }
 function dist2(ax, ay, bx, by) { const dx = ax - bx, dy = ay - by; return dx * dx + dy * dy; }
 
@@ -750,12 +767,12 @@ const GEAR_SUFFIX = { dmg: 'of the Tiger', spell: 'of the Owl', hp: 'of the Bear
 function pick(a) { return a[rndi(0, a.length - 1)]; }
 function rollGear(d) {
   const slot = pick(['weapon', 'weapon', 'armor', 'helm', 'ring']);
-  const tier = Math.random() < .12 + d * .03 ? 2 : Math.random() < .42 ? 1 : 0;
+  const tier = RNG() < .12 + d * .03 ? 2 : RNG() < .42 ? 1 : 0;
   const b = {};
   let base;
   let wtype = null;
   if (slot === 'weapon') {
-    wtype = Math.random() < .5 ? 'sword' : 'staff';
+    wtype = RNG() < .5 ? 'sword' : 'staff';
     if (wtype === 'sword') { base = pick(['Blade', 'Cleaver', 'Greatsword', 'Axe']); b.dmg = 2 + d * 2 + tier * 3 + rndi(0, 2); }
     else { base = pick(['Staff', 'Rod', 'Scepter']); b.spell = 4 + d * 3 + tier * 4 + rndi(0, 3); }
   } else if (slot === 'armor') { base = pick(['Hauberk', 'Breastplate', 'Vest']); b.armor = 1 + ((d + tier) / 2 | 0); if (tier) b.hp = 5 * tier + d; }
@@ -795,6 +812,7 @@ let remotes = {};             // id -> party member avatar (lerped for display)
 let roster = {};              // id -> {name, cls}, filled in the lobby
 let selfId = null, currentCode = '';
 let myName = 'Hero', myCls = 'war';
+let runSeed = '', seedActive = false;   // when set, dungeons are reproducible
 let nextItemId = 1, nextEid = 1, snapAcc = 0, inpAcc = 0, localMoving = false;
 let pendingPicks = {};        // item ids we've asked the host for
 let eshots = [];              // enemy projectiles (axes, shadow bolts)
@@ -826,6 +844,8 @@ function setTile(x, y, v) { map[(y | 0) * MS + (x | 0)] = v; }
 function solid(x, y) { const t = tile(x, y); return t > 0; }
 
 function genLevel() {
+  // deterministic layout when a seed is active; live play stays truly random
+  RNG = seedActive ? mulberry32((hashStr(runSeed) ^ Math.imul(depth, 0x9E3779B1)) >>> 0) : Math.random;
   map = new Uint8Array(MS * MS).fill(1);
   seen = new Uint8Array(MS * MS);
   rooms = []; enemies = []; items = []; shots = []; eshots = []; particles = []; pendingPicks = {};
@@ -849,7 +869,7 @@ function genLevel() {
   }
   // wall variety
   for (let i = 0; i < MS * MS; i++) if (map[i] === 1) {
-    const r = Math.random();
+    const r = RNG();
     map[i] = r < .14 ? 2 : r < .19 ? 3 : 1;
   }
   // doors: corridor pinch points
@@ -857,7 +877,7 @@ function genLevel() {
     if (tile(x, y) !== 0) continue;
     const h = solid(x - 1, y) && solid(x + 1, y) && !solid(x, y - 1) && !solid(x, y + 1);
     const v = solid(x, y - 1) && solid(x, y + 1) && !solid(x - 1, y) && !solid(x + 1, y);
-    if ((h || v) && Math.random() < .4) setTile(x, y, 8);
+    if ((h || v) && RNG() < .4) setTile(x, y, 8);
   }
   // player start: first room
   const r0 = rooms[0];
@@ -872,7 +892,7 @@ function genLevel() {
     const r = rooms[rndi(1, rooms.length - 1)];
     const ex = rnd(r.x + .8, r.x + r.w - .8), ey = rnd(r.y + .8, r.y + r.h - .8);
     if (dist2(ex, ey, p.x, p.y) < 36) continue;
-    let roll = Math.random() * 100, type = sp.pool[0][0];
+    let roll = RNG() * 100, type = sp.pool[0][0];
     for (const [t, w] of sp.pool) { if (roll < w) { type = t; break; } roll -= w; }
     spawnEnemy(type, ex, ey);
   }
@@ -881,7 +901,7 @@ function genLevel() {
   for (let i = 0; i < lootN; i++) {
     const r = rooms[rndi(0, rooms.length - 1)];
     const lx = rnd(r.x + .6, r.x + r.w - .6), ly = rnd(r.y + .6, r.y + r.h - .6);
-    const roll = Math.random();
+    const roll = RNG();
     addItem({ type: roll < .3 ? 'meat' : roll < .5 ? 'hpot' : roll < .62 ? 'mpot' : 'gold', x: lx, y: ly, amt: rndi(6, 14) * depth });
   }
   // a guaranteed piece of gear per floor, more in the vault
@@ -890,7 +910,7 @@ function genLevel() {
     addItem({ type: 'gear', gear: rollGear(depth), x: r.cx + .5, y: r.cy - .5 });
   }
   // braziers light the rooms
-  for (const r of rooms) if (Math.random() < .8) addItem({ type: 'torch', x: r.x + .55, y: r.y + .55 });
+  for (const r of rooms) if (RNG() < .8) addItem({ type: 'torch', x: r.x + .55, y: r.y + .55 });
   // spike traps (depth 2+)
   if (depth >= 2) for (let i = 0; i < 2 + depth; i++) {
     const r = rooms[rndi(1, rooms.length - 1)];
@@ -898,7 +918,7 @@ function genLevel() {
     if (dist2(tx, ty, p.x, p.y) > 16) addItem({ type: 'trap', x: tx, y: ty });
   }
   // a blessing shrine, sometimes
-  if (Math.random() < .6 && rooms.length > 3) {
+  if (RNG() < .6 && rooms.length > 3) {
     const r = rooms[rndi(1, rooms.length - 2)];
     addItem({ type: 'shrine', x: r.cx - .6, y: r.cy + .6, amt: 0 });
   }
@@ -927,6 +947,7 @@ function genLevel() {
     const r = rooms[rndi(1, rooms.length - 2)];
     addItem({ type: 'shop', x: r.cx + .4, y: r.cy });
   }
+  RNG = Math.random;   // hand the dice back to live play (combat, particles, drops)
   setTheme(depth);
 }
 function setTheme(d) {
@@ -1298,7 +1319,7 @@ function loadScores() { try { return JSON.parse(localStorage.getItem('boaScores'
 function recordScore(win) {
   try {
     const list = loadScores();
-    list.push({ n: p.name || myName, c: p.cls, d: depth, l: p.level, g: p.gold, k: kills, w: win ? 1 : 0 });
+    list.push({ n: p.name || myName, c: p.cls, d: depth, l: p.level, g: p.gold, k: kills, w: win ? 1 : 0, s: seedActive ? runSeed : '' });
     list.sort((a, b) => (b.w - a.w) || (b.d - a.d) || (b.g - a.g));
     localStorage.setItem('boaScores', JSON.stringify(list.slice(0, 8)));
   } catch (e) {}
@@ -1310,7 +1331,7 @@ function renderScores() {
   const list = loadScores();
   el.innerHTML = list.length
     ? '<b style="color:#ffce42">HALL OF HEROES</b><br>' + list.map(s =>
-      `${s.w ? '&#9876;' : '&#8224;'} ${s.n} the ${s.c === 'war' ? 'Footman' : 'Mage'} — ${s.w ? 'VICTORY' : 'fell on depth ' + s.d} · lv ${s.l} · ${s.g} gold · ${s.k} kills`
+      `${s.w ? '&#9876;' : '&#8224;'} ${s.n} the ${s.c === 'war' ? 'Footman' : 'Mage'} — ${s.w ? 'VICTORY' : 'fell on depth ' + s.d} · lv ${s.l} · ${s.g} gold · ${s.k} kills${s.s ? ' · ' + s.s : ''}`
     ).join('<br>')
     : '';
 }
@@ -1848,7 +1869,7 @@ function applySnap(m) {
 }
 function broadcastLevel(type) {
   if (!NET.hasPeers()) return;
-  NET.broadcast({ t: type, depth, map: Array.from(map), items, spawn: { x: rooms[0].cx, y: rooms[0].cy }, roster });
+  NET.broadcast({ t: type, depth, map: Array.from(map), items, spawn: { x: rooms[0].cx, y: rooms[0].cy }, roster, seed: seedActive ? runSeed : '' });
 }
 function applyLevel(m) {
   depth = m.depth;
@@ -1912,6 +1933,7 @@ function clientMsg(m) {
       document.getElementById('title').classList.add('hidden');
       msg('Your party enters the fallen barony. Depth 1.', '#ffce42');
       msg('Click the view to capture your mouse.', '#9ad870');
+      if (m.seed) { runSeed = m.seed; seedActive = true; msg(`Seed: ${m.seed}`, '#c9b37e'); }
       break;
     }
     case 'lvl': {
@@ -2359,6 +2381,7 @@ function startGame(cls) {
   document.getElementById('win').classList.add('hidden');
   msg(role === 'solo' ? 'You enter the fallen barony. Depth 1.' : 'Your party enters the fallen barony. Depth 1.', '#ffce42');
   msg(cls === 'war' ? 'Steel and courage. For Stormwind!' : 'Knowledge is power. And fireballs.', '#9ad870');
+  if (seedActive) msg(`Seed: ${runSeed} — share it to crawl this exact dungeon.`, '#c9b37e');
   if (!isTouch) cv.requestPointerLock && cv.requestPointerLock();
 }
 function restart() {
@@ -2375,6 +2398,14 @@ function grabName() {
   const v = document.getElementById('nameIn').value.trim();
   myName = v || (myCls === 'war' ? 'Footman' : 'Mage');
 }
+function grabSeed() {
+  runSeed = document.getElementById('seedIn').value.trim().toUpperCase();
+  seedActive = runSeed.length > 0;
+}
+function todaySeed() {
+  const d = new Date();
+  return 'DAILY-' + d.getUTCFullYear() + ('0' + (d.getUTCMonth() + 1)).slice(-2) + ('0' + d.getUTCDate()).slice(-2);
+}
 function setCls(c) {
   myCls = c;
   document.getElementById('clsWar').classList.toggle('selected', c === 'war');
@@ -2388,11 +2419,18 @@ function updateHostLobby() {
 }
 document.getElementById('clsWar').addEventListener('click', () => { audio(); setCls('war'); });
 document.getElementById('clsMage').addEventListener('click', () => { audio(); setCls('mage'); });
-document.getElementById('soloBtn').addEventListener('click', () => { audio(); grabName(); role = 'solo'; startGame(myCls); });
+document.getElementById('soloBtn').addEventListener('click', () => { audio(); grabName(); grabSeed(); role = 'solo'; startGame(myCls); });
+document.getElementById('dailyBtn').addEventListener('click', () => {
+  audio();
+  if (role !== 'solo') return;
+  document.getElementById('seedIn').value = todaySeed();
+  grabSeed();
+  lobbySet(`Daily seed <b style="font-size:13px;letter-spacing:2px">${runSeed}</b> set.<br>Press Play Solo, or Host Co-op to run it with friends.`);
+});
 document.getElementById('hostBtn').addEventListener('click', () => {
   audio();
   if (role !== 'solo') return;       // already hosting or joining
-  grabName();
+  grabName(); grabSeed();
   role = 'host'; currentCode = makeCode();
   lobbySet('Opening the dungeon gates...');
   netHost(currentCode, () => updateHostLobby(),

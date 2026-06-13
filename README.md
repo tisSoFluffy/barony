@@ -26,6 +26,11 @@ and touch devices (on-screen controls).
   Scourge Skeletons, Orc Grunts, Cultist Necromancers (shadow bolts, raise
   skeletons) — and **Gor'maul the Ogre Warlord**, who enrages at half health
   and calls reinforcements
+- **Gazlowe the goblin merchant** on every non-boss floor — spend your gold
+  on potions, food, and a rotating featured piece of gear (press **E** to shop)
+- **Seeded & Daily runs**: leave the seed blank for a random crawl, or type a
+  seed (or hit **Daily Challenge**) so your whole party explores the exact same
+  dungeon — great for racing friends on the same map
 - Procedural dungeon music that doubles tempo when enemies are on you, plus
   a local **Hall of Heroes** high-score board on the title screen
 
@@ -45,6 +50,10 @@ everyone needs internet; if a friend can't connect (strict NAT), have them
 host instead. Append `?testnet=1` to the URL to run all players as tabs in
 one browser via a loopback transport (used by the automated tests).
 
+To play a specific dungeon together, the host types a seed (or clicks
+**Daily Challenge**) before hosting — every floor is then identical for the
+whole party.
+
 ## Controls
 | Input | Action |
 |---|---|
@@ -54,5 +63,5 @@ one browser via a loopback transport (used by the automated tests).
 | Right click / F | fireball (mage) · hold to block (footman) |
 | Q / B | frost nova / blink (mage) |
 | I / Tab | inventory — click to equip, right-click to drop |
-| E | doors, vaults, shrines, stairs & portal |
+| E | doors, vaults, shrines, **the goblin shop**, stairs & portal |
 | H / M / G | health potion / mana potion / eat |
