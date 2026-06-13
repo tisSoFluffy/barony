@@ -13,9 +13,14 @@ and touch devices (on-screen controls).
 - 5 themed floors: the Old Mines, the Flooded Halls, the Crypt of the Barons,
   the Horde Warcamp, and Gor'maul's Throne — each with its own walls, floors,
   and palette, lit by flickering braziers
-- Two classes:
-  - **Footman** — heavy melee; hold right-click to raise your shield (-70% damage)
-  - **Mage** — fireballs (right-click), **Q** frost nova (AoE slow), **B** blink
+- Six hero classes, each with a primary attack, a **Q** ability, and a **B**
+  mobility/defense skill, drawn from a distinct resource:
+  - **Footman** (Rage) — sword & shield; hold RMB to block (-70%), Q Whirlwind, B Charge
+  - **Mage** (Mana) — fireballs, Q Frost Nova (AoE slow), B Blink
+  - **Hunter** (Focus) — rapid arrows, RMB piercing Power Shot, Q Multishot, B Roll
+  - **Paladin** (Faith) — holy warhammer, RMB Holy Light heal, Q Consecration, B Divine Shield
+  - **Rogue** (Energy) — fast crit daggers, RMB Throw, Q Fan of Knives, B Shadowstep
+  - **Warlock** (Mana) — life-draining shadow bolts, Q Hellfire, B Shadowstep
 - Barony staples: hunger, potions, gold, XP levels, spike traps, gamble shrines
 - **Loot & inventory** (press **I**): randomized gear in three tiers —
   weapons, armor, helms, rings with WoW-style names ("Orcish Cleaver of the
