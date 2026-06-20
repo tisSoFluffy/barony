@@ -62,4 +62,25 @@ func _run_tests() -> void:
 		if non_empty: break
 	print("painter produced pixels: %s" % non_empty)
 	im.save_png("user://painter_test.png")
+
+	print("--- SPRITE GALLERY ---")
+	var ids := ["pfoot", "pmage", "phunt", "ppala", "prog", "pwarl",
+		"orc", "kobold", "murloc", "skeleton", "troll", "necro", "ogre",
+		"hpot", "mpot", "meat", "gold", "stairs", "portal", "torch", "shrine", "shop", "key", "armorI", "helmI", "ringI", "sword", "staff"]
+	var cell := 100
+	var cols := 7
+	var rows := int(ceil(ids.size() / float(cols)))
+	var gal := Image.create(cols * cell, rows * cell, false, Image.FORMAT_RGBA8)
+	gal.fill(Color(0.10, 0.08, 0.06, 1))
+	var missing := 0
+	for idx in ids.size():
+		var tx: ImageTexture = Art.actor_texture(ids[idx])
+		if not Art._draw_fns.has(ids[idx]):
+			missing += 1
+		var src: Image = tx.get_image()
+		var cx := (idx % cols) * cell + (cell - src.get_width()) / 2
+		var cy := (idx / cols) * cell + (cell - src.get_height()) / 2
+		gal.blit_rect(src, Rect2i(0, 0, src.get_width(), src.get_height()), Vector2i(cx, cy))
+	gal.save_png("user://sprite_gallery.png")
+	print("gallery sprites: %d, missing art (placeholder): %d" % [ids.size(), missing])
 	print("ALL TESTS PASSED")
