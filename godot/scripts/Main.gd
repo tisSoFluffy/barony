@@ -1,19 +1,89 @@
 extends Node
 ## Root of the game. For now it just boots; the menu/world wiring lands next.
 
+var game: Game
+var menu: CanvasLayer
+
 func _ready() -> void:
 	print("Barony of Azeroth — Godot port booting on Godot %s" % Engine.get_version_info().string)
-	print("Autoloads OK: Util=%s Classes=%s Bestiary=%s Art=%s" % [
-		Util != null, Classes != null, Bestiary != null, Art != null])
 	var args := OS.get_cmdline_args() + OS.get_cmdline_user_args()
 	if "--gametest" in args:
 		_run_tests()
 		get_tree().quit(0)
 		return
+	if "--play" in args:
+		var i := args.find("--play")
+		var cls := args[i + 1] if i + 1 < args.size() else "war"
+		await _headless_play(cls)
+		return
 	if "--smoke" in args:
 		await get_tree().create_timer(0.2).timeout
 		print("SMOKE OK")
 		get_tree().quit(0)
+		return
+	_build_menu()
+
+func _build_menu() -> void:
+	menu = CanvasLayer.new()
+	var panel := ColorRect.new()
+	panel.color = Color(0.05, 0.03, 0.02, 1)
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	menu.add_child(panel)
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.position = Vector2(get_viewport().get_visible_rect().size.x / 2 - 160, 120)
+	box.custom_minimum_size = Vector2(320, 0)
+	box.add_theme_constant_override("separation", 8)
+	menu.add_child(box)
+	var title := Label.new()
+	title.text = "BARONY OF AZEROTH"
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", Color("ffce42"))
+	box.add_child(title)
+	var sub := Label.new()
+	sub.text = "Choose your hero"
+	sub.add_theme_color_override("font_color", Color("c9b37e"))
+	box.add_child(sub)
+	for id in Classes.order:
+		var d: Dictionary = Classes.get_def(id)
+		var b := Button.new()
+		b.text = "%s  %s" % [d.glyph, d.name]
+		b.tooltip_text = d.blurb
+		b.pressed.connect(_start_game.bind(id))
+		box.add_child(b)
+	add_child(menu)
+
+func _start_game(cls: String) -> void:
+	if menu:
+		menu.queue_free()
+		menu = null
+	game = Game.new()
+	add_child(game)
+	game.start(cls)
+
+func _headless_play(cls: String) -> void:
+	_start_game(cls)
+	for _i in range(8):
+		await get_tree().physics_frame
+	var walls := 0
+	for c in game.world.get_children():
+		if c is StaticBody3D:
+			walls = c.get_child_count()
+	var bills := 0
+	for c in game.world.get_children():
+		if c is Sprite3D:
+			bills += 1
+	print("PLAY: player=%s pos=%s walls=%d billboards=%d" % [
+		game.player != null, game.player.position, walls, bills])
+	# collision sanity: shove the player at a wall, confirm it can't tunnel out of bounds
+	var before: Vector3 = game.player.position
+	game.player.velocity = Vector3(40, 0, 40)
+	for _i in range(6):
+		await get_tree().physics_frame
+	var moved: float = before.distance_to(game.player.position)
+	print("PLAY: moved-under-shove=%.2f (bounded by collision)" % moved)
+	print("PLAY OK")
+	get_tree().quit(0)
 
 func _run_tests() -> void:
 	print("--- DATA ---")

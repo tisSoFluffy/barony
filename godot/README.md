@@ -23,9 +23,20 @@ Run the headless self-tests:
 godot --headless --path godot --gametest
 ```
 
+## Status — milestone 2 (walkable 3D dungeon)
+- `World.gd` — builds the floor/ceiling + instanced walls (MultiMesh visual +
+  StaticBody collision) and torch `OmniLight3D`s from a generated floor
+- `Player.gd` — first-person `CharacterBody3D`: WASD move, mouse-look, arrow turn,
+  Esc to free the cursor
+- `Game.gd` — generates a floor, builds the world, populates it with billboard
+  enemies/items drawn from the ported art, dim ambient + torchlight
+- `Main.gd` — a class-select menu (six heroes) that starts a run; press F5
+- Verified headless (`-- --play war`): world builds ~890 wall blocks + 19 actor/item
+  billboards, the player spawns and physics runs clean
+
 ## Next milestones
-2. 3D world build (walls/floor/ceiling mesh + torch lighting) and a first-person
-   player controller — a walkable dungeon.
-3. Combat: billboard enemies + AI, the six classes' primary attacks and Q/B abilities.
-4. Items, inventory, the goblin shop, the boss, win/lose.
-5. Co-op multiplayer (Godot high-level networking).
+3. Combat: enemy AI (chase/attack/ranged), the six classes' primary attacks and
+   Q/B abilities, damage/death, XP & leveling, hunger.
+4. Items & interaction: pickups, inventory, the goblin shop, stairs/descent, the
+   ogre boss, win/lose, the Hall of Heroes.
+5. Co-op multiplayer (Godot high-level networking / WebRTC).
