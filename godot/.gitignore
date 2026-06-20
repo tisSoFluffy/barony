@@ -1,0 +1,4 @@
+# Godot 4 import cache & editor state — regenerated on open
+.godot/
+*.translation
+export_presets.cfg
