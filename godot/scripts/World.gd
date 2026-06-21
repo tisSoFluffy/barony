@@ -94,3 +94,21 @@ func make_billboard(spr: String, ground_pos: Vector3, world_h: float) -> Sprite3
 	s.position = ground_pos + Vector3(0, world_h / 2.0, 0)
 	s.shaded = false
 	return s
+
+func spawn_spark(pos: Vector3, col: Color) -> void:
+	var m := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = 0.08
+	sm.height = 0.16
+	m.mesh = sm
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = col
+	mat.emission_enabled = true
+	mat.emission = col
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.material_override = mat
+	m.position = pos
+	add_child(m)
+	var tw := m.create_tween()
+	tw.tween_property(m, "scale", Vector3.ZERO, 0.4)
+	tw.tween_callback(m.queue_free)

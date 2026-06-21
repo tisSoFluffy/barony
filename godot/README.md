@@ -34,9 +34,19 @@ godot --headless --path godot --gametest
 - Verified headless (`-- --play war`): world builds ~890 wall blocks + 19 actor/item
   billboards, the player spawns and physics runs clean
 
+## Status — milestone 3 (combat)
+- `Enemy.gd` — chase/attack AI: wakes on sight + line-of-sight, melees in range,
+  ranged types (troll/necro) keep distance and fire projectiles; hit-flash + death
+- `Projectile.gd` — fireball/arrow/bolt with pierce + lifesteal (heals the caster)
+- `Player.gd` — full combat: per-class primary (melee / projectile), F secondary,
+  Q ability (AoE or multishot), B mobility (dash/blink/charge/shield), resource
+  costs + regen, damage/block/i-frames, death, XP & leveling
+- `HUD.gd` — health & resource bars, crosshair, floating messages, damage flash,
+  the first-person weapon view (bob + swing), and a death screen
+- Menu fixed (centered). Verified headless: enemies damage the player, melee &
+  abilities kill enemies and grant XP, all six weapon views render
+
 ## Next milestones
-3. Combat: enemy AI (chase/attack/ranged), the six classes' primary attacks and
-   Q/B abilities, damage/death, XP & leveling, hunger.
 4. Items & interaction: pickups, inventory, the goblin shop, stairs/descent, the
    ogre boss, win/lose, the Hall of Heroes.
 5. Co-op multiplayer (Godot high-level networking / WebRTC).

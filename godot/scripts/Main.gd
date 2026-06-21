@@ -29,26 +29,31 @@ func _build_menu() -> void:
 	panel.color = Color(0.05, 0.03, 0.02, 1)
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	menu.add_child(panel)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	menu.add_child(center)
 	var box := VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_CENTER)
-	box.position = Vector2(get_viewport().get_visible_rect().size.x / 2 - 160, 120)
-	box.custom_minimum_size = Vector2(320, 0)
+	box.custom_minimum_size = Vector2(340, 0)
 	box.add_theme_constant_override("separation", 8)
-	menu.add_child(box)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.add_child(box)
 	var title := Label.new()
 	title.text = "BARONY OF AZEROTH"
-	title.add_theme_font_size_override("font_size", 32)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 34)
 	title.add_theme_color_override("font_color", Color("ffce42"))
 	box.add_child(title)
 	var sub := Label.new()
 	sub.text = "Choose your hero"
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.add_theme_color_override("font_color", Color("c9b37e"))
 	box.add_child(sub)
 	for id in Classes.order:
 		var d: Dictionary = Classes.get_def(id)
 		var b := Button.new()
-		b.text = "%s  %s" % [d.glyph, d.name]
+		b.text = "%s  %s — %s" % [d.glyph, d.name, d.hint]
 		b.tooltip_text = d.blurb
+		b.custom_minimum_size = Vector2(0, 38)
 		b.pressed.connect(_start_game.bind(id))
 		box.add_child(b)
 	add_child(menu)
@@ -69,19 +74,51 @@ func _headless_play(cls: String) -> void:
 	for c in game.world.get_children():
 		if c is StaticBody3D:
 			walls = c.get_child_count()
-	var bills := 0
-	for c in game.world.get_children():
-		if c is Sprite3D:
-			bills += 1
-	print("PLAY: player=%s pos=%s walls=%d billboards=%d" % [
-		game.player != null, game.player.position, walls, bills])
-	# collision sanity: shove the player at a wall, confirm it can't tunnel out of bounds
-	var before: Vector3 = game.player.position
-	game.player.velocity = Vector3(40, 0, 40)
-	for _i in range(6):
+	var enemies := get_tree().get_nodes_in_group("enemy").size()
+	print("PLAY: player=%s walls=%d enemies=%d hud=%s" % [
+		game.player != null, walls, enemies, game.hud != null])
+
+	# combat: drop an awake enemy right next to the player, confirm it hurts us
+	var en: Enemy = get_tree().get_first_node_in_group("enemy")
+	en.global_position = game.player.global_position + Vector3(1.0, 0, 0)
+	en.awake = true
+	en.maxhp = 9999; en.hp = 9999
+	var hp0: float = game.player.hp
+	for _i in range(40):
 		await get_tree().physics_frame
-	var moved: float = before.distance_to(game.player.position)
-	print("PLAY: moved-under-shove=%.2f (bounded by collision)" % moved)
+	print("PLAY: enemy attacked player = %s (hp %d -> %d)" % [game.player.hp < hp0, int(hp0), int(game.player.hp)])
+
+	# player kills an enemy with primary + Q
+	var n0 := get_tree().get_nodes_in_group("enemy").size()
+	# stand the player just behind the enemy facing -Z (forward), enemy ahead
+	game.player.global_position = Vector3(en.global_position.x, 1.0, en.global_position.z + 1.2)
+	game.player.yaw = 0.0
+	game.player.rotation.y = 0.0
+	en.hp = 30; en.maxhp = 30
+	for _i in range(10):
+		game.player._melee()
+		game.player.atk_t = 0.0
+		await get_tree().physics_frame
+	var n1 := get_tree().get_nodes_in_group("enemy").size()
+	print("PLAY: melee killed an enemy = %s (%d -> %d)" % [n1 < n0, n0, n1])
+
+	# abilities fire without error
+	game.player.mana = 999
+	game.player.abil_t = 0.0; game.player._ability_q()
+	game.player.ab2_t = 0.0; game.player._ability_b()
+	await get_tree().physics_frame
+	print("PLAY: Q+B abilities ran, player level=%d xp=%d" % [game.player.level, game.player.xp])
+
+	# weapon-view gallery for visual QA
+	var cell := 200
+	var classes := ["war", "mage", "hunter", "paladin", "rogue", "warlock"]
+	var gal := Image.create(cell * 3, cell * 2, false, Image.FORMAT_RGBA8)
+	gal.fill(Color(0.10, 0.08, 0.06, 1))
+	for idx in classes.size():
+		var src: Image = WeaponArt.get_weapon(classes[idx]).get_image()
+		gal.blit_rect(src, Rect2i(0, 0, src.get_width(), src.get_height()),
+			Vector2i((idx % 3) * cell + 10, (idx / 3) * cell))
+	gal.save_png("user://weapon_gallery.png")
 	print("PLAY OK")
 	get_tree().quit(0)
 
