@@ -70,3 +70,11 @@ whole party.
 | I / Tab | inventory — click to equip, right-click to drop |
 | E | doors, vaults, shrines, **the goblin shop**, stairs & portal |
 | H / M / G | health potion / mana potion / eat |
+
+## Developing with an agent (Godot MCP)
+
+The Godot 4.7 port lives in [`godot/`](godot/). This repo ships a
+project-scoped **Godot MCP server** (`.mcp.json`) so agentic editors can launch
+the engine, run the project, and read debug output directly. See
+[`docs/godot-mcp.md`](docs/godot-mcp.md) for setup (requires a local Godot 4.7
+install).
