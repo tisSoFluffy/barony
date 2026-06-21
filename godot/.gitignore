@@ -1,4 +1,8 @@
-# Godot 4 import cache & editor state — regenerated on open
-.godot/
+# Godot 4 import cache & editor state — regenerated on open.
+# We DO commit the script class registry + uid cache so a fresh clone resolves
+# class_name globals (Enemy, WeaponArt, etc.) immediately, with no manual reimport.
+.godot/*
+!.godot/global_script_class_cache.cfg
+!.godot/uid_cache.bin
 *.translation
 export_presets.cfg
