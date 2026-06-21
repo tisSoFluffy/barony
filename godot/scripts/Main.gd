@@ -56,6 +56,14 @@ func _build_menu() -> void:
 		b.custom_minimum_size = Vector2(0, 38)
 		b.pressed.connect(_start_game.bind(id))
 		box.add_child(b)
+	var scores: Array = Scores.formatted()
+	if scores.size() > 0:
+		var hall := Label.new()
+		hall.text = "— HALL OF HEROES —\n" + "\n".join(scores)
+		hall.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hall.add_theme_color_override("font_color", Color("9a8a64"))
+		hall.add_theme_font_size_override("font_size", 12)
+		box.add_child(hall)
 	add_child(menu)
 
 func _start_game(cls: String) -> void:
@@ -108,6 +116,67 @@ func _headless_play(cls: String) -> void:
 	game.player.ab2_t = 0.0; game.player._ability_b()
 	await get_tree().physics_frame
 	print("PLAY: Q+B abilities ran, player level=%d xp=%d" % [game.player.level, game.player.xp])
+
+	# pickups: walk onto a gold + a gear item
+	var gold0: int = game.player.gold
+	for it in game.items:
+		if it.type == "gold":
+			game.player.global_position = it.pos + Vector3(0, 1, 0); break
+	for _i in range(6): await get_tree().physics_frame
+	var bag0: int = game.player.bag.size()
+	for it in game.items:
+		if it.type == "gear":
+			game.player.global_position = it.pos + Vector3(0, 1, 0); break
+	for _i in range(6): await get_tree().physics_frame
+	print("PLAY: picked gold=%s gear=%s" % [game.player.gold > gold0, game.player.bag.size() > bag0])
+
+	# equip the picked gear, stat should change
+	var dmg0: int = game.player.tot_dmg() + game.player.tot_spell() + game.player.tot_armor() + game.player.tot_maxhp()
+	if game.player.bag.size() > 0:
+		game.player.equip_from_bag(0)
+	print("PLAY: equipped gear, equip-not-empty=%s statchanged=%s" % [
+		game.player.equip.values().any(func(x): return x != null),
+		(game.player.tot_dmg() + game.player.tot_spell() + game.player.tot_armor() + game.player.tot_maxhp()) != dmg0])
+
+	# inventory UI open/refresh with real gear
+	game.inv_ui.open(game.player)
+	await get_tree().process_frame
+	game.inv_ui.close()
+	print("PLAY: inventory open/refresh ok (bag=%d)" % game.player.bag.size())
+
+	# shop: buy a potion
+	game.player.gold = 9999
+	game.shop_ui.open(game.player)
+	var hpots0: int = game.player.hpots
+	game.shop_ui._buy("hpot")
+	game.shop_ui._buy("gear")
+	game.shop_ui.close()
+	print("PLAY: shop bought potion=%s gear-in-bag=%s" % [game.player.hpots > hpots0, game.player.bag.size() >= 1])
+
+	# descent
+	var d0: int = game.depth
+	game.descend()
+	await get_tree().physics_frame
+	print("PLAY: descended %d -> %d, enemies=%d" % [d0, game.depth, get_tree().get_nodes_in_group("enemy").size()])
+
+	# boss floor: kill the ogre -> portal -> win
+	game.depth = 5
+	game._build_floor(false)
+	await get_tree().physics_frame
+	var ogre = null
+	for e2 in get_tree().get_nodes_in_group("enemy"):
+		if e2.type == "ogre": ogre = e2
+	if ogre:
+		ogre.take_damage(999999)
+	await get_tree().physics_frame
+	var has_portal := false
+	for it in game.items:
+		if it.type == "portal": has_portal = true
+	game.do_win()
+	print("PLAY: boss killed portal=%s ended=%s win_panel=%s" % [has_portal, game.ended, game.hud.win_panel.visible])
+
+	# score persisted
+	print("PLAY: scores saved = %d" % Scores.load_all().size())
 
 	# weapon-view gallery for visual QA
 	var cell := 200

@@ -17,6 +17,7 @@ Util="*res://scripts/Util.gd"
 Classes="*res://scripts/data/ClassDB.gd"
 Bestiary="*res://scripts/data/EnemyDB.gd"
 Art="*res://scripts/SpriteFactory.gd"
+Scores="*res://scripts/Scores.gd"
 
 [display]
 

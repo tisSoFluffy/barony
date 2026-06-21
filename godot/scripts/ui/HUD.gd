@@ -16,8 +16,12 @@ var res_bg: ColorRect
 var res_fill: ColorRect
 var res_label: Label
 var info: Label
+var cons_label: Label
+var food_bg: ColorRect
+var food_fill: ColorRect
 var msg_box: VBoxContainer
 var death_panel: Control
+var win_panel: Control
 
 const RES_COL := {"RAGE": "c85820", "MANA": "2858c8", "FOCUS": "2a9a4a", "FAITH": "c8a828", "ENERGY": "c8b028"}
 
@@ -47,13 +51,18 @@ func _ready() -> void:
 	hp_label = _bar_label(); res_label = _bar_label()
 	info = Label.new(); info.add_theme_color_override("font_color", Color("ffce42"))
 	info.add_theme_font_size_override("font_size", 16); add_child(info)
+	cons_label = Label.new(); cons_label.add_theme_color_override("font_color", Color("ffce42"))
+	cons_label.add_theme_font_size_override("font_size", 13); add_child(cons_label)
+	food_bg = _bar(Color("1a1208")); food_fill = _bar(Color("c8862a"))
 
 	msg_box = VBoxContainer.new()
 	msg_box.alignment = BoxContainer.ALIGNMENT_END
 	add_child(msg_box)
 
-	death_panel = _make_death()
+	death_panel = _make_end("YOU HAVE FALLEN", Color("e03c2c"))
 	add_child(death_panel)
+	win_panel = _make_end("THE BARONY IS YOURS", Color("62d8ff"))
+	add_child(win_panel)
 
 func _bar(c: Color) -> ColorRect:
 	var r := ColorRect.new(); r.color = c; r.mouse_filter = Control.MOUSE_FILTER_IGNORE; add_child(r); return r
@@ -62,9 +71,9 @@ func _bar_label() -> Label:
 	var l := Label.new(); l.add_theme_font_size_override("font_size", 12)
 	l.add_theme_color_override("font_color", Color.WHITE); add_child(l); return l
 
-func _make_death() -> Control:
+func _make_end(title_text: String, color: Color) -> Control:
 	var p := ColorRect.new()
-	p.color = Color(0.1, 0.0, 0.0, 0.78)
+	p.color = Color(0.06, 0.03, 0.03, 0.82)
 	p.set_anchors_preset(Control.PRESET_FULL_RECT)
 	p.visible = false
 	var c := CenterContainer.new()
@@ -72,10 +81,10 @@ func _make_death() -> Control:
 	p.add_child(c)
 	var v := VBoxContainer.new(); v.alignment = BoxContainer.ALIGNMENT_CENTER
 	c.add_child(v)
-	var title := Label.new(); title.text = "YOU HAVE FALLEN"
+	var title := Label.new(); title.text = title_text
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 40)
-	title.add_theme_color_override("font_color", Color("e03c2c"))
+	title.add_theme_font_size_override("font_size", 44)
+	title.add_theme_color_override("font_color", color)
 	v.add_child(title)
 	var sub := Label.new(); sub.name = "Sub"
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -105,9 +114,15 @@ func message(text: String, col: Color) -> void:
 
 func show_death(src: String) -> void:
 	var sub := death_panel.find_child("Sub", true, false)
-	if sub: sub.text = "Slain by %s at level %d." % [src, player.level]
+	if sub: sub.text = "Slain by %s on depth %d, at level %d." % [src, Game.instance.depth, player.level]
 	death_panel.visible = true
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if not OS.has_feature("headless"): Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func show_win(text: String) -> void:
+	var sub := win_panel.find_child("Sub", true, false)
+	if sub: sub.text = text
+	win_panel.visible = true
+	if not OS.has_feature("headless"): Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _process(dt: float) -> void:
 	t += dt
@@ -132,13 +147,18 @@ func _process(dt: float) -> void:
 	var bx := 20.0
 	var by := vs.y - 56.0
 	hp_bg.position = Vector2(bx, by); hp_bg.size = Vector2(bw, 16)
-	hp_fill.position = Vector2(bx, by); hp_fill.size = Vector2(bw * clampf(player.hp / player.maxhp, 0, 1), 16)
-	hp_label.position = Vector2(bx + 6, by - 1); hp_label.text = "%d / %d" % [ceili(player.hp), int(player.maxhp)]
+	hp_fill.position = Vector2(bx, by); hp_fill.size = Vector2(bw * clampf(player.hp / player.tot_maxhp(), 0, 1), 16)
+	hp_label.position = Vector2(bx + 6, by - 1); hp_label.text = "%d / %d" % [ceili(player.hp), player.tot_maxhp()]
 	var rc: String = RES_COL.get(player.def.res, "2858c8")
 	res_fill.color = Painter.hex(rc)
 	res_bg.position = Vector2(bx, by + 20); res_bg.size = Vector2(bw, 12)
-	res_fill.position = Vector2(bx, by + 20); res_fill.size = Vector2(bw * clampf(player.mana / player.maxmana, 0, 1), 12)
-	res_label.position = Vector2(bx + 6, by + 19); res_label.text = "%s %d / %d" % [player.def.res, int(player.mana), int(player.maxmana)]
+	res_fill.position = Vector2(bx, by + 20); res_fill.size = Vector2(bw * clampf(player.mana / player.tot_maxmana(), 0, 1), 12)
+	res_label.position = Vector2(bx + 6, by + 19); res_label.text = "%s %d / %d" % [player.def.res, int(player.mana), player.tot_maxmana()]
+	food_bg.position = Vector2(bx, by + 36); food_bg.size = Vector2(bw, 6)
+	food_fill.color = Painter.hex("c8862a") if player.food > 30.0 else Painter.hex("e03c2c")
+	food_fill.position = Vector2(bx, by + 36); food_fill.size = Vector2(bw * clampf(player.food / 100.0, 0, 1), 6)
+	cons_label.text = "H:%d  M:%d  G:%d    pack %d/6" % [player.hpots, player.mpots, player.meat, player.bag.size()]
+	cons_label.position = Vector2(bx + bw + 16, by + 8)
 
 	# info top-right
 	info.text = "%s  LV %d   DEPTH %d" % [player.def.name, player.level, Game.instance.depth]

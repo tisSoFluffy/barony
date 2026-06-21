@@ -14,6 +14,7 @@ var atk_t := 0.0
 var slow_t := 0.0
 var hit_flash := 0.0
 var has_key := false
+var enraged := false
 
 var spr: Sprite3D
 var player: Player
@@ -53,12 +54,26 @@ func take_damage(amt: int, col: Color = Color("a01818")) -> void:
 	awake = true
 	if Game.instance and Game.instance.world:
 		Game.instance.world.spawn_spark(global_position + Vector3(0, float(def.scale), 0), col)
+	if def.get("boss", false) and not enraged and hp > 0 and hp < maxhp * 0.5:
+		enraged = true
+		if Game.instance.hud:
+			Game.instance.hud.message("\"GRUNTS! TO ME!\" Gor'maul bellows!", Color("ff5040"))
+		for off in [Vector3(1.4, 0, 0), Vector3(-1.4, 0, 0), Vector3(0, 0, 1.4)]:
+			if get_tree().get_nodes_in_group("enemy").size() < 26:
+				var ne := Enemy.new()
+				Game.instance.floor_root.add_child(ne)
+				ne.setup("orc", global_position + off)
+				ne.awake = true
 	if hp <= 0:
 		_die()
 
 func _die() -> void:
 	if Game.instance:
 		Game.instance.on_enemy_killed(int(def.xp), def.name)
+		if has_key:
+			Game.instance.spawn_drop("key", global_position)
+		if def.get("boss", false):
+			Game.instance.spawn_portal(global_position)
 	queue_free()
 
 func _physics_process(dt: float) -> void:
@@ -82,7 +97,7 @@ func _physics_process(dt: float) -> void:
 			awake = true
 		else:
 			return
-	var spd: float = float(def.speed) * (0.45 if slow_t > 0.0 else 1.0)
+	var spd: float = float(def.speed) * (0.45 if slow_t > 0.0 else 1.0) * (1.3 if enraged else 1.0)
 	var rng: float = float(def.range)
 	if def.has("keep_dist"):
 		var keep: float = float(def.keep_dist)

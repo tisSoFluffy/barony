@@ -46,7 +46,22 @@ godot --headless --path godot --gametest
 - Menu fixed (centered). Verified headless: enemies damage the player, melee &
   abilities kill enemies and grant XP, all six weapon views render
 
-## Next milestones
-4. Items & interaction: pickups, inventory, the goblin shop, stairs/descent, the
-   ogre boss, win/lose, the Hall of Heroes.
+## Status — milestone 4 (items, economy, descent, boss)
+- `GearDB.gd` — randomized gear rolls (3 tiers, affixes), ported from `rollGear`
+- Pickups: walk over gold/potions/meat/gear/keys to collect; consumables on
+  H / M / G; a hunger meter that drains and bites when empty
+- `InventoryUI.gd` (press **I**) — equip slots + 6-slot bag, click to equip /
+  right-click to drop, with live total stats; gear bonuses feed `tot_*`
+- `ShopUI.gd` — Gazlowe the goblin merchant: press **E** to buy potions/meat
+  and a featured gear piece (prices scale with depth)
+- **E** also uses stairs (descend + rebuild the next floor), shrines (random
+  blessing/curse), and the boss portal
+- The Ogre **boss** on depth 5: enrages at half health and calls reinforcements;
+  on death drops a portal home — step in to win
+- Win/lose screens + the persistent **Hall of Heroes** (`Scores.gd`, shown on the
+  title menu)
+- Verified headless: pickups, equip changes stats, shop buys, descent, boss →
+  portal → victory, and scores persist
+
+## Next milestone
 5. Co-op multiplayer (Godot high-level networking / WebRTC).

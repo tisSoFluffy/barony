@@ -24,6 +24,17 @@ var xp := 0
 var dead := false
 var blocking := false
 
+var gold := 0
+var keys := 0
+var hpots := 1
+var mpots := 1
+var meat := 1
+var food := 100.0
+var kills := 0
+var equip := {"weapon": null, "armor": null, "helm": null, "ring": null}
+var bag: Array = []
+var _hunger_acc := 0.0
+
 var atk_t := 0.0
 var cast_t := 0.0
 var abil_t := 0.0
@@ -39,6 +50,7 @@ func _ready() -> void:
 	maxmana = float(def.mp); mana = maxmana
 	base_dmg = int(def.dmg); base_spell = int(def.spell)
 	regen = float(def.regen)
+	hpots = int(def.hpots); mpots = int(def.mpots); meat = 1
 	add_to_group("player")
 	var col := CollisionShape3D.new()
 	var cap := CapsuleShape3D.new()
@@ -53,8 +65,65 @@ func _ready() -> void:
 	if not OS.has_feature("headless"):
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
-func tot_dmg() -> int: return base_dmg
-func tot_spell() -> int: return base_spell
+func gear_sum(stat: String) -> int:
+	var s := 0
+	for k in equip:
+		var g = equip[k]
+		if g != null:
+			s += int(g["b"].get(stat, 0))
+	return s
+func tot_dmg() -> int: return base_dmg + gear_sum("dmg")
+func tot_spell() -> int: return base_spell + gear_sum("spell")
+func tot_maxhp() -> int: return int(maxhp) + gear_sum("hp")
+func tot_maxmana() -> int: return int(maxmana) + gear_sum("mana")
+func tot_armor() -> int: return gear_sum("armor")
+
+func add_gear(g: Dictionary) -> bool:
+	if bag.size() >= 6: return false
+	bag.append(g); return true
+func equip_from_bag(i: int) -> void:
+	if i < 0 or i >= bag.size(): return
+	var g = bag[i]
+	var slot = g["slot"]
+	var cur = equip[slot]
+	equip[slot] = g
+	bag.remove_at(i)
+	if cur != null: bag.append(cur)
+	hp = minf(hp, tot_maxhp()); mana = minf(mana, tot_maxmana())
+func unequip_slot(slot: String) -> void:
+	var g = equip[slot]
+	if g == null or bag.size() >= 6: return
+	bag.append(g); equip[slot] = null
+	hp = minf(hp, tot_maxhp()); mana = minf(mana, tot_maxmana())
+func drop_from_bag(i: int) -> void:
+	if i >= 0 and i < bag.size(): bag.remove_at(i)
+
+func use_hpot() -> void:
+	if dead: return
+	if hpots <= 0: _msg("No health potions left!", Color("ff7050")); return
+	hpots -= 1; hp = minf(tot_maxhp(), hp + 45)
+	if Game.instance.hud: Game.instance.hud.flash(Color(0.3, 0.8, 0.35, 0.25))
+	_msg("You quaff a health potion. (+45)", Color("ff9a8a"))
+func use_mpot() -> void:
+	if dead: return
+	if mpots <= 0: _msg("No mana potions left!", Color("ff7050")); return
+	mpots -= 1; mana = minf(tot_maxmana(), mana + 40)
+	_msg("You quaff a mana potion. (+40)", Color("8ab8ff"))
+func eat() -> void:
+	if dead: return
+	if meat <= 0: _msg("You have nothing to eat!", Color("ff7050")); return
+	meat -= 1; food = minf(100.0, food + 38.0)
+	_msg("You devour a haunch of boar. Mm.", Color("d8a868"))
+func grant(kind: String, amt: int, gear) -> void:
+	match kind:
+		"gold": gold += amt; _msg("+%d gold" % amt, Color("ffd84a"))
+		"hpot": hpots += 1; _msg("Picked up a health potion. (H)", Color("ff9a8a"))
+		"mpot": mpots += 1; _msg("Picked up a mana potion. (M)", Color("8ab8ff"))
+		"meat": meat += 1; _msg("Picked up a haunch of meat. (G)", Color("d8a868"))
+		"key": keys += 1; _msg("You found a vault key!", Color("ffce42"))
+		"gear":
+			if gear and add_gear(gear):
+				_msg("You found %s. (I)" % gear["name"], GearDB.tier_color(int(gear["tier"])))
 
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -72,16 +141,17 @@ func _physics_process(dt: float) -> void:
 	ab2_t = maxf(0.0, ab2_t - dt)
 	iframe = maxf(0.0, iframe - dt)
 	hurt_t = maxf(0.0, hurt_t - dt)
-	mana = minf(maxmana, mana + regen * dt)
+	mana = minf(tot_maxmana(), mana + regen * dt)
 
 	if Input.is_action_pressed("turn_left"): yaw += 2.4 * dt
 	if Input.is_action_pressed("turn_right"): yaw -= 2.4 * dt
 	rotation.y = yaw
 	if cam: cam.rotation.x = pitch
 
-	blocking = cls == "war" and Input.is_action_pressed("secondary") and not dead
+	var ui_open: bool = Game.instance and ((Game.instance.inv_ui and Game.instance.inv_ui.is_open) or (Game.instance.shop_ui and Game.instance.shop_ui.is_open))
+	blocking = cls == "war" and Input.is_action_pressed("secondary") and not dead and not ui_open
 
-	if not dead:
+	if not dead and not ui_open:
 		var ix := Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
 		var iz := Input.get_action_strength("move_back") - Input.get_action_strength("move_forward")
 		var dir := transform.basis * Vector3(ix, 0, iz)
@@ -97,6 +167,16 @@ func _physics_process(dt: float) -> void:
 		if Input.is_action_pressed("secondary") and cls != "war": _secondary()
 		if Input.is_action_just_pressed("ability_q"): _ability_q()
 		if Input.is_action_just_pressed("ability_b"): _ability_b()
+		if Input.is_action_just_pressed("heal_potion"): use_hpot()
+		if Input.is_action_just_pressed("mana_potion"): use_mpot()
+		if Input.is_action_just_pressed("eat"): eat()
+		_hunger_acc += dt
+		if _hunger_acc > 3.0:
+			_hunger_acc -= 3.0
+			food = maxf(0.0, food - 1.0)
+			if food == 30.0: _msg("Your stomach growls. (G to eat)", Color("d8a868"))
+			elif food == 10.0: _msg("You are famished!", Color("ff7050"))
+			elif food <= 0.0: take_damage(3, "starvation")
 
 func _aim() -> Vector3:
 	return (-global_transform.basis.z).normalized()
@@ -227,12 +307,13 @@ func _holy_light() -> void:
 	if mana < 16:
 		_msg("Not enough faith!", Color("8ab8ff")); return
 	mana -= 16; cast_t = 0.5
-	hp = minf(maxhp, hp + 42)
+	hp = minf(tot_maxhp(), hp + 42)
 	if Game.instance.hud: Game.instance.hud.flash(Color(0.3, 0.8, 0.35, 0.25))
 	_msg("Holy Light mends you. (+42)", Color("ffe48a"))
 
 func take_damage(amt: int, src := "") -> void:
 	if dead or iframe > 0.0: return
+	amt = max(1, amt - tot_armor())
 	if blocking: amt = int(ceil(amt * 0.3))
 	hp -= amt
 	hurt_t = 0.4
@@ -241,10 +322,11 @@ func take_damage(amt: int, src := "") -> void:
 		hp = 0.0
 		dead = true
 		_msg("You have fallen to %s." % src, Color("e03c2c"))
+		if Game.instance: Game.instance.on_player_death(src)
 		if Game.instance.hud: Game.instance.hud.show_death(src)
 
 func heal(amt: int) -> void:
-	hp = minf(maxhp, hp + amt)
+	hp = minf(tot_maxhp(), hp + amt)
 
 func gain_xp(amt: int) -> void:
 	xp += amt
@@ -253,7 +335,7 @@ func gain_xp(amt: int) -> void:
 		level += 1
 		maxhp += int(def.hp_lv); maxmana += int(def.mp_lv)
 		base_dmg += int(def.dmg_lv); base_spell += int(def.spell_lv)
-		hp = maxhp; mana = maxmana
+		hp = tot_maxhp(); mana = tot_maxmana()
 		_msg("You reach level %d!" % level, Color("ffce42"))
 
 func _msg(t: String, c: Color) -> void:
