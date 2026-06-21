@@ -58,6 +58,8 @@ func _build_floor(first: bool) -> void:
 	world = World.new()
 	floor_root.add_child(world)
 	world.build(level)
+	if hud and is_instance_valid(hud) and hud.minimap:
+		hud.minimap.setup(level)
 
 	for e in level.enemies:
 		var def: Dictionary = Bestiary.get_def(e.type)

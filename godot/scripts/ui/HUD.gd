@@ -22,6 +22,7 @@ var food_fill: ColorRect
 var msg_box: VBoxContainer
 var death_panel: Control
 var win_panel: Control
+var minimap: Minimap
 
 const RES_COL := {"RAGE": "c85820", "MANA": "2858c8", "FOCUS": "2a9a4a", "FAITH": "c8a828", "ENERGY": "c8b028"}
 
@@ -58,6 +59,9 @@ func _ready() -> void:
 	msg_box = VBoxContainer.new()
 	msg_box.alignment = BoxContainer.ALIGNMENT_END
 	add_child(msg_box)
+
+	minimap = Minimap.new()
+	add_child(minimap)
 
 	death_panel = _make_end("YOU HAVE FALLEN", Color("e03c2c"))
 	add_child(death_panel)
@@ -160,9 +164,11 @@ func _process(dt: float) -> void:
 	cons_label.text = "H:%d  M:%d  G:%d    pack %d/6" % [player.hpots, player.mpots, player.meat, player.bag.size()]
 	cons_label.position = Vector2(bx + bw + 16, by + 8)
 
-	# info top-right
+	# minimap — top-right corner; info label sits just below it
+	var mm_w := Minimap.MS * Minimap.CELL + Minimap.PAD * 2
+	minimap.position = Vector2(vs.x - mm_w - 12, 8)
 	info.text = "%s  LV %d   DEPTH %d" % [player.def.name, player.level, Game.instance.depth]
-	info.position = Vector2(vs.x - 320, 16)
+	info.position = Vector2(vs.x - mm_w - 12, mm_w + 14)
 
 	# message box bottom-left above bars
 	msg_box.position = Vector2(bx, by - 130)
