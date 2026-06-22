@@ -171,7 +171,13 @@ func _physics_process(dt: float) -> void:
 		cam.rotation.y = _shake_y
 
 	var ui_open: bool = Game.instance and ((Game.instance.inv_ui and Game.instance.inv_ui.is_open) or (Game.instance.shop_ui and Game.instance.shop_ui.is_open))
-	blocking = cls == "war" and Input.is_action_pressed("secondary") and not dead and not ui_open
+	var wants_block := cls == "war" and Input.is_action_pressed("secondary") and not dead and not ui_open
+	if wants_block and mana >= 2.0:
+		blocking = true
+		mana = maxf(0.0, mana - 10.0 * dt)
+	else:
+		if blocking and mana < 2.0: _msg("Your shield arm gives out!", Color("ff8050"))
+		blocking = false
 
 	if not dead and not ui_open:
 		var ix := Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
@@ -242,6 +248,10 @@ func _melee() -> void:
 		if to.length() < 1.9 and fwd.dot(to.normalized()) > 0.55:
 			en.take_damage(dmg + Util.li(0, 4))
 			en._apply_knockback(to.normalized() * 3.5)
+			if cls == "war" or cls == "rogue":
+				en._bleed_stacks = mini(en._bleed_stacks + 1, 3)
+				en._bleed_t = 3.0
+				en._bleed_tick = 0.0
 			hit_any = true
 	if hit_any:
 		if is_crit: _msg("Critical Strike!", Color("ffce42"))
@@ -350,7 +360,9 @@ func take_damage(amt: int, src := "") -> void:
 	var armor := tot_armor()
 	var dr := float(armor) / (float(armor) + 25.0)
 	amt = max(1, int(round(float(amt) * (1.0 - dr))))
-	if blocking: amt = int(ceil(amt * 0.3))
+	if blocking:
+		amt = int(ceil(amt * 0.3))
+		mana = maxf(0.0, mana - 5.0)
 	hp -= amt
 	hurt_t = 0.4
 	_apply_camera_shake(0.04 + clampf(float(amt) / 60.0, 0.0, 0.06))

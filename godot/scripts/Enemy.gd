@@ -19,6 +19,12 @@ var _wind_t := 0.0
 var _winding_up := false
 var _kb_t := 0.0
 var _kb_vel := Vector3.ZERO
+var _bleed_stacks := 0
+var _bleed_t := 0.0
+var _bleed_tick := 0.0
+var _burn_per_tick := 0.0
+var _burn_t := 0.0
+var _burn_tick := 0.0
 
 var spr: Sprite3D
 var player: Player
@@ -58,6 +64,11 @@ func body_center() -> Vector3:
 func _apply_knockback(impulse: Vector3) -> void:
 	_kb_vel = impulse
 	_kb_t = 0.25
+
+func apply_burn(fire_dmg: int) -> void:
+	_burn_per_tick = maxf(_burn_per_tick, float(fire_dmg) * 0.075)
+	_burn_t = 4.0
+	_burn_tick = 0.0
 
 func take_damage(amt: int, col: Color = Color("a01818")) -> void:
 	hp -= amt
@@ -116,6 +127,23 @@ func _physics_process(dt: float) -> void:
 			awake = true
 		else:
 			return
+	# status effect ticks
+	if _bleed_t > 0.0:
+		_bleed_t -= dt
+		_bleed_tick += dt
+		if _bleed_tick >= 1.0:
+			_bleed_tick -= 1.0
+			take_damage(_bleed_stacks * 4, Color("c83030"))
+		if _bleed_t <= 0.0:
+			_bleed_stacks = 0; _bleed_tick = 0.0
+	if _burn_t > 0.0:
+		_burn_t -= dt
+		_burn_tick += dt
+		if _burn_tick >= 1.0:
+			_burn_tick -= 1.0
+			take_damage(maxi(1, int(_burn_per_tick)), Painter.hex("ff6030"))
+		if _burn_t <= 0.0:
+			_burn_per_tick = 0.0; _burn_tick = 0.0
 	# knockback phase — suspend AI while being launched
 	if _kb_t > 0.0:
 		_kb_t -= dt

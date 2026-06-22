@@ -52,6 +52,10 @@ func _physics_process(dt: float) -> void:
 				t.take_damage(dmg, Painter.hex(Classes.proj.get(kind, {}).get("trail", "ff9020")))
 				if life > 0.0 and owner_player and is_instance_valid(owner_player):
 					owner_player.heal(int(round(dmg * life)))
+				if kind == "fire" and t.has_method("apply_burn"):
+					t.apply_burn(dmg)
+				if kind == "power" and t is Enemy:
+					t.slow_t = maxf(t.slow_t, 1.5)
 			else:
 				t.take_damage(dmg, kind)
 				if t.has_method("_apply_knockback"):
