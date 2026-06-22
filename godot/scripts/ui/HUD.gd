@@ -19,6 +19,8 @@ var info: Label
 var cons_label: Label
 var food_bg: ColorRect
 var food_fill: ColorRect
+var stam_bg: ColorRect
+var stam_fill: ColorRect
 var msg_box: VBoxContainer
 var death_panel: Control
 var win_panel: Control
@@ -56,6 +58,7 @@ func _ready() -> void:
 	cons_label = Label.new(); cons_label.add_theme_color_override("font_color", Color("ffce42"))
 	cons_label.add_theme_font_size_override("font_size", 13); add_child(cons_label)
 	food_bg = _bar(Color("1a1208")); food_fill = _bar(Color("c8862a"))
+	stam_bg = _bar(Color("181408")); stam_fill = _bar(Color("c8b028"))
 
 	msg_box = VBoxContainer.new()
 	msg_box.alignment = BoxContainer.ALIGNMENT_END
@@ -147,6 +150,7 @@ func _process(dt: float) -> void:
 
 	if player.atk_t > 0.0 and player.atk_cd > 0.0:
 		var n := clampf(player.atk_t / player.atk_cd, 0.0, 1.0)
+		var is_heavy: bool = player.atk_cd > float(Classes.melee_cd.get(player.cls, 0.45)) * 1.2
 		if player.cls == "rogue":
 			# undercut: draw dagger low-left → slash up-right
 			if n > 0.60:
@@ -158,6 +162,17 @@ func _process(dt: float) -> void:
 			else:
 				var p := smoothstep(0.0, 1.0, (0.12 - n) / 0.12)
 				off_x = lerp(28.0, 0.0, p);  off_y = lerp(-50.0, 0.0, p);  rot = lerp(0.15, 0.0, p)
+		elif is_heavy:
+			# heavy overhead: slow massive arc with extra wind-up
+			if n > 0.55:
+				var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.45)
+				off_x = 52.0 * p;  off_y = -170.0 * p;  rot = 0.55 * p
+			elif n > 0.10:
+				var p := smoothstep(0.0, 1.0, (0.55 - n) / 0.45)
+				off_x = lerp(52.0, -42.0, p);  off_y = lerp(-170.0, 70.0, p);  rot = lerp(0.55, -0.45, p)
+			else:
+				var p := smoothstep(0.0, 1.0, (0.10 - n) / 0.10)
+				off_x = lerp(-42.0, 0.0, p);  off_y = lerp(70.0, 0.0, p);  rot = lerp(-0.45, 0.0, p)
 		else:
 			# overhead diagonal cut: raise sword up → crash diagonally down-left
 			if n > 0.55:
@@ -201,6 +216,9 @@ func _process(dt: float) -> void:
 	food_bg.position = Vector2(bx, by + 36); food_bg.size = Vector2(bw, 6)
 	food_fill.color = Painter.hex("c8862a") if player.food > 30.0 else Painter.hex("e03c2c")
 	food_fill.position = Vector2(bx, by + 36); food_fill.size = Vector2(bw * clampf(player.food / 100.0, 0, 1), 6)
+	stam_bg.position = Vector2(bx, by + 46); stam_bg.size = Vector2(bw, 8)
+	stam_fill.color = Painter.hex("c8b028") if player.stamina > 25.0 else Painter.hex("e05820")
+	stam_fill.position = Vector2(bx, by + 46); stam_fill.size = Vector2(bw * clampf(player.stamina / player.max_stamina, 0, 1), 8)
 	cons_label.text = "H:%d  M:%d  G:%d    pack %d/6" % [player.hpots, player.mpots, player.meat, player.bag.size()]
 	cons_label.position = Vector2(bx + bw + 16, by + 8)
 

@@ -53,9 +53,35 @@ var _atk_hit_t := -1.0
 var _pending_dmg := 0
 var _pending_crit := false
 
+# stamina
+var stamina    := 100.0
+var max_stamina := 100.0
+
+# dodge roll (T2)
+var _dodge_t   := 0.0
+var _dodge_dir := Vector3.ZERO
+
+# heavy attack hold (T7)
+var _hold_t      := 0.0
+var _hold_armed  := false
+
+# parry / riposte (T6)
+var _parry_t    := 0.0
+var _riposte_t  := 0.0
+var _block_prev := false
+
 const SPEED := 4.2
 const CRIT_CHANCE := {"war": 0.10, "paladin": 0.08, "rogue": 0.30}
 const CRIT_MULT   := {"war": 1.8,  "paladin": 1.6,  "rogue": 2.5}
+
+const STAM_REGEN  := 18.0   # per second (idle)
+const STAM_ATK    := 22.0   # normal melee swing
+const STAM_DODGE  := 30.0   # dodge roll
+const STAM_HEAVY  := 42.0   # heavy attack
+const DODGE_DUR   := 0.28   # active i-frame window
+const DODGE_CD    := 0.55   # total lockout after roll ends
+const DODGE_SPD   := 9.0
+const HEAVY_HOLD  := 0.50   # seconds of hold to arm heavy
 
 func _ready() -> void:
 	def = Classes.get_def(cls)
@@ -148,15 +174,19 @@ func _unhandled_input(e: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED else Input.MOUSE_MODE_CAPTURED
 
 func _physics_process(dt: float) -> void:
-	atk_t = maxf(0.0, atk_t - dt)
-	cast_t = maxf(0.0, cast_t - dt)
-	abil_t = maxf(0.0, abil_t - dt)
-	ab2_t = maxf(0.0, ab2_t - dt)
-	iframe = maxf(0.0, iframe - dt)
-	hurt_t = maxf(0.0, hurt_t - dt)
-	_kb_t = maxf(0.0, _kb_t - dt)
+	atk_t   = maxf(0.0, atk_t - dt)
+	cast_t  = maxf(0.0, cast_t - dt)
+	abil_t  = maxf(0.0, abil_t - dt)
+	ab2_t   = maxf(0.0, ab2_t - dt)
+	iframe  = maxf(0.0, iframe - dt)
+	hurt_t  = maxf(0.0, hurt_t - dt)
+	_kb_t   = maxf(0.0, _kb_t - dt)
 	shake_t = maxf(0.0, shake_t - dt)
+	_dodge_t = maxf(0.0, _dodge_t - dt)
+	_parry_t = maxf(0.0, _parry_t - dt)
+	_riposte_t = maxf(0.0, _riposte_t - dt)
 	mana = minf(tot_maxmana(), mana + regen * dt)
+	stamina = minf(max_stamina, stamina + STAM_REGEN * dt)
 
 	# fire deferred melee impact when animation reaches the downstroke
 	if _atk_hit_t > 0.0 and not dead and atk_cd > 0.0 and atk_t / atk_cd <= _atk_hit_t:
@@ -180,6 +210,10 @@ func _physics_process(dt: float) -> void:
 
 	var ui_open: bool = Game.instance and ((Game.instance.inv_ui and Game.instance.inv_ui.is_open) or (Game.instance.shop_ui and Game.instance.shop_ui.is_open))
 	var wants_block := cls == "war" and Input.is_action_pressed("secondary") and not dead and not ui_open
+	# parry window opens on the leading edge of block
+	if wants_block and not _block_prev and not dead:
+		_parry_t = 0.22
+	_block_prev = wants_block
 	if wants_block and mana >= 2.0:
 		blocking = true
 		mana = maxf(0.0, mana - 10.0 * dt)
@@ -193,9 +227,43 @@ func _physics_process(dt: float) -> void:
 		var dir := transform.basis * Vector3(ix, 0, iz)
 		dir.y = 0
 		if dir.length() > 0.001: dir = dir.normalized()
+
+		# dodge roll: T2 + T3 (locked during first 55% of attack arc)
+		if Input.is_action_just_pressed("dodge") and _dodge_t <= 0.0 and stamina >= STAM_DODGE:
+			var atk_committed := atk_cd > 0.0 and atk_t > atk_cd * 0.45
+			if not atk_committed:
+				_dodge_dir = dir if dir.length_squared() > 0.001 else -transform.basis.z
+				_dodge_dir.y = 0
+				_dodge_dir = _dodge_dir.normalized()
+				_dodge_t = DODGE_DUR + DODGE_CD
+				iframe = DODGE_DUR * 0.7
+				stamina = maxf(0.0, stamina - STAM_DODGE)
+
+		# heavy attack hold tracking (melee classes only)
+		var is_melee_cls := cls == "war" or cls == "paladin" or cls == "rogue"
+		if is_melee_cls and atk_t <= 0.0:
+			if Input.is_action_pressed("attack"):
+				_hold_t += dt
+				if _hold_t >= HEAVY_HOLD and not _hold_armed:
+					_hold_armed = true
+					_msg("Heavy!", Color("ffce42"))
+			if Input.is_action_just_released("attack"):
+				if _hold_armed and stamina >= STAM_HEAVY:
+					_heavy_melee()
+				elif _hold_t < HEAVY_HOLD:
+					_primary()
+				_hold_t = 0.0; _hold_armed = false
+		elif not is_melee_cls:
+			if Input.is_action_pressed("attack"): _primary()
+
 		var spd := SPEED * (0.55 if blocking else 1.0)
-		velocity.x = dir.x * spd
-		velocity.z = dir.z * spd
+		# during dodge: override velocity with dodge direction
+		if _dodge_t > DODGE_CD:
+			velocity.x = _dodge_dir.x * DODGE_SPD
+			velocity.z = _dodge_dir.z * DODGE_SPD
+		else:
+			velocity.x = dir.x * spd
+			velocity.z = dir.z * spd
 		if _kb_t > 0.0:
 			var kf := _kb_t / 0.2
 			velocity.x += _kb_vel.x * kf
@@ -203,7 +271,6 @@ func _physics_process(dt: float) -> void:
 		velocity.y = 0
 		move_and_slide()
 
-		if Input.is_action_pressed("attack"): _primary()
 		if Input.is_action_pressed("secondary") and cls != "war": _secondary()
 		if Input.is_action_just_pressed("ability_q"): _ability_q()
 		if Input.is_action_just_pressed("ability_b"): _ability_b()
@@ -242,6 +309,9 @@ func _cast(kind: String) -> void:
 	_shoot(kind, _proj_dmg(kind))
 
 func _melee() -> void:
+	if stamina < STAM_ATK:
+		_msg("Too exhausted!", Color("ffb050")); return
+	stamina = maxf(0.0, stamina - STAM_ATK)
 	var cd: float = Classes.melee_cd.get(cls, 0.45)
 	atk_t = cd; atk_cd = cd
 	var dmg := tot_dmg()
@@ -252,22 +322,40 @@ func _melee() -> void:
 	# defer impact to the downstroke: 0.55 = slash peak, 0.35 = rogue undercut peak
 	_atk_hit_t = 0.35 if cls == "rogue" else 0.55
 
+func _heavy_melee() -> void:
+	stamina = maxf(0.0, stamina - STAM_HEAVY)
+	var cd: float = Classes.melee_cd.get(cls, 0.45) * 1.5
+	atk_t = cd; atk_cd = cd
+	var dmg := int(round(float(tot_dmg()) * 1.8))
+	_pending_crit = false
+	_pending_dmg = dmg
+	_atk_hit_t = 0.35 if cls == "rogue" else 0.55
+
 func _resolve_melee_hit() -> void:
 	var fwd := _aim()
 	var hit_any := false
+	var is_heavy: bool = atk_cd > float(Classes.melee_cd.get(cls, 0.45)) * 1.2
+	var is_riposte := _riposte_t > 0.0
 	for en in get_tree().get_nodes_in_group("enemy"):
 		var to: Vector3 = en.global_position - global_position
 		to.y = 0
 		if to.length() < 1.9 and fwd.dot(to.normalized()) > 0.55:
-			en.take_damage(_pending_dmg + Util.li(0, 4))
-			en._apply_knockback(to.normalized() * 3.5)
+			var dmg := _pending_dmg + Util.li(0, 4)
+			if is_riposte: dmg = int(round(float(dmg) * 3.0))
+			en.take_damage(dmg)
+			en._apply_knockback(to.normalized() * (5.5 if is_heavy else 3.5))
 			if cls == "war" or cls == "rogue":
 				en._bleed_stacks = mini(en._bleed_stacks + 1, 3)
 				en._bleed_t = 3.0; en._bleed_tick = 0.0
+			if is_heavy and en.has_method("_force_stagger"):
+				en._force_stagger()
 			hit_any = true
+	if is_riposte: _riposte_t = 0.0
 	if hit_any:
-		if _pending_crit: _msg("Critical Strike!", Color("ffce42"))
-		_apply_camera_shake(0.025 + (0.04 if _pending_crit else 0.0))
+		if is_riposte: _msg("RIPOSTE!", Color("ff9a20"))
+		elif _pending_crit: _msg("Critical Strike!", Color("ffce42"))
+		elif is_heavy: _msg("Heavy Strike!", Color("e08020"))
+		_apply_camera_shake(0.035 + (0.04 if _pending_crit or is_riposte else 0.0))
 
 func _primary() -> void:
 	match cls:
@@ -369,6 +457,15 @@ func _holy_light() -> void:
 
 func take_damage(amt: int, src := "") -> void:
 	if dead or iframe > 0.0: return
+	# parry: block raised within the last 0.22s deflects the hit entirely
+	if _parry_t > 0.0 and blocking:
+		_parry_t = 0.0
+		_riposte_t = 1.5
+		_apply_camera_shake(0.015)
+		if Game.instance and Game.instance.hud:
+			Game.instance.hud.flash(Color(1.0, 0.85, 0.1, 0.45))
+		_msg("Parried! Riposte ready.", Color("ffe050"))
+		return
 	var armor := tot_armor()
 	var dr := float(armor) / (float(armor) + 25.0)
 	amt = max(1, int(round(float(amt) * (1.0 - dr))))

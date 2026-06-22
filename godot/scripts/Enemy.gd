@@ -26,6 +26,9 @@ var _burn_per_tick := 0.0
 var _burn_t := 0.0
 var _burn_tick := 0.0
 var _t := 0.0
+var _punish_t := 0.0   # post-strike recovery stumble (T4)
+var _poise_cur := 0.0  # poise pool; breaks → stagger (T5)
+var _stagger_t := 0.0
 
 var spr: Sprite3D
 var player: Player
@@ -58,6 +61,7 @@ func setup(t: String, ground_pos: Vector3) -> void:
 	spr.position = Vector3(0, scale_h / 2.0, 0)
 	add_child(spr)
 	_t = randf() * TAU
+	_poise_cur = float(def.get("poise", 20))
 	position = ground_pos
 
 func body_center() -> Vector3:
@@ -66,6 +70,20 @@ func body_center() -> Vector3:
 func _apply_knockback(impulse: Vector3) -> void:
 	_kb_vel = impulse
 	_kb_t = 0.25
+
+func _force_stagger() -> void:
+	_poise_cur = -1.0
+	_trigger_stagger()
+
+func _trigger_stagger() -> void:
+	if _stagger_t > 0.0: return
+	_stagger_t = 0.8
+	_poise_cur = float(def.get("poise", 20))
+	_winding_up = false
+	var tw := create_tween()
+	tw.tween_property(spr, "position:x",  0.14, 0.06).set_ease(Tween.EASE_OUT)
+	tw.tween_property(spr, "position:x", -0.12, 0.08).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(spr, "position:x",  0.0,  0.06).set_ease(Tween.EASE_IN)
 
 func apply_burn(fire_dmg: int) -> void:
 	_burn_per_tick = maxf(_burn_per_tick, float(fire_dmg) * 0.075)
@@ -76,6 +94,10 @@ func take_damage(amt: int, col: Color = Color("a01818")) -> void:
 	hp -= amt
 	hit_flash = 0.12
 	awake = true
+	# poise damage — break → stagger
+	_poise_cur -= float(amt) * 0.8
+	if _poise_cur <= 0.0 and _stagger_t <= 0.0:
+		_trigger_stagger()
 	if amt >= 12:
 		_winding_up = false
 		atk_t = maxf(atk_t, float(def.atk_cd) * 0.4)
@@ -172,6 +194,7 @@ func _physics_process(dt: float) -> void:
 				spr.modulate = Color.WHITE
 			if d < float(def.range) * 1.5:
 				player.take_damage(dmg + Util.li(0, 3), def.name)
+				_punish_t = 0.65
 				var kb := to.normalized() * 4.5; kb.y = 0
 				player._apply_knockback(kb)
 				# strike burst: scale spike then spring back
@@ -185,6 +208,21 @@ func _physics_process(dt: float) -> void:
 						var off := Vector3(randf_range(-0.3, 0.3), randf_range(0.0, 0.5), randf_range(-0.3, 0.3))
 						Game.instance.world.spawn_spark(hp + off, Color("e05028"))
 			atk_t = float(def.atk_cd)
+		return
+	# stagger: frozen + wobble tween already fired in _trigger_stagger
+	if _stagger_t > 0.0:
+		_stagger_t -= dt
+		velocity = Vector3.ZERO
+		move_and_slide()
+		return
+	# punish window: stumble after striking
+	if _punish_t > 0.0:
+		_punish_t -= dt
+		velocity = Vector3.ZERO
+		spr.position.x = sin(_punish_t * 28.0) * 0.07 * (_punish_t / 0.65)
+		if _punish_t <= 0.0:
+			spr.position.x = 0.0
+		move_and_slide()
 		return
 	var spd: float = float(def.speed) * (0.45 if slow_t > 0.0 else 1.0) * (1.3 if enraged else 1.0)
 	var rng: float = float(def.range)

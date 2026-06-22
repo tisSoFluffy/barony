@@ -2,19 +2,19 @@ extends Node
 ## Enemy + spawn-table data, ported from the web build. Autoload name: Bestiary
 
 var defs: Dictionary = {
-	"kobold":   { "spr": "kobold", "hp": 22, "dmg": 6, "speed": 1.7, "xp": 14, "scale": 0.55,
+	"kobold":   { "spr": "kobold", "hp": 22, "dmg": 6, "speed": 1.7, "xp": 14, "scale": 0.55, "poise": 20,
 				"atk_cd": 1.1, "range": 0.95, "sight": 7, "name": "Kobold Tunneler" },
-	"murloc":   { "spr": "murloc", "hp": 32, "dmg": 9, "speed": 2.3, "xp": 26, "scale": 0.62,
+	"murloc":   { "spr": "murloc", "hp": 32, "dmg": 9, "speed": 2.3, "xp": 26, "scale": 0.62, "poise": 28,
 				"atk_cd": 0.85, "range": 0.95, "sight": 8, "name": "Murloc Raider" },
-	"troll":    { "spr": "troll", "hp": 42, "dmg": 11, "speed": 2.0, "xp": 55, "scale": 0.86,
+	"troll":    { "spr": "troll", "hp": 42, "dmg": 11, "speed": 2.0, "xp": 55, "scale": 0.86, "poise": 45,
 				"atk_cd": 1.7, "range": 7.0, "sight": 10, "ranged": "axe", "keep_dist": 4.0, "name": "Troll Headhunter" },
-	"skeleton": { "spr": "skeleton", "hp": 48, "dmg": 13, "speed": 1.5, "xp": 42, "scale": 0.82,
+	"skeleton": { "spr": "skeleton", "hp": 48, "dmg": 13, "speed": 1.5, "xp": 42, "scale": 0.82, "poise": 35,
 				"atk_cd": 1.2, "range": 1.05, "sight": 9, "name": "Scourge Skeleton" },
-	"orc":      { "spr": "orc", "hp": 75, "dmg": 17, "speed": 1.9, "xp": 75, "scale": 0.92,
+	"orc":      { "spr": "orc", "hp": 75, "dmg": 17, "speed": 1.9, "xp": 75, "scale": 0.92, "poise": 55,
 				"atk_cd": 1.0, "range": 1.05, "sight": 9, "name": "Orc Grunt" },
-	"necro":    { "spr": "necro", "hp": 58, "dmg": 15, "speed": 1.4, "xp": 95, "scale": 0.88,
+	"necro":    { "spr": "necro", "hp": 58, "dmg": 15, "speed": 1.4, "xp": 95, "scale": 0.88, "poise": 30,
 				"atk_cd": 2.2, "range": 8.0, "sight": 10, "ranged": "bolt", "keep_dist": 5.0, "summon": 9.0, "name": "Cultist Necromancer" },
-	"ogre":     { "spr": "ogre", "hp": 420, "dmg": 30, "speed": 1.25, "xp": 600, "scale": 1.45,
+	"ogre":     { "spr": "ogre", "hp": 420, "dmg": 30, "speed": 1.25, "xp": 600, "scale": 1.45, "poise": 200,
 				"atk_cd": 1.5, "range": 1.5, "sight": 12, "name": "Gor'maul the Warlord", "boss": true },
 }
 
