@@ -49,6 +49,9 @@ var _shake_x := 0.0
 var _shake_y := 0.0
 var _kb_t := 0.0
 var _kb_vel := Vector3.ZERO
+var _atk_hit_t := -1.0
+var _pending_dmg := 0
+var _pending_crit := false
 
 const SPEED := 4.2
 const CRIT_CHANCE := {"war": 0.10, "paladin": 0.08, "rogue": 0.30}
@@ -155,6 +158,11 @@ func _physics_process(dt: float) -> void:
 	shake_t = maxf(0.0, shake_t - dt)
 	mana = minf(tot_maxmana(), mana + regen * dt)
 
+	# fire deferred melee impact when animation reaches the downstroke
+	if _atk_hit_t > 0.0 and not dead and atk_cd > 0.0 and atk_t / atk_cd <= _atk_hit_t:
+		_atk_hit_t = -1.0
+		_resolve_melee_hit()
+
 	if Input.is_action_pressed("turn_left"): yaw += 2.4 * dt
 	if Input.is_action_pressed("turn_right"): yaw -= 2.4 * dt
 	rotation.y = yaw
@@ -238,24 +246,28 @@ func _melee() -> void:
 	atk_t = cd; atk_cd = cd
 	var dmg := tot_dmg()
 	var crit_ch: float = CRIT_CHANCE.get(cls, 0.0)
-	var is_crit := crit_ch > 0.0 and randf() < crit_ch
-	if is_crit: dmg = int(round(float(dmg) * CRIT_MULT.get(cls, 1.5)))
+	_pending_crit = crit_ch > 0.0 and randf() < crit_ch
+	if _pending_crit: dmg = int(round(float(dmg) * CRIT_MULT.get(cls, 1.5)))
+	_pending_dmg = dmg
+	# defer impact to the downstroke: 0.55 = slash peak, 0.35 = rogue undercut peak
+	_atk_hit_t = 0.35 if cls == "rogue" else 0.55
+
+func _resolve_melee_hit() -> void:
 	var fwd := _aim()
 	var hit_any := false
 	for en in get_tree().get_nodes_in_group("enemy"):
 		var to: Vector3 = en.global_position - global_position
 		to.y = 0
 		if to.length() < 1.9 and fwd.dot(to.normalized()) > 0.55:
-			en.take_damage(dmg + Util.li(0, 4))
+			en.take_damage(_pending_dmg + Util.li(0, 4))
 			en._apply_knockback(to.normalized() * 3.5)
 			if cls == "war" or cls == "rogue":
 				en._bleed_stacks = mini(en._bleed_stacks + 1, 3)
-				en._bleed_t = 3.0
-				en._bleed_tick = 0.0
+				en._bleed_t = 3.0; en._bleed_tick = 0.0
 			hit_any = true
 	if hit_any:
-		if is_crit: _msg("Critical Strike!", Color("ffce42"))
-		_apply_camera_shake(0.025 + (0.04 if is_crit else 0.0))
+		if _pending_crit: _msg("Critical Strike!", Color("ffce42"))
+		_apply_camera_shake(0.025 + (0.04 if _pending_crit else 0.0))
 
 func _primary() -> void:
 	match cls:
