@@ -68,36 +68,53 @@ func door_texture(locked: bool) -> ImageTexture:
 	if _door[idx] != null:
 		return _door[idx]
 	var pt := Painter.new(64, 64)
-	# wood tones — locked door is darker/more weathered
-	var bg    := Painter.hex("3c2008") if locked else Painter.hex("4a2c0c")
-	var plk_a := Painter.hex("5c3a14") if locked else Painter.hex("6e4a1c")
-	var plk_b := Painter.hex("523210") if locked else Painter.hex("624018")
-	pt.rect_fill(bg, 0, 0, 64, 64)
-	# 4 horizontal plank bands — 16px each in texture, stretched 3× in world
-	for row in range(4):
-		var y := row * 16
-		pt.rect_fill(plk_a if row % 2 == 0 else plk_b, 3, y + 2, 58, 12)
-		pt.rect_fill(Color(1, 1, 1, 0.10), 3, y + 2, 58, 2)   # top highlight
-		pt.rect_fill(Color(0, 0, 0, 0.28), 3, y + 12, 58, 2)  # bottom shadow
-	# subtle vertical grain marks
-	for gx in [14, 26, 40, 52]:
-		for row in range(4):
-			pt.rect_fill(Color(0, 0, 0, 0.09), gx, row * 16 + 2, 1, 12)
-	# iron hinges — left edge, top (~10%) and bottom (~85%) of face
-	var hm := Painter.hex("6e6458")
-	pt.rrect(hm, 1,  4, 9, 8)
-	pt.rrect(hm, 1, 53, 9, 8)
-	pt.rect_fill(Color(1, 1, 1, 0.18), 2,  5, 7, 2)
-	pt.rect_fill(Color(1, 1, 1, 0.18), 2, 54, 7, 2)
-	# door handle — right side, vertical center
-	pt.ell(Painter.hex("8a7050"), 57, 31, 4, 5)
-	pt.dot(Painter.hex("b89860"), 56, 29, 2.0)
-	if locked:
-		# gold keyhole escutcheon at face center
-		pt.rrect(Painter.hex("9c7c10"), 26, 22, 12, 18)
-		pt.rect_fill(Painter.hex("b89018"), 27, 23, 10, 16)
-		pt.ell(Painter.hex("1a0e04"), 32, 28, 3, 3)      # keyhole circle
-		pt.rect_fill(Painter.hex("1a0e04"), 30, 31, 4, 7) # keyhole slot
+	# gap / frame colour between planks
+	pt.rect_fill(Painter.hex("1a0a02"), 0, 0, 64, 64)
+
+	# wood tones — locked door is darker/more aged
+	var w_hi  := Painter.hex("d08840") if not locked else Painter.hex("a86828")
+	var w_mid := Painter.hex("a06028") if not locked else Painter.hex("7e4a18")
+	var w_lo  := Painter.hex("683c10") if not locked else Painter.hex("502e0c")
+
+	# 3 vertical planks (each 19 px wide, 2 px gaps)
+	for col in range(3):
+		var px: int = 2 + col * 21
+		pt.rect_fill(w_mid, px, 0, 19, 64)
+		pt.rect_fill(w_hi,  px, 0,  4, 64)
+		pt.rect_fill(w_lo,  px + 15, 0, 4, 64)
+		for gy in [9, 20, 32, 44, 56]:
+			pt.rect_fill(Color(0, 0, 0, 0.12), px + 4, gy, 11, 1)
+
+	# iron strap hinges — full-width horizontal bars
+	var ih := Painter.hex("a09888")
+	var im := Painter.hex("686058")
+	var is_ := Painter.hex("343028")
+	for hy in [11, 46]:
+		pt.rect_fill(im, 0, hy, 64, 7)
+		pt.rect_fill(ih, 0, hy, 64, 2)
+		pt.rect_fill(is_, 0, hy + 5, 64, 2)
+		for rx in [11, 32, 53]:
+			pt.dot(is_, rx, hy + 4, 2.8)
+			pt.dot(ih,  rx - 1, hy + 3, 1.4)
+
+	if not locked:
+		# iron ring pull (right plank, vertical centre)
+		pt.dot(im, 52, 31, 6.0)
+		pt.dot(Painter.hex("1a0a02"), 52, 31, 3.2)
+		pt.dot(ih, 49, 28, 1.8)
+	else:
+		# brass lock plate (centre plank)
+		var lh := Painter.hex("e8c030")
+		var lm := Painter.hex("b89018")
+		var ls_ := Painter.hex("785e08")
+		pt.rect_fill(lm, 24, 22, 16, 20)
+		pt.rect_fill(lh, 24, 22, 16, 3)
+		pt.rect_fill(ls_, 24, 39, 16, 3)
+		pt.dot(Painter.hex("100804"), 32, 30, 4.0)
+		pt.rect_fill(Painter.hex("100804"), 30, 33, 4, 6)
+		for cx in [27, 37]:
+			for cy in [25, 38]:
+				pt.dot(lh, cx, cy, 1.8)
 	var tex := pt.texture()
 	_door[idx] = tex
 	return tex
