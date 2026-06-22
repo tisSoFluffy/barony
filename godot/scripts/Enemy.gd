@@ -25,6 +25,7 @@ var _bleed_tick := 0.0
 var _burn_per_tick := 0.0
 var _burn_t := 0.0
 var _burn_tick := 0.0
+var _t := 0.0
 
 var spr: Sprite3D
 var player: Player
@@ -56,6 +57,7 @@ func setup(t: String, ground_pos: Vector3) -> void:
 	spr.pixel_size = scale_h / float(tx.get_height())
 	spr.position = Vector3(0, scale_h / 2.0, 0)
 	add_child(spr)
+	_t = randf() * TAU
 	position = ground_pos
 
 func body_center() -> Vector3:
@@ -77,6 +79,9 @@ func take_damage(amt: int, col: Color = Color("a01818")) -> void:
 	if amt >= 12:
 		_winding_up = false
 		atk_t = maxf(atk_t, float(def.atk_cd) * 0.4)
+	var sq := create_tween()
+	sq.tween_property(spr, "scale", Vector3(1.35, 0.70, 1.35), 0.07).set_ease(Tween.EASE_OUT)
+	sq.tween_property(spr, "scale", Vector3.ONE, 0.15).set_ease(Tween.EASE_IN_OUT)
 	if Game.instance and Game.instance.world:
 		Game.instance.world.spawn_spark(global_position + Vector3(0, float(def.scale), 0), col)
 	if def.get("boss", false) and not enraged and hp > 0 and hp < maxhp * 0.5:
@@ -119,6 +124,7 @@ func _physics_process(dt: float) -> void:
 		velocity = Vector3.ZERO
 		return
 	atk_t -= dt
+	_t += dt
 	var to := player.global_position - global_position
 	to.y = 0
 	var d := to.length()
@@ -155,16 +161,29 @@ func _physics_process(dt: float) -> void:
 	if _winding_up:
 		_wind_t -= dt
 		if hit_flash <= 0.0:
-			spr.modulate = Color(1.8, 1.6, 0.2)
+			var wp := smoothstep(0.0, 1.0, 1.0 - _wind_t / 0.25)
+			spr.modulate = Color(1.8, 1.6, 0.2).lerp(Color(2.2, 0.4, 0.05), wp)
+			spr.scale = Vector3.ONE * lerpf(1.0, 1.18, wp)
 		velocity = Vector3.ZERO
 		if _wind_t <= 0.0:
 			_winding_up = false
+			spr.scale = Vector3.ONE
 			if hit_flash <= 0.0:
 				spr.modulate = Color.WHITE
 			if d < float(def.range) * 1.5:
 				player.take_damage(dmg + Util.li(0, 3), def.name)
 				var kb := to.normalized() * 4.5; kb.y = 0
 				player._apply_knockback(kb)
+				# strike burst: scale spike then spring back
+				spr.scale = Vector3(1.3, 1.3, 1.3)
+				var tw := create_tween()
+				tw.tween_property(spr, "scale", Vector3.ONE, 0.15).set_ease(Tween.EASE_OUT)
+				# impact sparks at player
+				if Game.instance and Game.instance.world:
+					var hp := player.global_position + Vector3(0, 0.9, 0)
+					for i in range(6):
+						var off := Vector3(randf_range(-0.3, 0.3), randf_range(0.0, 0.5), randf_range(-0.3, 0.3))
+						Game.instance.world.spawn_spark(hp + off, Color("e05028"))
 			atk_t = float(def.atk_cd)
 		return
 	var spd: float = float(def.speed) * (0.45 if slow_t > 0.0 else 1.0) * (1.3 if enraged else 1.0)
@@ -194,3 +213,6 @@ func _physics_process(dt: float) -> void:
 			if atk_t <= 0.0 and not _winding_up:
 				_winding_up = true
 				_wind_t = 0.25
+	# awake bob — gentle float when alive and not mid-action
+	if hit_flash <= 0.0 and not _winding_up and _kb_t <= 0.0:
+		spr.position.y = float(def.scale) * 0.95 + sin(_t * 2.8) * 0.05 * float(def.scale)
