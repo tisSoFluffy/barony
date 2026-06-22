@@ -39,6 +39,7 @@ func _ready() -> void:
 	weapon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	weapon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	weapon.custom_minimum_size = Vector2(360, 400)
+	weapon.pivot_offset = Vector2(180, 400)
 	add_child(weapon)
 
 	crosshair = Label.new()
@@ -139,34 +140,47 @@ func _process(dt: float) -> void:
 
 	# weapon view bob + swing
 	var spd_factor := clampf(player.velocity.length() / 4.2, 0.0, 1.0)
-	var bob := Vector2(sin(t * 2.0) * 6.0 * spd_factor, abs(cos(t * 2.0)) * 5.0 * spd_factor)
+	var bob := Vector2(sin(t * 2.0) * 7.0 * spd_factor, abs(cos(t * 2.0)) * 6.0 * spd_factor)
 	var off_x := 0.0
 	var off_y := 0.0
 	var rot  := 0.0
 
 	if player.atk_t > 0.0 and player.atk_cd > 0.0:
 		var n := clampf(player.atk_t / player.atk_cd, 0.0, 1.0)
-		if n > 0.70:                             # wind-up: pull right and rise
-			var p := (1.0 - n) / 0.30
-			off_x = 22.0 * p;  off_y = -14.0 * p;  rot = 0.30 * p
-		elif n > 0.20:                           # impact arc: sweep left-down
-			var p := smoothstep(0.0, 1.0, (0.70 - n) / 0.50)
-			off_x = lerp(22.0, -18.0, p);  off_y = lerp(-14.0, 22.0, p);  rot = lerp(0.30, -0.22, p)
-		else:                                    # recovery: ease back to rest
-			var p := n / 0.20
-			off_x = lerp(0.0, -18.0, p);  off_y = lerp(0.0, 22.0, p);  rot = lerp(0.0, -0.22, p)
+		if player.cls == "rogue":
+			# stab: pull back then lunge straight forward
+			if n > 0.60:
+				var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.40)
+				off_x = 22.0 * p;  off_y = 36.0 * p;  rot = 0.12 * p
+			elif n > 0.12:
+				var p := smoothstep(0.0, 1.0, (0.60 - n) / 0.48)
+				off_x = lerp(22.0, -6.0, p);  off_y = lerp(36.0, -55.0, p);  rot = lerp(0.12, -0.08, p)
+			else:
+				var p := smoothstep(0.0, 1.0, (0.12 - n) / 0.12)
+				off_x = lerp(-6.0, 0.0, p);  off_y = lerp(-55.0, 0.0, p);  rot = lerp(-0.08, 0.0, p)
+		else:
+			# broad slash (war, paladin): pull right → sweep left-down → recover
+			if n > 0.58:
+				var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.42)
+				off_x = 50.0 * p;  off_y = -28.0 * p;  rot = 0.28 * p
+			elif n > 0.10:
+				var p := smoothstep(0.0, 1.0, (0.58 - n) / 0.48)
+				off_x = lerp(50.0, -46.0, p);  off_y = lerp(-28.0, 40.0, p);  rot = lerp(0.28, -0.24, p)
+			else:
+				var p := smoothstep(0.0, 1.0, (0.10 - n) / 0.10)
+				off_x = lerp(-46.0, 0.0, p);  off_y = lerp(40.0, 0.0, p);  rot = lerp(-0.24, 0.0, p)
 
 	elif player.cast_t > 0.0 and player.cast_cd > 0.0:
 		var n := clampf(player.cast_t / player.cast_cd, 0.0, 1.0)
-		if n > 0.60:                             # raise to aim
-			var p := (1.0 - n) / 0.40
-			off_y = -22.0 * smoothstep(0.0, 1.0, p);  rot = -0.12 * p
-		elif n > 0.25:                           # fire recoil: kick back
-			var p := (0.60 - n) / 0.35
-			off_x = -12.0 * sin(p * PI);  off_y = lerp(-22.0, 18.0, smoothstep(0.0, 1.0, p));  rot = lerp(-0.12, 0.18, p)
-		else:                                    # return to rest
-			var p := n / 0.25
-			off_y = lerp(0.0, 18.0, p);  rot = lerp(0.0, 0.18, p)
+		if n > 0.55:
+			var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.45)
+			off_y = -36.0 * p;  rot = -0.14 * p
+		elif n > 0.20:
+			var p := smoothstep(0.0, 1.0, (0.55 - n) / 0.35)
+			off_x = -15.0 * sin(p * PI);  off_y = lerp(-36.0, 22.0, p);  rot = lerp(-0.14, 0.18, p)
+		else:
+			var p := smoothstep(0.0, 1.0, (0.20 - n) / 0.20)
+			off_y = lerp(22.0, 0.0, p);  rot = lerp(0.18, 0.0, p)
 
 	weapon.size = weapon.custom_minimum_size
 	weapon.position = Vector2(vs.x * 0.5 - 120 + bob.x + off_x, vs.y - 300 + bob.y + off_y)
