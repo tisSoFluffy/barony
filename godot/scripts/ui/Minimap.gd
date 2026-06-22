@@ -93,7 +93,7 @@ func _draw() -> void:
 		draw_circle(Vector2(PAD + wp.x * CELL, PAD + wp.z * CELL), 2.5, col)
 
 	# enemies visible in explored tiles
-	for en in g.get_tree().get_nodes_in_group("enemy"):
+	for en: Node3D in g.get_tree().get_nodes_in_group("enemy"):
 		if not is_instance_valid(en):
 			continue
 		var ex := en.global_position.x

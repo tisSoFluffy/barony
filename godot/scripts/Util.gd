@@ -44,6 +44,18 @@ func weighted(pool: Array) -> Variant:
 			return e[0]
 	return pool[0][0]
 
+static func commafy(n: int) -> String:
+	var negative := n < 0
+	var s := str(abs(n))
+	var result := ""
+	var count := 0
+	for i in range(s.length() - 1, -1, -1):
+		result = s[i] + result
+		count += 1
+		if count % 3 == 0 and i != 0:
+			result = "," + result
+	return "-" + result if negative else result
+
 func hash_str(s: String) -> int:
 	var h := 2166136261
 	for i in s.length():

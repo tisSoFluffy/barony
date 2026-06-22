@@ -43,7 +43,7 @@ func start(cls: String, seed_str := "", start_depth := 1) -> void:
 	shop_ui = ShopUI.new(); add_child(shop_ui)
 	_build_floor(true)
 
-func _build_floor(first: bool) -> void:
+func _build_floor(_first: bool) -> void:
 	if floor_root and is_instance_valid(floor_root):
 		floor_root.queue_free()
 	for e in get_tree().get_nodes_in_group("enemy"):
@@ -180,7 +180,7 @@ func do_win() -> void:
 	_record(true)
 	hud.show_win("%s of level %d — you slew Gor'maul and took back the barony! For the Alliance!" % [player.def.name, player.level])
 
-func on_player_death(src: String) -> void:
+func on_player_death(_src: String) -> void:
 	if ended: return
 	ended = true
 	_record(false)
@@ -206,9 +206,9 @@ func has_los(a: Vector3, b: Vector3) -> bool:
 			return false
 	return true
 
-func spawn_projectile(team: String, from: Vector3, dir: Vector3, kind: String, dmg: int, owner: Player) -> void:
+func spawn_projectile(team: String, from: Vector3, dir: Vector3, kind: String, dmg: int, shooter: Player) -> void:
 	var pr := Projectile.new()
-	pr.team = team; pr.kind = kind; pr.dmg = dmg; pr.dir = dir.normalized(); pr.owner_player = owner
+	pr.team = team; pr.kind = kind; pr.dmg = dmg; pr.dir = dir.normalized(); pr.owner_player = shooter
 	var d: Dictionary = Classes.proj.get(kind, {})
 	pr.speed = d.get("speed", 9.0)
 	pr.pierce = int(d.get("pierce", 0))

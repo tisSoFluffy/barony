@@ -106,8 +106,8 @@ static func generate(depth: int) -> Dictionary:
 	var n: int = sp.n
 	for i in range(n):
 		var r: Dictionary = rooms[Util.ri(1, rooms.size() - 1)]
-		var ex := Util.rf(r.x + 0.8, r.x + r.w - 0.8)
-		var ey := Util.rf(r.y + 0.8, r.y + r.h - 0.8)
+		var ex: float = Util.rf(r.x + 0.8, r.x + r.w - 0.8)
+		var ey: float = Util.rf(r.y + 0.8, r.y + r.h - 0.8)
 		if dist2(ex, ey, start.x, start.y) < 36.0:
 			continue
 		enemies.append({ "type": Util.weighted(pool), "pos": Vector2(ex, ey), "has_key": false })

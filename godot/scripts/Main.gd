@@ -186,7 +186,7 @@ func _headless_play(cls: String) -> void:
 	for idx in classes.size():
 		var src: Image = WeaponArt.get_weapon(classes[idx]).get_image()
 		gal.blit_rect(src, Rect2i(0, 0, src.get_width(), src.get_height()),
-			Vector2i((idx % 3) * cell + 10, (idx / 3) * cell))
+			Vector2i((idx % 3) * cell + 10, floori(float(idx) / 3) * cell))
 	gal.save_png("user://weapon_gallery.png")
 	print("PLAY OK")
 	get_tree().quit(0)
@@ -254,8 +254,8 @@ func _run_tests() -> void:
 		if not Art._draw_fns.has(ids[idx]):
 			missing += 1
 		var src: Image = tx.get_image()
-		var cx := (idx % cols) * cell + (cell - src.get_width()) / 2
-		var cy := (idx / cols) * cell + (cell - src.get_height()) / 2
+		var cx := (idx % cols) * cell + int((cell - src.get_width()) * 0.5)
+		var cy := floori(float(idx) / cols) * cell + int((cell - src.get_height()) * 0.5)
 		gal.blit_rect(src, Rect2i(0, 0, src.get_width(), src.get_height()), Vector2i(cx, cy))
 	gal.save_png("user://sprite_gallery.png")
 	print("gallery sprites: %d, missing art (placeholder): %d" % [ids.size(), missing])
