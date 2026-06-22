@@ -43,8 +43,16 @@ var abil_t := 0.0
 var ab2_t := 0.0
 var iframe := 0.0
 var hurt_t := 0.0
+var shake_t := 0.0
+var _shake_mag := 0.0
+var _shake_x := 0.0
+var _shake_y := 0.0
+var _kb_t := 0.0
+var _kb_vel := Vector3.ZERO
 
 const SPEED := 4.2
+const CRIT_CHANCE := {"war": 0.10, "paladin": 0.08, "rogue": 0.30}
+const CRIT_MULT   := {"war": 1.8,  "paladin": 1.6,  "rogue": 2.5}
 
 func _ready() -> void:
 	def = Classes.get_def(cls)
@@ -143,12 +151,24 @@ func _physics_process(dt: float) -> void:
 	ab2_t = maxf(0.0, ab2_t - dt)
 	iframe = maxf(0.0, iframe - dt)
 	hurt_t = maxf(0.0, hurt_t - dt)
+	_kb_t = maxf(0.0, _kb_t - dt)
+	shake_t = maxf(0.0, shake_t - dt)
 	mana = minf(tot_maxmana(), mana + regen * dt)
 
 	if Input.is_action_pressed("turn_left"): yaw += 2.4 * dt
 	if Input.is_action_pressed("turn_right"): yaw -= 2.4 * dt
 	rotation.y = yaw
-	if cam: cam.rotation.x = pitch
+	if cam:
+		if shake_t > 0.0:
+			var s := (shake_t / 0.35) * _shake_mag
+			_shake_x = lerpf(_shake_x, randf_range(-s, s), 0.5)
+			_shake_y = lerpf(_shake_y, randf_range(-s * 0.6, s * 0.6), 0.5)
+		else:
+			_shake_mag = 0.0
+			_shake_x = lerpf(_shake_x, 0.0, 15.0 * dt)
+			_shake_y = lerpf(_shake_y, 0.0, 15.0 * dt)
+		cam.rotation.x = pitch + _shake_x
+		cam.rotation.y = _shake_y
 
 	var ui_open: bool = Game.instance and ((Game.instance.inv_ui and Game.instance.inv_ui.is_open) or (Game.instance.shop_ui and Game.instance.shop_ui.is_open))
 	blocking = cls == "war" and Input.is_action_pressed("secondary") and not dead and not ui_open
@@ -162,6 +182,10 @@ func _physics_process(dt: float) -> void:
 		var spd := SPEED * (0.55 if blocking else 1.0)
 		velocity.x = dir.x * spd
 		velocity.z = dir.z * spd
+		if _kb_t > 0.0:
+			var kf := _kb_t / 0.2
+			velocity.x += _kb_vel.x * kf
+			velocity.z += _kb_vel.z * kf
 		velocity.y = 0
 		move_and_slide()
 
@@ -204,16 +228,24 @@ func _cast(kind: String) -> void:
 	_shoot(kind, _proj_dmg(kind))
 
 func _melee() -> void:
-	var cd: float = {"war": 0.42, "paladin": 0.52, "rogue": 0.3}.get(cls, 0.45)
+	var cd: float = Classes.melee_cd.get(cls, 0.45)
 	atk_t = cd; atk_cd = cd
 	var dmg := tot_dmg()
-	if cls == "rogue" and randf() < 0.25: dmg *= 2
+	var crit_ch: float = CRIT_CHANCE.get(cls, 0.0)
+	var is_crit := crit_ch > 0.0 and randf() < crit_ch
+	if is_crit: dmg = int(round(float(dmg) * CRIT_MULT.get(cls, 1.5)))
 	var fwd := _aim()
+	var hit_any := false
 	for en in get_tree().get_nodes_in_group("enemy"):
 		var to: Vector3 = en.global_position - global_position
 		to.y = 0
 		if to.length() < 1.9 and fwd.dot(to.normalized()) > 0.55:
 			en.take_damage(dmg + Util.li(0, 4))
+			en._apply_knockback(to.normalized() * 3.5)
+			hit_any = true
+	if hit_any:
+		if is_crit: _msg("Critical Strike!", Color("ffce42"))
+		_apply_camera_shake(0.025 + (0.04 if is_crit else 0.0))
 
 func _primary() -> void:
 	match cls:
@@ -315,10 +347,13 @@ func _holy_light() -> void:
 
 func take_damage(amt: int, src := "") -> void:
 	if dead or iframe > 0.0: return
-	amt = max(1, amt - tot_armor())
+	var armor := tot_armor()
+	var dr := float(armor) / (float(armor) + 25.0)
+	amt = max(1, int(round(float(amt) * (1.0 - dr))))
 	if blocking: amt = int(ceil(amt * 0.3))
 	hp -= amt
 	hurt_t = 0.4
+	_apply_camera_shake(0.04 + clampf(float(amt) / 60.0, 0.0, 0.06))
 	if Game.instance.hud: Game.instance.hud.flash(Color(0.75, 0.05, 0.05, 0.4))
 	if hp <= 0.0:
 		hp = 0.0
@@ -343,3 +378,11 @@ func gain_xp(amt: int) -> void:
 func _msg(t: String, c: Color) -> void:
 	if Game.instance and Game.instance.hud:
 		Game.instance.hud.message(t, c)
+
+func _apply_camera_shake(mag: float) -> void:
+	shake_t = 0.35
+	_shake_mag = maxf(_shake_mag, mag)
+
+func _apply_knockback(impulse: Vector3) -> void:
+	_kb_vel = impulse
+	_kb_t = 0.2

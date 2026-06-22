@@ -54,6 +54,8 @@ func _physics_process(dt: float) -> void:
 					owner_player.heal(int(round(dmg * life)))
 			else:
 				t.take_damage(dmg, kind)
+				if t.has_method("_apply_knockback"):
+					t._apply_knockback(dir * 2.5)
 			_hit[t] = true
 			if pierce <= 0:
 				queue_free()

@@ -15,6 +15,10 @@ var slow_t := 0.0
 var hit_flash := 0.0
 var has_key := false
 var enraged := false
+var _wind_t := 0.0
+var _winding_up := false
+var _kb_t := 0.0
+var _kb_vel := Vector3.ZERO
 
 var spr: Sprite3D
 var player: Player
@@ -51,10 +55,17 @@ func setup(t: String, ground_pos: Vector3) -> void:
 func body_center() -> Vector3:
 	return global_position + Vector3(0, float(def.scale) * 0.95, 0)
 
+func _apply_knockback(impulse: Vector3) -> void:
+	_kb_vel = impulse
+	_kb_t = 0.25
+
 func take_damage(amt: int, col: Color = Color("a01818")) -> void:
 	hp -= amt
 	hit_flash = 0.12
 	awake = true
+	if amt >= 12:
+		_winding_up = false
+		atk_t = maxf(atk_t, float(def.atk_cd) * 0.4)
 	if Game.instance and Game.instance.world:
 		Game.instance.world.spawn_spark(global_position + Vector3(0, float(def.scale), 0), col)
 	if def.get("boss", false) and not enraged and hp > 0 and hp < maxhp * 0.5:
@@ -82,7 +93,12 @@ func _die() -> void:
 func _physics_process(dt: float) -> void:
 	if hit_flash > 0.0:
 		hit_flash -= dt
-		spr.modulate = Color(2, 2, 2) if hit_flash > 0.0 else Color.WHITE
+		if hit_flash > 0.0:
+			spr.modulate = Color(2, 2, 2)
+		elif _winding_up:
+			spr.modulate = Color(1.8, 1.6, 0.2)
+		else:
+			spr.modulate = Color.WHITE
 	if slow_t > 0.0:
 		slow_t -= dt
 	if player == null or not is_instance_valid(player):
@@ -100,6 +116,29 @@ func _physics_process(dt: float) -> void:
 			awake = true
 		else:
 			return
+	# knockback phase — suspend AI while being launched
+	if _kb_t > 0.0:
+		_kb_t -= dt
+		velocity = _kb_vel * (maxf(0.0, _kb_t) / 0.25)
+		velocity.y = 0
+		move_and_slide()
+		return
+	# wind-up telegraph (melee enemies only)
+	if _winding_up:
+		_wind_t -= dt
+		if hit_flash <= 0.0:
+			spr.modulate = Color(1.8, 1.6, 0.2)
+		velocity = Vector3.ZERO
+		if _wind_t <= 0.0:
+			_winding_up = false
+			if hit_flash <= 0.0:
+				spr.modulate = Color.WHITE
+			if d < float(def.range) * 1.5:
+				player.take_damage(dmg + Util.li(0, 3), def.name)
+				var kb := to.normalized() * 4.5; kb.y = 0
+				player._apply_knockback(kb)
+			atk_t = float(def.atk_cd)
+		return
 	var spd: float = float(def.speed) * (0.45 if slow_t > 0.0 else 1.0) * (1.3 if enraged else 1.0)
 	var rng: float = float(def.range)
 	if def.has("keep_dist"):
@@ -124,6 +163,6 @@ func _physics_process(dt: float) -> void:
 			move_and_slide()
 		else:
 			velocity = Vector3.ZERO
-			if atk_t <= 0.0:
-				atk_t = float(def.atk_cd)
-				player.take_damage(dmg + Util.li(0, 3), def.name)
+			if atk_t <= 0.0 and not _winding_up:
+				_winding_up = true
+				_wind_t = 0.25
