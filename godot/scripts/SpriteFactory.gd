@@ -14,6 +14,7 @@ const THEMES := {
 
 var _wall := {}
 var _floor := {}
+var _door: Array = [null, null]   # [regular, locked]
 var _actor := {}
 var _draw_fns := {}
 
@@ -60,6 +61,45 @@ func floor_texture(theme: int) -> ImageTexture:
 		pt.rect_fill(c, Util.li(0, 62), Util.li(0, 62), 2, 2)
 	var tex := pt.texture()
 	_floor[theme] = tex
+	return tex
+
+func door_texture(locked: bool) -> ImageTexture:
+	var idx := 1 if locked else 0
+	if _door[idx] != null:
+		return _door[idx]
+	var pt := Painter.new(64, 64)
+	# wood tones — locked door is darker/more weathered
+	var bg    := Painter.hex("3c2008") if locked else Painter.hex("4a2c0c")
+	var plk_a := Painter.hex("5c3a14") if locked else Painter.hex("6e4a1c")
+	var plk_b := Painter.hex("523210") if locked else Painter.hex("624018")
+	pt.rect_fill(bg, 0, 0, 64, 64)
+	# 4 horizontal plank bands — 16px each in texture, stretched 3× in world
+	for row in range(4):
+		var y := row * 16
+		pt.rect_fill(plk_a if row % 2 == 0 else plk_b, 3, y + 2, 58, 12)
+		pt.rect_fill(Color(1, 1, 1, 0.10), 3, y + 2, 58, 2)   # top highlight
+		pt.rect_fill(Color(0, 0, 0, 0.28), 3, y + 12, 58, 2)  # bottom shadow
+	# subtle vertical grain marks
+	for gx in [14, 26, 40, 52]:
+		for row in range(4):
+			pt.rect_fill(Color(0, 0, 0, 0.09), gx, row * 16 + 2, 1, 12)
+	# iron hinges — left edge, top (~10%) and bottom (~85%) of face
+	var hm := Painter.hex("6e6458")
+	pt.rrect(hm, 1,  4, 9, 8)
+	pt.rrect(hm, 1, 53, 9, 8)
+	pt.rect_fill(Color(1, 1, 1, 0.18), 2,  5, 7, 2)
+	pt.rect_fill(Color(1, 1, 1, 0.18), 2, 54, 7, 2)
+	# door handle — right side, vertical center
+	pt.ell(Painter.hex("8a7050"), 57, 31, 4, 5)
+	pt.dot(Painter.hex("b89860"), 56, 29, 2.0)
+	if locked:
+		# gold keyhole escutcheon at face center
+		pt.rrect(Painter.hex("9c7c10"), 26, 22, 12, 18)
+		pt.rect_fill(Painter.hex("b89018"), 27, 23, 10, 16)
+		pt.ell(Painter.hex("1a0e04"), 32, 28, 3, 3)      # keyhole circle
+		pt.rect_fill(Painter.hex("1a0e04"), 30, 31, 4, 7) # keyhole slot
+	var tex := pt.texture()
+	_door[idx] = tex
 	return tex
 
 func ceil_color(theme: int) -> Color:

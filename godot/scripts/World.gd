@@ -96,7 +96,7 @@ func build(lv: Dictionary) -> void:
 func _spawn_door(x: int, y: int, tile: int) -> void:
 	var pos := Vector3(x + 0.5, WALL_H / 2.0, y + 0.5)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.60, 0.47, 0.06) if tile == 9 else Color(0.56, 0.40, 0.16)
+	mat.albedo_texture = Art.door_texture(tile == 9)
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	var mi := MeshInstance3D.new()
 	var bm := BoxMesh.new()
