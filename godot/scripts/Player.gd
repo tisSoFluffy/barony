@@ -99,7 +99,7 @@ func _ready() -> void:
 	add_child(col)
 	cam = Camera3D.new()
 	cam.position = Vector3(0, 0.55, 0)
-	cam.fov = 78
+	cam.fov = 90
 	add_child(cam)
 	if not OS.has_feature("headless"):
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

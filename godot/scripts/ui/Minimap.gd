@@ -4,10 +4,9 @@ class_name Minimap
 ## live enemies, and key items (stairs, portal, shop).  Revealed area grows as
 ## the player explores; unvisited tiles stay dark.
 
-const MS      := 36    # must match Dungeon.MS
-const CELL    := 4     # screen pixels per dungeon tile
+const CELL    := 2     # screen pixels per dungeon tile
 const PAD     := 5     # border padding (pixels)
-const REVEAL_R := 7.0  # fog-of-war reveal radius (tiles)
+const REVEAL_R := 10.0  # fog-of-war reveal radius (tiles)
 
 # tile colours
 const C_WALL   := Color(0.17, 0.13, 0.10)
@@ -17,17 +16,19 @@ const C_LOCKED := Color(0.60, 0.47, 0.06)
 const C_BG     := Color(0.04, 0.03, 0.02, 0.88)
 const C_BORDER := Color(0.50, 0.38, 0.16, 0.70)
 
+var ms: int = 1          # set in setup() from level.w
 var _tiles: PackedByteArray
 var _explored: PackedByteArray   # 1 = tile has been seen
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	size = Vector2(MS * CELL + PAD * 2, MS * CELL + PAD * 2)
 
 func setup(level: Dictionary) -> void:
+	ms = level.w
 	_tiles = level.tiles
 	_explored = PackedByteArray()
-	_explored.resize(MS * MS)
+	_explored.resize(ms * ms)
+	size = Vector2(ms * CELL + PAD * 2, ms * CELL + PAD * 2)
 
 func _process(_dt: float) -> void:
 	if _tiles.is_empty():
@@ -41,15 +42,15 @@ func _process(_dt: float) -> void:
 func _reveal(px: float, pz: float) -> void:
 	var r2 := REVEAL_R * REVEAL_R
 	var x0 := maxi(0, int(px - REVEAL_R) - 1)
-	var x1 := mini(MS - 1, int(px + REVEAL_R) + 1)
+	var x1 := mini(ms - 1, int(px + REVEAL_R) + 1)
 	var y0 := maxi(0, int(pz - REVEAL_R) - 1)
-	var y1 := mini(MS - 1, int(pz + REVEAL_R) + 1)
+	var y1 := mini(ms - 1, int(pz + REVEAL_R) + 1)
 	for ty in range(y0, y1 + 1):
 		for tx in range(x0, x1 + 1):
 			var dx := tx + 0.5 - px
 			var dy := ty + 0.5 - pz
 			if dx * dx + dy * dy <= r2:
-				_explored[ty * MS + tx] = 1
+				_explored[ty * ms + tx] = 1
 
 func _draw() -> void:
 	if _tiles.is_empty():
@@ -58,12 +59,12 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), C_BG)
 
 	# tiles
-	for ty in range(MS):
-		for tx in range(MS):
-			if _explored[ty * MS + tx] == 0:
+	for ty in range(ms):
+		for tx in range(ms):
+			if _explored[ty * ms + tx] == 0:
 				continue
 			var col: Color
-			match _tiles[ty * MS + tx]:
+			match _tiles[ty * ms + tx]:
 				0: col = C_FLOOR
 				8: col = C_DOOR
 				9: col = C_LOCKED
@@ -86,9 +87,9 @@ func _draw() -> void:
 			_: continue
 		var wp: Vector3 = it.pos
 		var ix := int(wp.x); var iz := int(wp.z)
-		if ix < 0 or iz < 0 or ix >= MS or iz >= MS:
+		if ix < 0 or iz < 0 or ix >= ms or iz >= ms:
 			continue
-		if _explored[iz * MS + ix] == 0:
+		if _explored[iz * ms + ix] == 0:
 			continue
 		draw_circle(Vector2(PAD + wp.x * CELL, PAD + wp.z * CELL), 2.5, col)
 
@@ -99,9 +100,9 @@ func _draw() -> void:
 		var ex := en.global_position.x
 		var ez := en.global_position.z
 		var eix := int(ex); var eiz := int(ez)
-		if eix < 0 or eiz < 0 or eix >= MS or eiz >= MS:
+		if eix < 0 or eiz < 0 or eix >= ms or eiz >= ms:
 			continue
-		if _explored[eiz * MS + eix] == 0:
+		if _explored[eiz * ms + eix] == 0:
 			continue
 		draw_circle(Vector2(PAD + ex * CELL, PAD + ez * CELL), 2.0, Color(0.90, 0.20, 0.16))
 

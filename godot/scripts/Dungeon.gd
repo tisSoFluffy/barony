@@ -3,7 +3,7 @@ class_name Dungeon
 ## Pure-logic procedural dungeon generator, ported from the web build's genLevel().
 ## All randomness routes through Util.* (seeded) so floors are reproducible.
 
-const MS := 36
+const MS := 72
 
 static func _in_bounds(x: int, y: int) -> bool:
 	return x >= 0 and x < MS and y >= 0 and y < MS
@@ -37,17 +37,17 @@ static func generate(depth: int) -> Dictionary:
 	var enemies: Array = []
 	var items: Array = []
 
-	# carve rooms
+	# carve rooms — larger chambers for DS feel
 	var attempts := 0
-	while attempts < 60 and rooms.size() < 9:
+	while attempts < 200 and rooms.size() < 14:
 		attempts += 1
-		var w := Util.ri(4, 8)
-		var h := Util.ri(4, 8)
-		var x := Util.ri(2, MS - w - 3)
-		var y := Util.ri(2, MS - h - 3)
+		var w := Util.ri(8, 18)
+		var h := Util.ri(8, 18)
+		var x := Util.ri(3, MS - w - 4)
+		var y := Util.ri(3, MS - h - 4)
 		var ok := true
 		for r in rooms:
-			if x < r.x + r.w + 2 and x + w + 2 > r.x and y < r.y + r.h + 2 and y + h + 2 > r.y:
+			if x < r.x + r.w + 3 and x + w + 3 > r.x and y < r.y + r.h + 3 and y + h + 3 > r.y:
 				ok = false
 				break
 		if not ok:
@@ -57,7 +57,7 @@ static func generate(depth: int) -> Dictionary:
 			for xx in range(x, x + w):
 				_set_tile(tiles, xx, yy, 0)
 
-	# corridors between consecutive rooms
+	# corridors — 2 tiles wide for DS hallway feel
 	for i in range(1, rooms.size()):
 		var ax := int(rooms[i - 1].cx)
 		var ay := int(rooms[i - 1].cy)
@@ -65,11 +65,14 @@ static func generate(depth: int) -> Dictionary:
 		var by := int(rooms[i].cy)
 		while ax != bx:
 			_set_tile(tiles, ax, ay, 0)
+			_set_tile(tiles, ax, ay + 1, 0)
 			ax += 1 if ax < bx else -1
 		while ay != by:
 			_set_tile(tiles, ax, ay, 0)
+			_set_tile(tiles, ax + 1, ay, 0)
 			ay += 1 if ay < by else -1
 		_set_tile(tiles, ax, ay, 0)
+		_set_tile(tiles, ax + 1, ay, 0)
 
 	# wall variety
 	for i in range(MS * MS):
@@ -108,7 +111,7 @@ static func generate(depth: int) -> Dictionary:
 		var r: Dictionary = rooms[Util.ri(1, rooms.size() - 1)]
 		var ex: float = Util.rf(r.x + 0.8, r.x + r.w - 0.8)
 		var ey: float = Util.rf(r.y + 0.8, r.y + r.h - 0.8)
-		if dist2(ex, ey, start.x, start.y) < 36.0:
+		if dist2(ex, ey, start.x, start.y) < 100.0:
 			continue
 		enemies.append({ "type": Util.weighted(pool), "pos": Vector2(ex, ey), "has_key": false })
 

@@ -4,7 +4,7 @@ class_name World
 ## ceiling, instanced walls (visual via MultiMesh, collision via StaticBody),
 ## and torch lights. Billboards for actors/items are added by Game.
 
-const WALL_H := 3.0
+const WALL_H := 4.5
 
 var level: Dictionary
 var _doors: Dictionary = {}   # Vector2i → [MeshInstance3D, StaticBody3D]

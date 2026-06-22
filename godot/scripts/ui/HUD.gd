@@ -223,7 +223,7 @@ func _process(dt: float) -> void:
 	cons_label.position = Vector2(bx + bw + 16, by + 8)
 
 	# minimap — top-right corner; info label sits just below it
-	var mm_w := Minimap.MS * Minimap.CELL + Minimap.PAD * 2
+	var mm_w := minimap.size.x
 	minimap.position = Vector2(vs.x - mm_w - 12, 8)
 	info.text = "%s  LV %d   DEPTH %d" % [player.def.name, player.level, Game.instance.depth]
 	info.position = Vector2(vs.x - mm_w - 12, mm_w + 14)
