@@ -138,13 +138,39 @@ func _process(dt: float) -> void:
 	crosshair.position = vs * 0.5 - Vector2(7, 14)
 
 	# weapon view bob + swing
-	var bob := Vector2(sin(t * 2.0) * 6.0, abs(cos(t * 2.0)) * 5.0)
-	var swing := 0.0
-	if player.atk_t > 0.0: swing = player.atk_t / 0.42
-	elif player.cast_t > 0.0: swing = player.cast_t / 0.45
+	var spd_factor := clampf(player.velocity.length() / 4.2, 0.0, 1.0)
+	var bob := Vector2(sin(t * 2.0) * 6.0 * spd_factor, abs(cos(t * 2.0)) * 5.0 * spd_factor)
+	var off_x := 0.0
+	var off_y := 0.0
+	var rot  := 0.0
+
+	if player.atk_t > 0.0 and player.atk_cd > 0.0:
+		var n := clampf(player.atk_t / player.atk_cd, 0.0, 1.0)
+		if n > 0.70:                             # wind-up: pull right and rise
+			var p := (1.0 - n) / 0.30
+			off_x = 22.0 * p;  off_y = -14.0 * p;  rot = 0.30 * p
+		elif n > 0.20:                           # impact arc: sweep left-down
+			var p := smoothstep(0.0, 1.0, (0.70 - n) / 0.50)
+			off_x = lerp(22.0, -18.0, p);  off_y = lerp(-14.0, 22.0, p);  rot = lerp(0.30, -0.22, p)
+		else:                                    # recovery: ease back to rest
+			var p := n / 0.20
+			off_x = lerp(0.0, -18.0, p);  off_y = lerp(0.0, 22.0, p);  rot = lerp(0.0, -0.22, p)
+
+	elif player.cast_t > 0.0 and player.cast_cd > 0.0:
+		var n := clampf(player.cast_t / player.cast_cd, 0.0, 1.0)
+		if n > 0.60:                             # raise to aim
+			var p := (1.0 - n) / 0.40
+			off_y = -22.0 * smoothstep(0.0, 1.0, p);  rot = -0.12 * p
+		elif n > 0.25:                           # fire recoil: kick back
+			var p := (0.60 - n) / 0.35
+			off_x = -12.0 * sin(p * PI);  off_y = lerp(-22.0, 18.0, smoothstep(0.0, 1.0, p));  rot = lerp(-0.12, 0.18, p)
+		else:                                    # return to rest
+			var p := n / 0.25
+			off_y = lerp(0.0, 18.0, p);  rot = lerp(0.0, 0.18, p)
+
 	weapon.size = weapon.custom_minimum_size
-	weapon.position = Vector2(vs.x * 0.5 - 120 + bob.x, vs.y - 300 + bob.y - swing * 26.0)
-	weapon.rotation = swing * 0.25
+	weapon.position = Vector2(vs.x * 0.5 - 120 + bob.x + off_x, vs.y - 300 + bob.y + off_y)
+	weapon.rotation = rot
 
 	# bars (bottom-left)
 	var bw := 200.0

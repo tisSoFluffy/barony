@@ -37,6 +37,8 @@ var _hunger_acc := 0.0
 
 var atk_t := 0.0
 var cast_t := 0.0
+var atk_cd := 0.0   # cooldown duration set when melee fires — lets HUD normalize swing time
+var cast_cd := 0.0  # cooldown duration set when cast fires
 var abil_t := 0.0
 var ab2_t := 0.0
 var iframe := 0.0
@@ -198,12 +200,12 @@ func _cast(kind: String) -> void:
 	if mana < cost:
 		_msg("Not enough %s!" % def.res.to_lower(), Color("8ab8ff")); return
 	mana -= cost
-	cast_t = float(d.get("cd", 0.4))
+	cast_t = float(d.get("cd", 0.4)); cast_cd = cast_t
 	_shoot(kind, _proj_dmg(kind))
 
 func _melee() -> void:
 	var cd: float = {"war": 0.42, "paladin": 0.52, "rogue": 0.3}.get(cls, 0.45)
-	atk_t = cd
+	atk_t = cd; atk_cd = cd
 	var dmg := tot_dmg()
 	if cls == "rogue" and randf() < 0.25: dmg *= 2
 	var fwd := _aim()
