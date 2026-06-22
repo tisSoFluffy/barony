@@ -240,7 +240,8 @@ func _physics_process(dt: float) -> void:
 			atk_t = float(def.atk_cd)
 			var kind: String = "arrow" if def.ranged == "axe" else "shadow"
 			var from := global_position + Vector3(0, 0.8, 0)
-			Game.instance.spawn_projectile("enemy", from, (player.global_position - from), kind, dmg, null)
+			var tgt := player.global_position + Vector3(0, 0.55, 0)
+			Game.instance.spawn_projectile("enemy", from, tgt - from, kind, dmg, null)
 	else:
 		if d > rng:
 			velocity = to.normalized() * spd

@@ -286,7 +286,7 @@ func _physics_process(dt: float) -> void:
 			elif food <= 0.0: take_damage(3, "starvation")
 
 func _aim() -> Vector3:
-	return (-global_transform.basis.z).normalized()
+	return (-cam.global_transform.basis.z).normalized()
 
 func _shoot(kind: String, dmg: int) -> void:
 	var from := global_position + cam.position + _aim() * 0.4
