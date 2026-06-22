@@ -148,27 +148,27 @@ func _process(dt: float) -> void:
 	if player.atk_t > 0.0 and player.atk_cd > 0.0:
 		var n := clampf(player.atk_t / player.atk_cd, 0.0, 1.0)
 		if player.cls == "rogue":
-			# stab: pull back then lunge straight forward
+			# undercut: draw dagger low-left → slash up-right
 			if n > 0.60:
 				var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.40)
-				off_x = 22.0 * p;  off_y = 36.0 * p;  rot = 0.12 * p
+				off_x = -15.0 * p;  off_y = 32.0 * p;  rot = -0.18 * p
 			elif n > 0.12:
 				var p := smoothstep(0.0, 1.0, (0.60 - n) / 0.48)
-				off_x = lerp(22.0, -6.0, p);  off_y = lerp(36.0, -55.0, p);  rot = lerp(0.12, -0.08, p)
+				off_x = lerp(-15.0, 28.0, p);  off_y = lerp(32.0, -50.0, p);  rot = lerp(-0.18, 0.15, p)
 			else:
 				var p := smoothstep(0.0, 1.0, (0.12 - n) / 0.12)
-				off_x = lerp(-6.0, 0.0, p);  off_y = lerp(-55.0, 0.0, p);  rot = lerp(-0.08, 0.0, p)
+				off_x = lerp(28.0, 0.0, p);  off_y = lerp(-50.0, 0.0, p);  rot = lerp(0.15, 0.0, p)
 		else:
-			# broad slash (war, paladin): pull right → sweep left-down → recover
-			if n > 0.58:
-				var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.42)
-				off_x = 50.0 * p;  off_y = -28.0 * p;  rot = 0.28 * p
+			# overhead diagonal cut: raise sword up → crash diagonally down-left
+			if n > 0.55:
+				var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.45)
+				off_x = 32.0 * p;  off_y = -130.0 * p;  rot = 0.32 * p
 			elif n > 0.10:
-				var p := smoothstep(0.0, 1.0, (0.58 - n) / 0.48)
-				off_x = lerp(50.0, -46.0, p);  off_y = lerp(-28.0, 40.0, p);  rot = lerp(0.28, -0.24, p)
+				var p := smoothstep(0.0, 1.0, (0.55 - n) / 0.45)
+				off_x = lerp(32.0, -28.0, p);  off_y = lerp(-130.0, 52.0, p);  rot = lerp(0.32, -0.28, p)
 			else:
 				var p := smoothstep(0.0, 1.0, (0.10 - n) / 0.10)
-				off_x = lerp(-46.0, 0.0, p);  off_y = lerp(40.0, 0.0, p);  rot = lerp(-0.24, 0.0, p)
+				off_x = lerp(-28.0, 0.0, p);  off_y = lerp(52.0, 0.0, p);  rot = lerp(-0.28, 0.0, p)
 
 	elif player.cast_t > 0.0 and player.cast_cd > 0.0:
 		var n := clampf(player.cast_t / player.cast_cd, 0.0, 1.0)
