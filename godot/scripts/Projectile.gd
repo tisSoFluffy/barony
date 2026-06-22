@@ -46,7 +46,8 @@ func _physics_process(dt: float) -> void:
 	for t in get_tree().get_nodes_in_group(grp):
 		if _hit.has(t):
 			continue
-		if global_position.distance_to(t.global_position) < 0.7:
+		var tc: Vector3 = t.body_center() if t.has_method("body_center") else t.global_position + Vector3(0, 0.7, 0)
+		if global_position.distance_to(tc) < 0.85:
 			if team == "player":
 				t.take_damage(dmg, Painter.hex(Classes.proj.get(kind, {}).get("trail", "ff9020")))
 				if life > 0.0 and owner_player and is_instance_valid(owner_player):

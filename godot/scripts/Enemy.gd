@@ -48,6 +48,9 @@ func setup(t: String, ground_pos: Vector3) -> void:
 	add_child(spr)
 	position = ground_pos
 
+func body_center() -> Vector3:
+	return global_position + Vector3(0, float(def.scale) * 0.95, 0)
+
 func take_damage(amt: int, col: Color = Color("a01818")) -> void:
 	hp -= amt
 	hit_flash = 0.12

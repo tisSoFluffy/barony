@@ -98,6 +98,7 @@ func _spawn_door(x: int, y: int, tile: int) -> void:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_texture = Art.door_texture(tile == 9)
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	mat.uv1_scale = Vector3(1.0, 1.0 / WALL_H, 1.0)
 	var mi := MeshInstance3D.new()
 	var bm := BoxMesh.new()
 	bm.size = Vector3(1.0, WALL_H, 1.0)
