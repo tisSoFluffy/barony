@@ -7,6 +7,7 @@ class_name World
 const WALL_H := 3.0
 
 var level: Dictionary
+var _doors: Dictionary = {}   # Vector2i → [MeshInstance3D, StaticBody3D]
 
 func build(lv: Dictionary) -> void:
 	level = lv
@@ -39,11 +40,12 @@ func build(lv: Dictionary) -> void:
 	cm.position = Vector3(ms / 2.0, WALL_H, ms / 2.0)
 	add_child(cm)
 
-	# ---- walls: gather solid tiles (incl. closed doors) ----
+	# ---- walls: solid tiles only — doors handled separately ----
 	var wpos: Array = []
 	for y in range(ms):
 		for x in range(ms):
-			if tiles[y * ms + x] > 0:
+			var t := tiles[y * ms + x]
+			if t > 0 and t != 8 and t != 9:
 				wpos.append(Vector2i(x, y))
 
 	var wmat := StandardMaterial3D.new()
@@ -73,6 +75,14 @@ func build(lv: Dictionary) -> void:
 		cs.position = Vector3(p.x + 0.5, WALL_H / 2.0, p.y + 0.5)
 		body.add_child(cs)
 
+	# ---- doors: individual nodes keyed by grid pos for runtime removal ----
+	_doors.clear()
+	for y in range(ms):
+		for x in range(ms):
+			var t := tiles[y * ms + x]
+			if t == 8 or t == 9:
+				_spawn_door(x, y, t)
+
 	# ---- torch lights ----
 	for it in lv.items:
 		if it.type == "torch":
@@ -82,6 +92,36 @@ func build(lv: Dictionary) -> void:
 			l.omni_range = 7.0
 			l.light_energy = 2.4
 			add_child(l)
+
+func _spawn_door(x: int, y: int, tile: int) -> void:
+	var pos := Vector3(x + 0.5, WALL_H / 2.0, y + 0.5)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.60, 0.47, 0.06) if tile == 9 else Color(0.56, 0.40, 0.16)
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(1.0, WALL_H, 1.0)
+	mi.mesh = bm
+	mi.material_override = mat
+	mi.position = pos
+	add_child(mi)
+	var sb := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	var bs := BoxShape3D.new()
+	bs.size = Vector3(1.0, WALL_H, 1.0)
+	cs.shape = bs
+	sb.position = pos
+	sb.add_child(cs)
+	add_child(sb)
+	_doors[Vector2i(x, y)] = [mi, sb]
+
+func open_door(grid_pos: Vector2i) -> void:
+	if not _doors.has(grid_pos):
+		return
+	var pair: Array = _doors[grid_pos]
+	pair[0].queue_free()
+	pair[1].queue_free()
+	_doors.erase(grid_pos)
 
 func make_billboard(spr: String, ground_pos: Vector3, world_h: float) -> Sprite3D:
 	var s := Sprite3D.new()

@@ -109,6 +109,7 @@ func _process(_dt: float) -> void:
 		_use_action()
 	if not (inv_ui.is_open or shop_ui.is_open) and not player.dead:
 		_check_pickups()
+		_check_doors()
 
 func _hdist(a: Vector3, b: Vector3) -> float:
 	return Vector2(a.x - b.x, a.z - b.z).length()
@@ -125,11 +126,47 @@ func _check_pickups() -> void:
 			if is_instance_valid(it.node): it.node.queue_free()
 			items.remove_at(i)
 
+func _check_doors() -> void:
+	var px := int(floor(player.global_position.x))
+	var pz := int(floor(player.global_position.z))
+	for dz in range(-1, 2):
+		for dx in range(-1, 2):
+			var tx := px + dx; var tz := pz + dz
+			if tx < 0 or tz < 0 or tx >= level.w or tz >= level.h:
+				continue
+			if level.tiles[tz * level.w + tx] == 8:
+				if _hdist(player.global_position, Vector3(tx + 0.5, 0, tz + 0.5)) < 1.2:
+					_open_door(Vector2i(tx, tz), false)
+
+func _open_door(grid_pos: Vector2i, locked: bool) -> void:
+	level.tiles[grid_pos.y * level.w + grid_pos.x] = 0
+	if world:
+		world.open_door(grid_pos)
+	if locked:
+		hud.message("You unlock the vault door.", Color("ffd84a"))
+	else:
+		hud.message("The door swings open.", Color("c8a040"))
+
 func _use_action() -> void:
 	if shop_ui.is_open:
 		shop_ui.close(); return
 	if inv_ui.is_open:
 		inv_ui.close(); return
+	# locked vault doors (tile 9) require a key
+	var px := int(floor(player.global_position.x))
+	var pz := int(floor(player.global_position.z))
+	for dz in range(-1, 2):
+		for dx in range(-1, 2):
+			var tx := px + dx; var tz := pz + dz
+			if tx < 0 or tz < 0 or tx >= level.w or tz >= level.h: continue
+			if level.tiles[tz * level.w + tx] == 9:
+				if _hdist(player.global_position, Vector3(tx + 0.5, 0, tz + 0.5)) < 1.8:
+					if player.keys > 0:
+						player.keys -= 1
+						_open_door(Vector2i(tx, tz), true)
+					else:
+						hud.message("The vault door is locked. (You need a key.)", Color("c8a040"))
+					return
 	for it in items:
 		var near: bool = _hdist(player.global_position, it.pos) < 2.2
 		if not near:
