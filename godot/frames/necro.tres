@@ -1,0 +1,94 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/attack_0.png" id="1_fev5t"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/attack_1.png" id="2_2sygg"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/attack_2.png" id="3_i7gt1"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/death_0.png" id="4_k5g3j"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/death_1.png" id="5_xwe1y"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/death_2.png" id="6_ntnu3"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/death_3.png" id="7_swnhx"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/death_4.png" id="8_8u2mg"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/hurt_0.png" id="9_ea8co"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/hurt_1.png" id="10_2e5t8"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/idle_0.png" id="11_yme4a"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/idle_1.png" id="12_4ekdf"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/idle_2.png" id="13_rl1dd"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/walk_0.png" id="14_g8rk5"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/walk_1.png" id="15_mcrtt"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/necro/walk_2.png" id="16_i88w1"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_fev5t")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_2sygg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_i7gt1")
+}],
+"loop": 0,
+"name": &"attack",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_k5g3j")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_xwe1y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_ntnu3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_swnhx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_8u2mg")
+}],
+"loop": 0,
+"name": &"death",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_ea8co")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_2e5t8")
+}],
+"loop": 0,
+"name": &"hurt",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("11_yme4a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_4ekdf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_rl1dd")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("14_g8rk5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_mcrtt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_i88w1")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 8.0
+}]

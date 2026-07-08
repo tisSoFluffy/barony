@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://b2en7f4b8n3ej"]
+
+[ext_resource type="Script" uid="uid://b8l2gfbfhtfer" path="res://scripts/Player.gd" id="1_player"]
+[ext_resource type="SpriteFrames" path="res://frames/warrior-base.tres" id="2_frames"]
+[ext_resource type="Script" uid="uid://b7epjvbpltg5e" path="res://scripts/WeaponOverlay.gd" id="3_overlay"]
+[ext_resource type="Texture2D" uid="uid://bmqnwxkr7d5ru" path="res://sprites/weapon-sword.png" id="4_sword"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
+radius = 0.28
+height = 1.4
+
+[node name="Player" type="CharacterBody3D" unique_id=1865710873]
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=601069083]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+shape = SubResource("CapsuleShape3D_player")
+
+[node name="Sprite" type="AnimatedSprite3D" parent="." unique_id=940130007]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.825, 0)
+pixel_size = 0.0025
+billboard = 2
+sprite_frames = ExtResource("2_frames")
+animation = &"attack"
+autoplay = "idle"
+
+[node name="WeaponOverlay" type="Sprite3D" parent="Sprite" unique_id=137213807]
+transform = Transform3D(0.20790862, 0.9781483, 0, -0.9781483, 0.20790862, 0, 0, 0, 1, -0.17, -0.1, 0.01)
+pixel_size = 0.0008
+texture = ExtResource("4_sword")
+script = ExtResource("3_overlay")

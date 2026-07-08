@@ -67,6 +67,11 @@ var proj: Dictionary = {
 				"c1": "3a1050", "c2": "9aff6a", "trail": "7aff50", "sfx": "fire" },
 	"dagger": { "speed": 11.0, "cost": 6, "cd": 0.30, "dmg_kind": "dmg", "dmg_add": 0, "pierce": 0, "life": 0.0,
 				"c1": "4a4a54", "c2": "ccd6e0", "trail": "aab4c0", "sfx": "swing" },
+	# Enemy-fired ranged projectiles (troll axe throw / necro shadow bolt).
+	"axe": { "speed": 10.0, "cost": 0, "cd": 0.0, "dmg_kind": "", "dmg_add": 0, "pierce": 0, "life": 0.0,
+			 "c1": "8a7048", "c2": "c8b088", "trail": "b09060", "sfx": "swing", "glow": 0.0 },
+	"bolt": { "speed": 8.0, "cost": 0, "cd": 0.0, "dmg_kind": "", "dmg_add": 0, "pierce": 0, "life": 0.0,
+			  "c1": "5a1a70", "c2": "b060ff", "trail": "9a40e0", "sfx": "fire", "glow": 0.8 },
 }
 
 # Self-centred ability bursts (Q). dmg_kind:

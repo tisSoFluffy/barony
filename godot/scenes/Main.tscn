@@ -1,6 +1,43 @@
-[gd_scene load_steps=2 format=3 uid="uid://b0baronymain01"]
+[gd_scene load_steps=5 format=3 uid="uid://b0baronymain01"]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/IsoCamera.gd" id="2_camera"]
+[ext_resource type="Environment" path="res://environments/hd2d_default.tres" id="3_env"]
+[ext_resource type="Script" path="res://scripts/World.gd" id="4_world"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
+
+[node name="World" type="Node3D" parent="."]
+script = ExtResource("4_world")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="World"]
+environment = ExtResource("3_env")
+
+[node name="DirectionalLight" type="DirectionalLight3D" parent="World"]
+transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 8, 0)
+light_color = Color(0.9, 0.75, 0.55, 1)
+light_energy = 0.3
+shadow_enabled = true
+
+[node name="Level" type="Node3D" parent="World"]
+
+[node name="Camera" type="Camera3D" parent="World"]
+script = ExtResource("2_camera")
+
+[node name="SpriteViewport" type="SubViewport" parent="."]
+size = Vector2i(320, 180)
+render_target_update_mode = 4
+
+[node name="SpriteLayer" type="CanvasLayer" parent="."]
+layer = 5
+
+[node name="SpriteDisplay" type="TextureRect" parent="SpriteLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture_filter = 0
+stretch_mode = 5
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 10

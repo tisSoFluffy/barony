@@ -185,10 +185,15 @@ const PALETTE := {
 	"prog": "2a2630", "pwarl": "2e2440",
 }
 
-func actor_texture(spr: String) -> ImageTexture:
+func actor_texture(spr: String) -> Texture2D:
 	if _actor.has(spr):
 		return _actor[spr]
-	var tex: ImageTexture
+	var path := "res://sprites/%s.png" % spr
+	var tex: Texture2D
+	if ResourceLoader.exists(path):
+		tex = load(path)
+		_actor[spr] = tex
+		return tex
 	if _draw_fns.has(spr):
 		var rec: Array = _draw_fns[spr]
 		var pt := Painter.new(rec[0], rec[1])

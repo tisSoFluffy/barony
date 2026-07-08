@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__godot__get_debug_output",
+      "mcp__godot__run_project",
+      "mcp__godot__stop_project",
+      "Bash(/Applications/Godot.app/Contents/MacOS/Godot --headless --path /Users/josh/Documents/barony/godot *)",
+      "Bash(/Applications/Godot.app/Contents/MacOS/Godot --path /Users/josh/Documents/barony/godot *)",
+      "Bash(pip3 show *)",
+      "Bash(brew list *)"
+    ]
+  }
+}

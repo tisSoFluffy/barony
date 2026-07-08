@@ -1,0 +1,1090 @@
+[gd_scene load_steps=25 format=3 uid="uid://57473pq1jtnv"]
+
+[ext_resource type="PackedScene" uid="uid://to5y8ejmaf40" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Terrain_Default.prefab.tscn" id="1_sgeyh"]
+[ext_resource type="Environment" uid="uid://m5scmo23q4jh" path="res://Assets/EmaceArt_LavaPlant/PostProcessing/LavaPlant_PostPprocessProfile.res" id="1_wpsdi"]
+[ext_resource type="PackedScene" uid="uid://cg4m8mbdf7p0q" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Clif_01e_PRE.prefab.tscn" id="2_wpsdi"]
+[ext_resource type="PackedScene" uid="uid://dp17jycmcx1eh" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Plant_01b_Default.prefab.tscn" id="3_ox2jk"]
+[ext_resource type="PackedScene" uid="uid://de5pyl8cly2ks" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Plant_01a_Default.prefab.tscn" id="4_2croe"]
+[ext_resource type="PackedScene" uid="uid://j53gngl04fau" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Plant_01d_Default.prefab.tscn" id="5_v7wks"]
+[ext_resource type="PackedScene" uid="uid://fp572wnx4jym" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Plant_01e_Default.prefab.tscn" id="6_iyw7a"]
+[ext_resource type="PackedScene" uid="uid://c0mnmulsr772p" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Plant_01c_Default.prefab.tscn" id="7_k1imy"]
+[ext_resource type="PackedScene" uid="uid://bwpjgj3xpcwii" path="res://Assets/EmaceArt_LavaPlant/Tscn/Rocks_01c_Default.prefab.tscn" id="8_70cjc"]
+[ext_resource type="PackedScene" uid="uid://cyqv3yf6wl1uq" path="res://Assets/EmaceArt_LavaPlant/Tscn/Rocks_01b_Default.prefab.tscn" id="9_cks05"]
+[ext_resource type="PackedScene" uid="uid://cmnclvan0ong8" path="res://Assets/EmaceArt_LavaPlant/Tscn/Rocks_01d_Default.prefab.tscn" id="10_k1rxw"]
+[ext_resource type="PackedScene" uid="uid://yv82kxcuxdwa" path="res://Assets/EmaceArt_LavaPlant/Tscn/Rocks_01a_Default.prefab.tscn" id="11_rsvqp"]
+[ext_resource type="PackedScene" uid="uid://ceyo6o5a1hwss" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Fruit_01b_Default.prefab.tscn" id="12_xdadk"]
+[ext_resource type="PackedScene" uid="uid://cib3nyahw0cor" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Fruit_01a_Default.prefab.tscn" id="13_ftlrn"]
+[ext_resource type="PackedScene" uid="uid://4g2vv4v1luac" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Fruit_01d_Default.prefab.tscn" id="14_jnv8i"]
+[ext_resource type="PackedScene" uid="uid://cbrasnwkcwbhj" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Fruit_PRE.prefab.tscn" id="15_cpskt"]
+[ext_resource type="PackedScene" uid="uid://tgeuksicehik" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Fruit_01c_Default.prefab.tscn" id="16_owqmc"]
+[ext_resource type="PackedScene" uid="uid://csrovv75x4ydf" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Puddle_01a_Default.prefab.tscn" id="17_q61wq"]
+[ext_resource type="PackedScene" uid="uid://de0ses2q7efkj" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Puddle_01c_Default.prefab.tscn" id="18_pgaig"]
+[ext_resource type="PackedScene" uid="uid://b55tmgr211710" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Puddle_01b_Default.prefab.tscn" id="19_2sxcv"]
+[ext_resource type="PackedScene" uid="uid://bhlrtmyv0ufv2" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Clif_01c_Default.prefab.tscn" id="20_33hwj"]
+[ext_resource type="PackedScene" uid="uid://tcaccmg21mxe" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Clif_01b_Default.prefab.tscn" id="21_cgcdo"]
+[ext_resource type="PackedScene" uid="uid://cxo2hcyq05xex" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Clif_01a_Default.prefab.tscn" id="22_weoqb"]
+[ext_resource type="PackedScene" uid="uid://b3e0m7kubofiy" path="res://Assets/EmaceArt_LavaPlant/Tscn/EA_Clif_01d_Default.prefab.tscn" id="23_6vi7x"]
+
+[node name="RootNode3D" type="Node3D"]
+transform = Transform3D(-0.794425, 0, -0.607362, 0, 1, 0, 0.607362, 0, -0.794425, 0, 0, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("1_wpsdi")
+
+[node name="EA_Terrain_Default" parent="." instance=ExtResource("1_sgeyh")]
+
+[node name="EA_Clif_01e_PRE (2)" parent="." instance=ExtResource("2_wpsdi")]
+transform = Transform3D(4.11936, 0, 0, 0, 4.11936, 0, 0, 0, 4.11936, -101.9, 2.48, 79.1)
+
+[node name="EA_Plants" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.98893, 2.93349, 15.3079)
+
+[node name="EA_Plant_01b_Default (2)" parent="EA_Plants" instance=ExtResource("3_ox2jk")]
+transform = Transform3D(-0.77622, 0.0500945, -0.391991, -0.0225292, 0.856982, 0.154131, 0.394536, 0.147494, -0.762411, 7.58529, -0.259773, -24.0625)
+
+[node name="EA_Plant_01b_Default (3)" parent="EA_Plants" instance=ExtResource("3_ox2jk")]
+transform = Transform3D(0.414686, -0.0402044, 1.02047, 0.210349, 1.08113, -0.0428846, -0.999362, 0.210878, 0.414417, 2.3489, -2.35607, -22.9416)
+
+[node name="EA_Plant_01a_Default" parent="EA_Plants" instance=ExtResource("4_2croe")]
+transform = Transform3D(0.0785207, 0.0927632, -0.875648, 0.159261, 0.863127, 0.105718, 0.866025, -0.167139, 0.0599517, -4.55368, -2.35978, 0.517552)
+
+[node name="EA_Plant_01a_Default (1)" parent="EA_Plants" instance=ExtResource("4_2croe")]
+transform = Transform3D(1.4986, 0.16111, 0.636984, -0.130685, 1.62775, -0.104244, -0.643915, 0.0445983, 1.50363, 16.2711, -2.13349, -25.8879)
+
+[node name="EA_Plant_01a_Default (3)" parent="EA_Plants" instance=ExtResource("4_2croe")]
+transform = Transform3D(0.221245, 0.124661, 0.884499, -0.283979, 0.873767, -0.0521148, -0.846898, -0.260422, 0.248543, -2.60985, 4.08987, 12.4031)
+
+[node name="EA_Plant_01a_Default (2)" parent="EA_Plants" instance=ExtResource("4_2croe")]
+transform = Transform3D(0.704994, 0.0981283, 0.95594, -0.0309513, 1.18731, -0.0990523, -0.960465, 0.0337662, 0.704865, 15.8961, -1.47149, -1.02194)
+
+[node name="EA_Plant_01d_Default" parent="EA_Plants" instance=ExtResource("5_v7wks")]
+transform = Transform3D(1.37608, 0.0764421, 0.24777, -0.0632411, 1.3966, -0.0796476, -0.251463, 0.0670803, 1.3759, 23.8911, -2.49349, -0.537939)
+
+[node name="EA_Plant_01b_Default (1)" parent="EA_Plants" instance=ExtResource("3_ox2jk")]
+transform = Transform3D(-1.60285, -0.0384846, -0.467091, 0.0978131, 1.60021, -0.467496, 0.458354, -0.476065, -1.53364, -4.71493, -2.29149, -8.04794)
+
+[node name="EA_Plant_01e_Default" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(0.989669, -0.143042, 0.00975629, 0.143042, 0.980455, -0.135079, 0.00975629, 0.135079, 0.990787, 2.34257, -1.7336, -5.37517)
+
+[node name="EA_Plant_01e_Default2" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(2.75709, 0.429283, 1.24341, -0.367505, 3.02396, -0.229122, -1.26305, 0.0572045, 2.78089, 34.8635, -3.28763, -16.4047)
+
+[node name="EA_Plant_01e_Default3" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(0.397388, 0.00075877, 0.732973, 0.17833, 0.808613, -0.0975201, -0.710949, 0.203251, 0.385237, -46.271, -2.16027, -17.7044)
+
+[node name="EA_Plant_01e_Default4" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(0.733048, 0.179576, 0.542363, -0.133189, 0.91169, -0.121845, -0.555577, 0.0183791, 0.744823, 5.07107, 2.76651, 20.3221)
+
+[node name="EA_Plant_01e_Default5" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(-0.121548, 0.266979, -1.30639, -0.0525418, 1.30983, 0.272571, 1.33236, 0.0760095, -0.10843, 17.3714, -2.10607, -33.2263)
+
+[node name="EA_Plant_01e_Default6" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(0.509966, 0.122035, -0.996192, 0.421756, 0.987908, 0.336924, 0.910721, -0.525836, 0.401797, -4.00506, 2.99817, 9.07063)
+
+[node name="EA_Plant_01e_Default7" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(1.12519, -0.0357203, -0.00495334, 0.0357203, 1.08272, 0.306252, -0.00495334, -0.306252, 1.0833, -32.9057, -2.10799, -8.09137)
+
+[node name="EA_Plant_01e_Default8" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(0.617051, -0.0193629, -1.04211, 0.242386, 1.1805, 0.121587, 1.01371, -0.27048, 0.605263, 13.3811, 0.706509, 21.7521)
+
+[node name="EA_Plant_01e_Default9" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(-0.27698, 0.370655, 1.40657, -0.181272, 1.41189, -0.407751, -1.44325, -0.248466, -0.218728, 1.19045, 4.24488, 18.7814)
+
+[node name="EA_Plant_01e_Default10" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(1.00772, -0.176621, -0.218721, 0.231489, 0.983173, 0.272616, 0.159521, -0.310984, 0.986092, -41.5033, -0.830725, -6.401)
+
+[node name="EA_Plant_01e_Default11" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(0.790727, 0.31132, -0.72237, -0.159838, 1.06649, 0.284663, 0.770188, -0.0982919, 0.80071, 23.3411, 0.726509, 25.8421)
+
+[node name="EA_Plant_01e_Default12" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(-2.16854, 0.192863, 0.453458, 0.265232, 2.18152, 0.340558, -0.415298, 0.386174, -2.15029, 12.6711, -2.07349, -21.9579)
+
+[node name="EA_Plant_01e_Default13" parent="EA_Plants" instance=ExtResource("6_iyw7a")]
+transform = Transform3D(0.691433, -0.0700638, -2.04028, 0.0915413, 2.15303, -0.0429129, 2.03943, -0.0728863, 0.693647, 8.17107, -2.88349, -5.86794)
+
+[node name="EA_Plant_01c_Default" parent="EA_Plants" instance=ExtResource("7_k1imy")]
+transform = Transform3D(-0.762228, -0.0704206, 0.485477, -0.134218, 0.892762, -0.0812314, -0.47184, -0.140193, -0.761152, 0.805952, -2.20596, 0.7143)
+
+[node name="EA_Plant_01c_Default2" parent="EA_Plants" instance=ExtResource("7_k1imy")]
+transform = Transform3D(-0.0392519, -0.00229774, -1.54796, -0.182405, 1.53768, 0.00234281, 1.53718, 0.182406, -0.0392493, -2.50363, 4.27886, 16.0851)
+
+[node name="EA_Plant_01c_Default3" parent="EA_Plants" instance=ExtResource("7_k1imy")]
+transform = Transform3D(0.218606, 0.21141, 0.982918, -0.419423, 0.933352, -0.107468, -0.913732, -0.37785, 0.284489, 16.5889, 1.14559, 22.6838)
+
+[node name="EA_Plant_01c_Default4" parent="EA_Plants" instance=ExtResource("7_k1imy")]
+transform = Transform3D(0.272052, 0.357019, -0.858986, -0.0561411, 0.899638, 0.356135, 0.92853, -0.0502096, 0.273209, 5.52107, 3.45651, 22.6321)
+
+[node name="EA_Plant_01c_Default5" parent="EA_Plants" instance=ExtResource("7_k1imy")]
+transform = Transform3D(-1.37873, -0.250896, -0.293042, -0.217922, 1.40393, -0.176709, 0.318328, -0.125568, -1.39019, -2.74551, 4.60222, 22.8928)
+
+[node name="EA_Plant_01c_Default6" parent="EA_Plants" instance=ExtResource("7_k1imy")]
+transform = Transform3D(0.821873, -0.451322, -0.959451, 0.795247, 1.0653, 0.180104, 0.701298, -0.679091, 0.920179, -25.6306, 5.6212, 12.9526)
+
+[node name="EA_Plant_01c_Default7" parent="EA_Plants" instance=ExtResource("7_k1imy")]
+transform = Transform3D(0.887965, 0.17815, 0.0376624, -0.17815, 0.811197, 0.363123, 0.0376624, -0.363123, 0.829675, -39.8682, -1.882, -9.12093)
+
+[node name="EA_Rocks" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.50697, 0.216098, 4.73789)
+
+[node name="Rocks_01c_Default (2)" parent="EA_Rocks" instance=ExtResource("8_70cjc")]
+transform = Transform3D(0.472265, 0.228688, -0.410399, -0.0824763, 0.613227, 0.246802, 0.462519, -0.124157, 0.463057, 8.52349, -1.15411, 25.4816)
+
+[node name="Rocks_01b_Default (1)" parent="EA_Rocks" instance=ExtResource("9_cks05")]
+transform = Transform3D(0.997975, 0.0619142, -0.0146038, -0.0619142, 0.892675, -0.446427, -0.0146038, 0.446427, 0.894701, -0.146972, 4.8939, -34.2079)
+
+[node name="Rocks_01d_Default (3)" parent="EA_Rocks" instance=ExtResource("10_k1rxw")]
+transform = Transform3D(0.390732, -0.881433, 0.265338, 0.0193779, 0.296065, 0.954971, -0.9203, -0.367996, 0.132762, 39.723, -5.7161, -3.71789)
+
+[node name="Rocks_01a_Default" parent="EA_Rocks" instance=ExtResource("11_rsvqp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.10697, -0.216098, 36.8621)
+
+[node name="Rocks_01d_Default" parent="EA_Rocks" instance=ExtResource("10_k1rxw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.807, -0.216098, -16.5979)
+
+[node name="Rocks_01d_Default (1)" parent="EA_Rocks" instance=ExtResource("10_k1rxw")]
+transform = Transform3D(0.740125, 0.302358, -0.600662, 0.540171, 0.264711, 0.798839, 0.400537, -0.915701, 0.0325942, 21.5427, -3.17309, 40.5818)
+
+[node name="Rocks_01c_Default" parent="EA_Rocks" instance=ExtResource("8_70cjc")]
+transform = Transform3D(0.993508, 2.32831e-09, 0.113766, 0.0100421, 0.996097, -0.0876974, -0.113321, 0.0882705, 0.98963, -14.987, -1.2161, 8.02211)
+
+[node name="Rocks_01c_Default (1)" parent="EA_Rocks" instance=ExtResource("8_70cjc")]
+transform = Transform3D(-0.0609506, 0.367856, 0.927883, 0.556845, 0.784035, -0.27425, -0.828377, 0.499971, -0.252626, -10.9515, -1.42064, -15.8732)
+
+[node name="Rocks_01d_Default (2)" parent="EA_Rocks" instance=ExtResource("10_k1rxw")]
+transform = Transform3D(-0.350887, 0.902303, -0.250456, -0.00759381, 0.264712, 0.964298, 0.936388, 0.340261, -0.0860319, -4.28293, -1.13557, -35.9728)
+
+[node name="Rocks_01b_Default" parent="EA_Rocks" instance=ExtResource("9_cks05")]
+transform = Transform3D(0.996521, 0.0829355, -0.00822723, -0.079165, 0.972808, 0.217664, 0.0260556, -0.216255, 0.975989, -14.4276, 8.07101, -4.51898)
+
+[node name="lights" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.60889, 5.77556, 17.2933)
+
+[node name="Directional Light" type="Node3D" parent="lights"]
+transform = Transform3D(0.898028, -0.0814556, -0.432333, 0, 0.98271, -0.185152, 0.439939, 0.166272, 0.882501, -4.60889, -2.77556, -17.2933)
+
+[node name="Light" type="DirectionalLight3D" parent="lights/Directional Light"]
+transform = Transform3D(-0.267707, -0.231626, 0.935245, 0.703575, 0.616172, 0.353996, -0.658266, 0.752782, -0.00198688, 0, 0, 0)
+light_color = Color(1, 0.885502, 0, 1)
+light_energy = 1.1
+light_bake_mode = 0
+shadow_enabled = true
+shadow_bias = 0.658
+shadow_normal_bias = 0.0
+
+[node name="Reflection Probe" type="Node3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.77111, 0.864445, -14.0133)
+
+[node name="ReflectionProbe" type="ReflectionProbe" parent="lights/Reflection Probe"]
+max_distance = 1000.0
+size = Vector3(84.14, 20.78, 63.44)
+box_projection = true
+interior = true
+cull_mask = 16777215
+
+[node name="Point Light (6)" type="Node3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6589, -1.75556, -15.3833)
+
+[node name="Light" type="OmniLight3D" parent="lights/Point Light (6)"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+light_color = Color(0, 0.23608, 1, 1)
+light_energy = 0.97
+light_bake_mode = 0
+shadow_bias = 0.05
+omni_range = 35.3
+
+[node name="Point Light (3)" type="Node3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.7511, 0.184445, 23.8167)
+
+[node name="Light" type="OmniLight3D" parent="lights/Point Light (3)"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+light_color = Color(0.912625, 1, 0, 1)
+light_energy = 0.38
+light_bake_mode = 0
+shadow_bias = 0.05
+omni_range = 35.3
+
+[node name="Point Light (5)" type="Node3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.78889, -1.75556, -20.9633)
+
+[node name="Light" type="OmniLight3D" parent="lights/Point Light (5)"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+light_color = Color(0, 0.261906, 1, 1)
+light_energy = 0.98
+light_bake_mode = 0
+shadow_bias = 0.05
+omni_range = 35.3
+
+[node name="Point Light (2)" type="Node3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5311, 0.184445, 19.4967)
+
+[node name="Light" type="OmniLight3D" parent="lights/Point Light (2)"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+light_color = Color(0.912625, 1, 0, 1)
+light_energy = 0.46
+light_bake_mode = 0
+shadow_bias = 0.05
+omni_range = 35.3
+
+[node name="Point Light (4)" type="Node3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.1489, -0.815555, -9.96333)
+
+[node name="Light" type="OmniLight3D" parent="lights/Point Light (4)"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+light_color = Color(0.912625, 1, 0, 1)
+light_energy = 0.19
+light_bake_mode = 0
+shadow_bias = 0.05
+omni_range = 35.3
+
+[node name="Point Light (1)" type="Node3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.26889, 2.93444, 11.8567)
+
+[node name="Light" type="OmniLight3D" parent="lights/Point Light (1)"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+light_color = Color(0.912625, 1, 0, 1)
+light_energy = 0.15
+light_bake_mode = 0
+shadow_bias = 0.05
+omni_range = 35.3
+
+[node name="Point Light" type="Node3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.57889, 2.93444, 22.4467)
+
+[node name="Light" type="OmniLight3D" parent="lights/Point Light"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+light_color = Color(0.912625, 1, 0, 1)
+light_energy = 0.58
+light_bake_mode = 0
+shadow_bias = 0.05
+omni_range = 35.3
+
+[node name="Global Volume" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.0445, 11.2356, 15.4321)
+
+[node name="Main Camera" type="Node3D" parent="."]
+transform = Transform3D(0.643324, 0.109192, -0.757767, 5.88596e-07, 0.989777, 0.142624, 0.765594, -0.0917542, 0.636748, 43.3001, 3.49433, -20.2567)
+
+[node name="Camera" type="Camera3D" parent="Main Camera"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+cull_mask = 1
+fov = 60.0
+near = 0.3
+far = 1000.0
+
+[node name="EA_Clif_01e_PRE" parent="." instance=ExtResource("2_wpsdi")]
+transform = Transform3D(2.5733, 0, 0, 0, 2.5733, 0, 0, 0, 2.5733, -105.6, 2.48, -13.2)
+
+[node name="EA_Clif_01e_PRE (1)" parent="." instance=ExtResource("2_wpsdi")]
+transform = Transform3D(2.5733, 0, 0, 0, 2.5733, 0, 0, 0, 2.5733, -15.5, 2.48, 57.6)
+
+[node name="EA_Fruit" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.77131, 1.82167, 4.48646)
+
+[node name="EA_Fruit_01b_Default" parent="EA_Fruit" instance=ExtResource("12_xdadk")]
+transform = Transform3D(-3.4522, 8.23068e-07, -3.01801e-07, 8.23069e-07, 3.4522, -1.2346e-06, 3.01801e-07, -1.2346e-06, -3.4522, -33.9203, 4.55833, -1.01046)
+
+[node name="EA_Fruit_01a_Default" parent="EA_Fruit" instance=ExtResource("13_ftlrn")]
+transform = Transform3D(2.69585, -7.7913e-07, 0, 8.03425e-07, 2.61433, 0, 0, 0, 2.69585, -42.4123, 4.80833, 1.46354)
+
+[node name="EA_Fruit_01d_Default" parent="EA_Fruit" instance=ExtResource("14_jnv8i")]
+transform = Transform3D(3.26683, 0, 0, 0, 3.26683, 0, 0, 0, 3.26683, -46.7963, 3.85133, -3.71646)
+
+[node name="EA_Fruit_PRE (4)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.720605, 0, 0.774568, 0, 1.05794, 0, -0.774568, 0, -0.720605, 8.72401, -1.05229, 3.44059)
+
+[node name="EA_Fruit_PRE (67)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.12164, 0, 0.168531, 0, 1.13423, 0, -0.168531, 0, 1.12164, 15.9315, -1.35625, -8.47688)
+
+[node name="EA_Fruit_PRE (62)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.730423, 0, -0.00213566, 0, 0.730426, 0, 0.00213566, 0, 0.730423, 14.0843, -1.35625, -9.02464)
+
+[node name="EA_Fruit_PRE" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7577, 0.328334, 8.7967)
+
+[node name="EA_Fruit_PRE (98)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.888497, 0, -1.26039, 0, 1.54208, 0, 1.26039, 0, 0.888497, -17.1361, -1.39167, -2.30595)
+
+[node name="EA_Fruit_PRE (9)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.565542, 0, 0.886043, 0, 1.05115, 0, -0.886043, 0, -0.565542, 8.80194, 0.816764, 8.39646)
+
+[node name="EA_Fruit_PRE (58)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.0853706, 0, 0.682535, 0, 0.687853, 0, -0.682535, 0, -0.0853706, 15.5525, -1.35625, -0.763812)
+
+[node name="EA_Fruit_PRE (105)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-3.15306, 0, 1.68991, 0, 3.57737, 0, -1.68991, 0, -3.15306, 32.6887, -0.663166, -10.6465)
+
+[node name="EA_Fruit_PRE (7)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.20947, 0, 0.0771062, 0, 1.21192, 0, -0.0771062, 0, -1.20947, 13.3184, -1.32667, 2.93176)
+
+[node name="EA_Fruit_PRE (64)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.279367, 0, 0.642142, 0, 0.70028, 0, -0.642142, 0, -0.279367, 16.5387, -1.35625, -9.06646)
+
+[node name="EA_Fruit_PRE (72)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.265236, 0.176293, 1.25791, -0.370558, 1.23988, -0.0956329, -1.21495, -0.339676, 0.303783, -11.4851, -0.192802, 4.09371)
+
+[node name="EA_Fruit_PRE (24)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.22, 0, 0, 0, 1.22, 0, 0, 0, 1.22, 10.5107, -1.35625, 1.20326)
+
+[node name="EA_Fruit_PRE (22)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.12114, 0, 0.171809, 0, 1.13423, 0, -0.171809, 0, 1.12114, 9.27374, -1.35625, 2.41457)
+
+[node name="EA_Fruit_PRE (16)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.74502, 1.04004, -15.3231)
+
+[node name="EA_Fruit_PRE (68)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.14347, 0, -0.272464, 0, 1.17549, 0, 0.272464, 0, -1.14347, 15.2442, -1.35625, -8.43187)
+
+[node name="EA_Fruit_PRE (77)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.32731, 0.266177, 0.738532, 0.363562, 1.4942, 0.114871, -0.695774, 0.272988, -1.34885, -11.7859, -0.391328, 6.80038)
+
+[node name="EA_Fruit_PRE (57)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.0753, 0, 0.576313, 0, 1.22, 0, -0.576313, 0, -1.0753, 13.9687, -1.35625, -0.106458)
+
+[node name="EA_Fruit_PRE (10)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.812347, 0, 0.637367, 0, 1.03254, 0, -0.637367, 0, 0.812347, 16.0567, -0.660666, 7.50954)
+
+[node name="EA_Fruit_PRE (32)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.208103, 0, 0.668645, 0, 0.70028, 0, -0.668645, 0, 0.208103, 3.17869, -1.35625, -8.97646)
+
+[node name="EA_Fruit_PRE (107)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-5.42832, 0, 2.90935, 0, 6.15881, 0, -2.90935, 0, -5.42832, 27.1487, -0.663166, -5.77646)
+
+[node name="EA_Fruit_PRE (3)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.789792, 0, -0.223769, 0, 0.820879, 0, 0.223769, 0, -0.789792, 6.08612, 0.64026, 6.52842)
+
+[node name="EA_Fruit_PRE (93)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.462231, 0, -0.526056, 0, 0.70028, 0, 0.526056, 0, 0.462231, -5.57242, -1.39167, -10.6951)
+
+[node name="EA_Fruit_PRE (65)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.21999, 0, -0.00356711, 0, 1.22, 0, 0.00356711, 0, 1.21999, 16.7829, -1.35625, -9.98438)
+
+[node name="EA_Fruit_PRE (102)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.229607, 0, -0.6484, 0, 0.687853, 0, 0.6484, 0, -0.229607, -16.3613, -1.39167, -2.11646)
+
+[node name="EA_Fruit_PRE (53)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.35918, 0, 0.728461, 0, 1, 0, -0.728461, 0, -1.35918, 14.9222, -1.35625, -0.274964)
+
+[node name="EA_Fruit_PRE (104)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.883796, 0, 0.775032, 0, 1.17549, 0, -0.775032, 0, -0.883796, -16.0555, -1.39167, -1.71581)
+
+[node name="EA_Fruit_PRE (38)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.303483, 0, 0.664395, 0, 0.730426, 0, -0.664395, 0, -0.303483, -14.377, -1.35625, 1.0856)
+
+[node name="EA_Fruit_PRE (106)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-5.42832, 0, 2.90935, 0, 6.15881, 0, -2.90935, 0, -5.42832, 35.4587, -0.663166, -4.57646)
+
+[node name="EA_Fruit_PRE (100)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.362131, 0, 0.599378, 0, 0.70028, 0, -0.599378, 0, 0.362131, -16.9141, -1.39167, -2.87388)
+
+[node name="EA_Fruit_PRE (108)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-5.42832, 0, 2.90935, 0, 6.15881, 0, -2.90935, 0, -5.42832, 27.8887, -1.22167, -22.8365)
+
+[node name="EA_Fruit_PRE (44)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.725639, 0, -0.924779, 0, 1.17549, 0, 0.924779, 0, 0.725639, -14.3236, -1.35625, -0.215969)
+
+[node name="EA_Fruit_PRE (54)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.643791, 0, 0.345044, 0, 0.730426, 0, -0.345044, 0, -0.643791, 16.8019, -1.35625, 0.314161)
+
+[node name="EA_Fruit_PRE (89)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.01649, 0, -0.503223, 0, 1.13423, 0, 0.503223, 0, -1.01649, -10.3729, -1.39167, -7.74609)
+
+[node name="EA_Fruit_PRE (29)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.16441, 0, -1.01102, 0, 1.54208, 0, 1.01102, 0, 1.16441, 5.48869, -1.35625, -8.29646)
+
+[node name="EA_Fruit_PRE (81)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.934036, 0.143931, 0.478743, -0.00414384, 1.01228, -0.312421, -0.499894, -0.277322, -0.891926, -10.8991, -0.574064, 2.7879)
+
+[node name="EA_Fruit_PRE (42)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.345289, 0, 0.594909, 0, 0.687853, 0, -0.594909, 0, 0.345289, -14.7187, -1.35625, -0.528803)
+
+[node name="EA_Fruit_PRE (78)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.899114, 0.0418941, 0.475085, -0.0978564, 0.976065, -0.271268, -0.466781, -0.285319, -0.858239, -13.5562, -0.392176, 2.71969)
+
+[node name="EA_Fruit_PRE (18)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.974549, 0.344768, -0.0164198, -0.223573, 1.4865, -0.144238, -0.0164198, 0.222427, 0.989407, 12.9995, -0.884034, -13.3356)
+
+[node name="EA_Fruit_PRE (70)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(2.31717, 1.12233, -0.10523, -1.12233, 2.27453, -0.454864, -0.105231, 0.454864, 2.53417, 10.9905, -0.161584, -13.5221)
+
+[node name="EA_Fruit_PRE (39)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.312329, 0, 0.68376, 0, 0.751716, 0, -0.68376, 0, -0.312329, -14.7676, -1.35625, 0.102162)
+
+[node name="EA_Fruit_PRE (86)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.462231, 0, -0.526056, 0, 0.70028, 0, 0.526056, 0, 0.462231, -9.6974, -1.39167, -8.2559)
+
+[node name="EA_Fruit_PRE (49)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.789498, 0, -0.930104, 0, 1.22, 0, 0.930104, 0, 0.789498, -4.22408, -1.35625, 1.38929)
+
+[node name="EA_Fruit_PRE (99)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.433114, 0, -0.614401, 0, 0.751716, 0, 0.614401, 0, 0.433114, -16.5643, -1.39167, -1.51705)
+
+[node name="EA_Fruit_PRE (80)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.04865, 0.0914728, 0.574144, 0.210882, 1.1633, 0.199828, -0.541791, 0.275744, -1.03349, -11.8574, 0.00312233, 4.77797)
+
+[node name="EA_Fruit_PRE (85)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.716427, 0, -0.227619, 0, 0.751716, 0, 0.227619, 0, -0.716427, -11.0966, -1.39167, -8.33165)
+
+[node name="EA_Fruit_PRE (17)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.9925, -0.191363, -16.9373)
+
+[node name="EA_Fruit_PRE (14)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.985, 0.0754864, 16.0754)
+
+[node name="EA_Fruit_PRE (75)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.881198, 0.139914, 0.696356, 0.00269832, 0.956673, -0.448979, -0.47274, -0.255343, -1.30059, -8.57479, -0.91981, 2.73824)
+
+[node name="EA_Fruit_PRE (92)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.716427, 0, -0.227619, 0, 0.751716, 0, 0.227619, 0, -0.716427, -6.97157, -1.39167, -10.7708)
+
+[node name="EA_Fruit_PRE (28)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.20947, 0, 0.0771062, 0, 1.21192, 0, -0.0771062, 0, -1.20947, 12.3397, -1.40367, 1.50354)
+
+[node name="EA_Fruit_PRE (94)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.16273, 0, -0.369416, 0, 1.22, 0, 0.369416, 0, -1.16273, -5.21632, -1.39167, -11.5756)
+
+[node name="EA_Fruit_PRE (110)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.7453, 0, 0.139229, 0, 1.75085, 0, -0.139229, 0, 1.7453, -42.7509, -0.440512, 2.22365)
+
+[node name="EA_Fruit_PRE (74)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.608205, 0.0507831, 1.07219, -0.277033, 1.18316, -0.213189, -1.03702, -0.345858, -0.571877, -11.6537, -0.736068, 1.8226)
+
+[node name="EA_Fruit_PRE (19)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.48816, 0.260587, 0.0438663, -0.401846, 0.941891, 0.326892, 0.0438663, -0.211981, 1.5064, -0.292766, -0.315648, -15.3274)
+
+[node name="EA_Fruit_PRE (13)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.6265, -0.574377, 10.9421)
+
+[node name="EA_Fruit_PRE (48)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.102776, 0, 0.692698, 0, 0.70028, 0, -0.692698, 0, 0.102776, -1.98659, -1.35625, 1.34692)
+
+[node name="EA_Fruit_PRE (82)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.34868, 0.0762891, 0.738413, 0.271217, 0.970202, 0.257001, -0.696803, 0.229973, -1.32918, -10.4489, -0.598523, 6.84892)
+
+[node name="EA_Fruit_PRE (61)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.54208, 0, -0.00450884, 0, 1.54208, 0, 0.00450884, 0, 1.54208, 16.0204, -1.35625, -9.38769)
+
+[node name="EA_Fruit_PRE (5)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.68089, 0, -0.722413, 0, 0.992719, 0, 0.722413, 0, -0.68089, 6.20729, -0.951891, 2.4222)
+
+[node name="EA_Fruit_PRE (101)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.702924, 0, -0.997145, 0, 1.22, 0, 0.997145, 0, 0.702924, -17.8611, -1.39167, -2.94778)
+
+[node name="EA_Fruit_PRE (23)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.397666, 0, -0.561251, 0, 0.687853, 0, 0.561251, 0, 0.397666, 9.09616, -1.35625, 2.17249)
+
+[node name="EA_Fruit_PRE (87)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.16273, 0, -0.369416, 0, 1.22, 0, 0.369416, 0, -1.16273, -9.34131, -1.39167, -9.13646)
+
+[node name="EA_Fruit_PRE (45)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.997927, 0, -1.17565, 0, 1.54208, 0, 1.17565, 0, 0.997927, -5.17302, -1.35625, 1.19686)
+
+[node name="EA_Fruit_PRE (11)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(3.60354, 0, 0, 0, 3.60354, 0, 0, 0, 3.60354, 17.1123, -1.07969, 5.9821)
+
+[node name="EA_Fruit_PRE (31)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.567613, 0, -0.492841, 0, 0.751716, 0, 0.492841, 0, 0.567613, 4.5489, -1.35625, -8.55359)
+
+[node name="EA_Fruit_PRE (47)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.636666, 0, -0.399667, 0, 0.751716, 0, 0.399667, 0, 0.636666, -7.69131, -1.35625, 1.03354)
+
+[node name="EA_Fruit_PRE (83)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.16292, -0.0829683, 0.632077, -0.189168, 1.3006, -0.177318, -0.608786, -0.245647, -1.15231, -13.0581, -0.0400358, 4.23722)
+
+[node name="EA_Fruit_PRE (90)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.00551, 0, 0.608857, 0, 1.17549, 0, -0.608857, 0, 1.00551, -11.0605, -1.39167, -7.78659)
+
+[node name="EA_Fruit_PRE (35)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.13412, 0, -0.0159875, 0, 1.13423, 0, 0.0159875, 0, -1.13412, 7.24449, -1.35625, -8.35667)
+
+[node name="EA_Fruit_PRE (40)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.466494, 0, -0.522279, 0, 0.70028, 0, 0.522279, 0, -0.466494, -15.4413, -1.35625, -1.12646)
+
+[node name="EA_Fruit_PRE (66)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.396024, 0, -0.562411, 0, 0.687853, 0, 0.562411, 0, 0.396024, 15.6937, -1.35625, -8.66002)
+
+[node name="EA_Fruit_PRE (111)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.981424, 0, 1.07986, 0, 1.45921, 0, -1.07986, 0, 0.981424, -47.3568, 1.44539, 7.5994)
+
+[node name="EA_Fruit_PRE (55)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.662555, 0, 0.355102, 0, 0.751716, 0, -0.355102, 0, -0.662555, 15.8956, -1.35625, -0.232048)
+
+[node name="EA_Fruit_PRE (60)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.13743, 0, -0.296692, 0, 1.17549, 0, 0.296692, 0, 1.13743, 16.0564, -1.35625, -0.754089)
+
+[node name="EA_Fruit_PRE (41)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.506896, 0, 1.10971, 0, 1.22, 0, -1.10971, 0, -0.506896, -16.3772, -1.35625, -0.964488)
+
+[node name="EA_Fruit_PRE (25)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.281242, 0, 0.641323, 0, 0.70028, 0, -0.641323, 0, -0.281242, 10.0209, -1.35625, 2.01705)
+
+[node name="EA_Fruit_PRE (46)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.618634, 0, -0.388347, 0, 0.730426, 0, 0.388347, 0, 0.618634, -8.97131, -1.35625, 0.223542)
+
+[node name="EA_Fruit_PRE (27)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.730426, 0, 0, 0, 0.730426, 0, 0, 0, 0.730426, 7.65163, -1.35625, 1.37474)
+
+[node name="EA_Fruit_PRE (12)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.3613, -0.413285, 13.1266)
+
+[node name="EA_Fruit_PRE (91)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.46969, 0, -0.466942, 0, 1.54208, 0, 0.466942, 0, -1.46969, -6.04694, -1.39167, -11.078)
+
+[node name="EA_Fruit_PRE (63)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.751713, 0, -0.00219791, 0, 0.751716, 0, 0.00219791, 0, 0.751713, 15.1409, -1.35625, -8.96825)
+
+[node name="EA_Fruit_PRE (56)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.0550687, 0, -0.698112, 0, 0.70028, 0, 0.698112, 0, -0.0550687, 14.6155, -1.35625, -0.802021)
+
+[node name="EA_Fruit_PRE (73)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.629258, 0.240707, 1.22098, 0.114307, 1.35123, -0.325295, -1.23922, 0.246866, 0.58999, -11.6087, -0.332826, 5.98457)
+
+[node name="EA_Fruit_PRE (26)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.751716, 0, 0, 0, 0.751716, 0, 0, 0, 0.751716, 8.65095, -1.35625, 1.72272)
+
+[node name="EA_Fruit_PRE (76)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.36229, 0.0634759, 0.719825, -0.148267, 1.47889, -0.411013, -0.707244, -0.432302, -1.30036, -12.8143, -0.219387, 3.41973)
+
+[node name="EA_Fruit_PRE (20)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.50285, 0.223525, -0.025346, -0.344695, 0.963941, -0.222695, -0.025346, 0.144412, 1.52571, 18.3657, -1.44167, -17.5135)
+
+[node name="EA_Fruit_PRE (112)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.307398, 0, -1.40039, 0, 1.43373, 0, 1.40039, 0, 0.307398, -46.5976, -1.05467, -5.97577)
+
+[node name="EA_Fruit_PRE (69)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.4092, 0.7499, 0.645119, 0.809147, 1.51975, 0.000907072, -0.569043, 0.303923, -1.5963, 18.7017, -1.57267, -18.9885)
+
+[node name="EA_Fruit_PRE (33)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.921209, 0, -0.799858, 0, 1.22, 0, 0.799858, 0, 0.921209, 6.45583, -1.35625, -8.24991)
+
+[node name="EA_Fruit_PRE (95)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.548943, 0, 0.414491, 0, 0.687853, 0, -0.414491, 0, -0.548943, -6.46131, -1.39167, -10.3965)
+
+[node name="EA_Fruit_PRE (88)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.548943, 0, 0.414491, 0, 0.687853, 0, -0.414491, 0, -0.548943, -10.5863, -1.39167, -7.9573)
+
+[node name="EA_Fruit_PRE (6)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.945537, 0, -0.882843, 0, 1.29362, 0, 0.882843, 0, -0.945537, 9.46937, 0.2726, 12.8314)
+
+[node name="EA_Fruit_PRE (52)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.11442, 0, 0.373933, 0, 1.17549, 0, -0.373933, 0, -1.11442, -3.42076, -1.35625, 1.20037)
+
+[node name="EA_Fruit_PRE (30)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.551537, 0, -0.478883, 0, 0.730426, 0, 0.478883, 0, 0.551537, 3.78584, -1.35625, -9.28671)
+
+[node name="EA_Fruit_PRE (36)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.16974, 0, 0.116033, 0, 1.17549, 0, -0.116033, 0, 1.16974, 7.9316, -1.35625, -8.30873)
+
+[node name="EA_Fruit_PRE (97)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.00551, 0, 0.608857, 0, 1.17549, 0, -0.608857, 0, 1.00551, -6.93554, -1.39167, -10.2257)
+
+[node name="EA_Fruit_PRE (1)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.947799, 0.317719, -0.041717, -0.317719, 0.93378, -0.253908, -0.0270524, 0.164653, 1.52046, 8.9664, 0.738875, 9.05519)
+
+[node name="EA_Fruit_PRE (43)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.622099, 0, 0.948405, 0, 1.13423, 0, -0.948405, 0, -0.622099, -14.6519, -1.35625, -0.821479)
+
+[node name="EA_Fruit_PRE (84)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.46969, 0, -0.466942, 0, 1.54208, 0, 0.466942, 0, -1.46969, -10.1719, -1.39167, -8.63885)
+
+[node name="EA_Fruit_PRE (21)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.14267, 0, -0.275804, 0, 1.17549, 0, 0.275804, 0, -1.14267, 8.60102, -1.35625, 2.26669)
+
+[node name="EA_Fruit_PRE (15)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.65728, -1.06435, -9.76077)
+
+[node name="EA_Fruit_PRE (79)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-2.23493, 0.194952, 1.22365, 0.449442, 2.47929, 0.425884, -1.15469, 0.587681, -2.20262, -9.70761, -0.201509, 4.9281)
+
+[node name="EA_Fruit_PRE (8)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.20947, 0, 0.0771062, 0, 1.21192, 0, -0.0771062, 0, -1.20947, 12.1047, -1.32667, 2.78154)
+
+[node name="EA_Fruit_PRE (37)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.640717, 0, 1.40268, 0, 1.54208, 0, -1.40268, 0, -0.640717, -15.5163, -1.35625, -0.52132)
+
+[node name="EA_Fruit_PRE (50)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.0384011, 0, -0.68678, 0, 0.687853, 0, 0.68678, 0, 0.0384011, -2.91869, -1.35625, 1.2446)
+
+[node name="EA_Fruit_PRE (103)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.78639, 0, -0.817354, 0, 1.13423, 0, 0.817354, 0, 0.78639, -16.2243, -1.39167, -2.38359)
+
+[node name="EA_Fruit_PRE (59)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.06933, 0, 0.378183, 0, 1.13423, 0, -0.378183, 0, -1.06933, 15.4285, -1.35625, -1.03725)
+
+[node name="EA_Fruit_PRE (109)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.35918, 0, 0.728461, 0, 1, 0, -0.728461, 0, -1.35918, -46.0886, -0.129569, 3.66164)
+
+[node name="EA_Fruit_PRE (34)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.316699, 0, 0.610609, 0, 0.687853, 0, -0.610609, 0, -0.316699, 7.45555, -1.35625, -8.14315)
+
+[node name="EA_Fruit_PRE (96)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.01649, 0, -0.503223, 0, 1.13423, 0, 0.503223, 0, -1.01649, -6.24795, -1.39167, -10.1852)
+
+[node name="EA_Fruit_PRE (71)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.905892, 0.430253, -1.64247, -0.454877, 1.85507, 0.235061, 1.63582, 0.277578, 0.974938, 13.0563, -0.854842, -14.4957)
+
+[node name="EA_Fruit_PRE (51)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.0409, 0, -0.450566, 0, 1.13423, 0, 0.450566, 0, 1.0409, -2.81376, -1.35625, 1.52589)
+
+[node name="EA_Fruit_PRE (2)" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(2.80993, 0, -0.039661, 0, 2.81021, 0, 0.039661, 0, 2.80993, 8.73687, 0.470454, 11.7146)
+
+[node name="EA_Fruit_01b_Default (2)" parent="EA_Fruit" instance=ExtResource("12_xdadk")]
+transform = Transform3D(1.03634, -0.0869938, -0.00634148, 0.0871904, 1.03107, 0.104334, -0.00244029, -0.104498, 1.03473, 13.9257, 5.97643, 31.2325)
+
+[node name="EA_Fruit_01d_Default2" parent="EA_Fruit" instance=ExtResource("14_jnv8i")]
+transform = Transform3D(2.26736, -0.108762, 0.374184, 0.0833367, 3.27188, -0.0360491, -0.372695, 0.0699382, 2.26836, -1.536, 9.126, 26.442)
+
+[node name="EA_Fruit_01c_Default (1)" parent="EA_Fruit" instance=ExtResource("16_owqmc")]
+transform = Transform3D(1.16277, -0.0235802, 0.133067, 0.0248495, 1.1703, -0.0097576, -0.132836, 0.0125171, 1.16297, -0.151308, 10.7483, 28.6035)
+
+[node name="EA_Fruit_01a_Default2" parent="EA_Fruit" instance=ExtResource("13_ftlrn")]
+transform = Transform3D(2.0898, 0, 0, 0, 2.0898, 0, 0, 0, 2.0898, 1.28669, 3.52833, 4.66554)
+
+[node name="EA_Fruit_01b_Default2" parent="EA_Fruit" instance=ExtResource("12_xdadk")]
+transform = Transform3D(1.86102, -0.0416292, -0.0391803, 0.0362498, 1.84606, -0.23962, 0.0442045, 0.238745, 1.846, 11.3767, 6.62723, -7.33836)
+
+[node name="EA_Fruit_01c_Default" parent="EA_Fruit" instance=ExtResource("16_owqmc")]
+transform = Transform3D(1.09101, 0.0158227, -1.85881, 0.0655722, 2.15365, 0.0568195, 1.85772, -0.0853101, 1.08965, 9.74, 5.62, 4.41)
+
+[node name="EA_Fruit_01d_Default (1)" parent="EA_Fruit" instance=ExtResource("14_jnv8i")]
+transform = Transform3D(0.958354, 0.332131, 0.162681, -0.233831, 1.38393, -0.0156728, -0.161804, -0.0327941, 0.986199, 6.456, 6.375, 32.525)
+
+[node name="EA_Fruit_01c_Default (2)" parent="EA_Fruit" instance=ExtResource("16_owqmc")]
+transform = Transform3D(2.10931, 0.50643, 0.248197, -0.507691, 2.12348, -0.0181999, -0.245607, -0.0401292, 2.16917, 4.396, 7.095, 30.199)
+
+[node name="EA_Fruit_01c_Default (3)" parent="EA_Fruit" instance=ExtResource("16_owqmc")]
+transform = Transform3D(1.13087, 0.271515, 0.133067, -0.272191, 1.13847, -0.0097576, -0.131679, -0.0215147, 1.16297, 24.7087, 5.31833, 35.5835)
+
+[node name="EA_Fruit_PRE2" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.691433, -0.0700638, -2.04028, 0.0915413, 2.15303, -0.0429129, 2.03943, -0.0728863, 0.693647, 9.80373, 5.76234, 4.45265)
+
+[node name="EA_Fruit_PRE3" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.11414, -0.161032, 0.0109833, 0.161032, 1.10377, -0.152067, 0.0109833, 0.152067, 1.1154, 1.31017, 3.43019, 4.63203)
+
+[node name="EA_Fruit_PRE4" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.397388, 0.00075877, 0.732973, 0.17833, 0.808613, -0.09752, -0.710949, 0.203251, 0.385237, -47.8196, 1.92065, -6.848)
+
+[node name="EA_Fruit_PRE5" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.733048, 0.179576, 0.542363, -0.133189, 0.91169, -0.121845, -0.555577, 0.0183791, 0.744823, 4.46814, 7.14398, 30.1497)
+
+[node name="EA_Fruit_PRE6" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.121548, 0.266979, -1.30639, -0.0525418, 1.30983, 0.272571, 1.33236, 0.0760095, -0.10843, 19.0527, 3.19811, -21.6272)
+
+[node name="EA_Fruit_PRE7" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.509966, 0.122035, -0.996192, 0.421756, 0.987908, 0.336924, 0.910721, -0.525836, 0.401797, -3.01755, 7.24659, 17.8493)
+
+[node name="EA_Fruit_PRE8" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.27698, 0.370655, 1.40657, -0.181272, 1.41189, -0.407751, -1.44325, -0.248466, -0.218728, -0.0830431, 10.6852, 28.5903)
+
+[node name="EA_Fruit_PRE9" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.00772, -0.176621, -0.218721, 0.231489, 0.983173, 0.272616, 0.159521, -0.310984, 0.986092, -42.3435, 3.424, 2.20124)
+
+[node name="EA_Fruit_PRE10" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.790727, 0.31132, -0.72237, -0.159838, 1.06649, 0.284663, 0.770188, -0.0982919, 0.80071, 24.735, 5.14255, 35.5801)
+
+[node name="EA_Fruit_PRE11" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(1.12519, -0.0357203, -0.00495334, 0.0357203, 1.08272, 0.306252, -0.00495334, -0.306252, 1.0833, -33.4818, 2.39456, 0.362757)
+
+[node name="EA_Fruit_PRE12" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.617051, -0.0193629, -1.04211, 0.242386, 1.1805, 0.121587, 1.01371, -0.27048, 0.605263, 13.9651, 5.8297, 31.1995)
+
+[node name="EA_Fruit_PRE13" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-2.16853, 0.192863, 0.453457, 0.265231, 2.18152, 0.340557, -0.415297, 0.386174, -2.15029, 11.3856, 6.25894, -7.32765)
+
+[node name="EA_Fruit_PRE14" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(2.75709, 0.429283, 1.24341, -0.367505, 3.02396, -0.229122, -1.26305, 0.0572045, 2.78089, 34.8634, 8.46642, -9.09988)
+
+[node name="EA_Fruit_PRE15" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.762228, -0.0704206, 0.485477, -0.134218, 0.892762, -0.0812314, -0.47184, -0.140193, -0.761152, -0.235363, 1.27026, 12.3403)
+
+[node name="EA_Fruit_PRE16" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.218606, 0.21141, 0.982918, -0.419423, 0.933352, -0.107468, -0.913732, -0.37785, 0.284489, 15.0797, 4.92452, 32.8116)
+
+[node name="EA_Fruit_PRE17" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.272052, 0.357019, -0.858986, -0.0561411, 0.899638, 0.356135, 0.92853, -0.0502096, 0.273209, 6.42178, 6.40703, 32.4565)
+
+[node name="EA_Fruit_PRE18" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-1.37873, -0.250896, -0.293042, -0.217922, 1.40393, -0.176709, 0.318328, -0.125568, -1.39019, -2.9736, 9.49181, 34.7863)
+
+[node name="EA_Fruit_PRE19" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.821873, -0.451322, -0.959451, 0.795247, 1.0653, 0.180104, 0.701298, -0.679091, 0.920179, -26.9341, 8.65987, 20.6396)
+
+[node name="EA_Fruit_PRE20" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(0.887965, 0.17815, 0.0376624, -0.17815, 0.811197, 0.363123, 0.0376624, -0.363123, 0.829675, -40.7959, 0.917761, -0.152641)
+
+[node name="EA_Fruit_PRE21" parent="EA_Fruit" instance=ExtResource("15_cpskt")]
+transform = Transform3D(-0.0392519, -0.00229774, -1.54796, -0.182405, 1.53768, 0.00234281, 1.53718, 0.182406, -0.0392493, -1.51549, 9.2724, 26.464)
+
+[node name="EA_Puddles" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.11616, 2.24963, 15.2614)
+
+[node name="EA_Puddle_01a_Default (3)" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(-0.298797, 0.0479165, -0.475268, 0.0881659, 0.55649, 0.000676174, 0.46947, -0.0740114, -0.302614, 7.67684, -1.70963, -7.33842)
+
+[node name="EA_Puddle_01a_Default (5)" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(0.590778, 0.072503, 0.668837, -0.199297, 0.869024, 0.0818334, -0.642558, -0.202877, 0.589558, 10.4682, 1.64004, 22.3281)
+
+[node name="EA_Puddle_01a_Default (7)" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(0.996087, -0.0883673, 0.00098349, 0.0883673, 0.99584, -0.0222128, 0.00098349, 0.0222128, 0.999753, 14.0765, -0.0385032, 11.2233)
+
+[node name="EA_Puddle_01a_Default (8)" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(1.79835, 0.0899724, 0, -0.0899724, 1.79835, 0, 0, 0, 1.8006, 30.7438, -1.66963, -18.8514)
+
+[node name="EA_Puddle_01c_Default (8)" parent="EA_Puddles" instance=ExtResource("18_pgaig")]
+transform = Transform3D(0.727531, 0.089229, -0.680248, -0.0545793, 0.995891, 0.0722594, 0.683901, -0.0154434, 0.729412, -12.4217, -1.40748, -1.24272)
+
+[node name="EA_Puddle_01c_Default" parent="EA_Puddles" instance=ExtResource("18_pgaig")]
+transform = Transform3D(0.628523, 0.221851, -1.50654, -0.286212, 1.61799, 0.118855, 1.49565, 0.216394, 0.655844, 9.35384, -1.73963, -21.6714)
+
+[node name="EA_Puddle_01c_Default (5)" parent="EA_Puddles" instance=ExtResource("18_pgaig")]
+transform = Transform3D(0.99386, -0.110097, 0.0109403, 0.110097, 0.974365, -0.196192, 0.0109403, 0.196192, 0.980504, 8.01075, -1.1977, 10.2019)
+
+[node name="EA_Puddle_01c_Default (7)" parent="EA_Puddles" instance=ExtResource("18_pgaig")]
+transform = Transform3D(-0.985345, 0.000860374, -0.170579, 0.0012128, 0.999997, -0.00196184, 0.170577, -0.00213996, -0.985343, -1.57897, -1.90479, -21.4983)
+
+[node name="EA_Puddle_01a_Default (10)" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(0.597073, 0.110267, 0.0397606, -0.114756, 0.507816, 0.314945, 0.0238909, -0.316544, 0.5191, -44.0593, -0.697073, -8.041)
+
+[node name="EA_Puddle_01a_Default (4)" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(-0.790396, 0, -0.612597, 0, 1, 0, 0.612597, 0, -0.790396, 12.4031, 1.97863, 24.3896)
+
+[node name="EA_Puddle_01a_Default (1)" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(-0.587182, -0.0563044, -0.396156, 0.0163624, 0.69952, -0.123673, 0.399802, -0.111322, -0.576765, -4.60758, -1.71963, -0.236915)
+
+[node name="EA_Puddle_01c_Default (1)" parent="EA_Puddles" instance=ExtResource("18_pgaig")]
+transform = Transform3D(-0.489257, 0.0184926, -0.586994, 0.192429, 0.726873, -0.13749, 0.554865, -0.235776, -0.469905, -7.62564, -1.43963, -7.35139)
+
+[node name="EA_Puddle_01b_Default" parent="EA_Puddles" instance=ExtResource("19_2sxcv")]
+transform = Transform3D(-0.524624, 0.150646, -0.8379, 0.017784, 0.985944, 0.166128, 0.851149, 0.0722537, -0.519929, 12.9372, -1.87963, -26.9838)
+
+[node name="EA_Puddle_01c_Default (6)" parent="EA_Puddles" instance=ExtResource("18_pgaig")]
+transform = Transform3D(0.989514, 0.144411, -0.0027887, -0.144411, 0.988772, -0.0384048, -0.0027887, 0.0384048, 0.999258, 10.7114, -0.839633, -0.43352)
+
+[node name="EA_Puddle_01c_Default (3)" parent="EA_Puddles" instance=ExtResource("18_pgaig")]
+transform = Transform3D(-0.886555, 0.000508109, -0.410953, 0.0174424, 0.976335, -0.0364217, 0.410582, -0.0403797, -0.885807, -6.41616, 5.58037, 24.1686)
+
+[node name="EA_Puddle_01c_Default (4)" parent="EA_Puddles" instance=ExtResource("18_pgaig")]
+transform = Transform3D(0.601557, 0.26, -0.829964, 0.0523192, 0.996499, 0.350091, 0.86816, -0.24021, 0.553992, -5.51616, 5.21037, 15.7586)
+
+[node name="EA_Puddle_01a_Default (6)" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(-0.162913, 0.0248349, -0.803846, 0.529478, 0.620653, -0.0881329, 0.605341, -0.536188, -0.139248, -9.50855, 3.05647, 7.84233)
+
+[node name="EA_Puddle_01a_Default (9)" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(-0.254583, -0.0105404, 0.603564, 0.149028, 0.633671, 0.073926, -0.584971, 0.166022, -0.243841, -48.63, -1.79, -16.67)
+
+[node name="EA_Puddle_01c_Default (2)" parent="EA_Puddles" instance=ExtResource("18_pgaig")]
+transform = Transform3D(0.608706, 0.40067, 0.684792, -0.436488, 0.889874, -0.132673, -0.662537, -0.218145, 0.71656, 1.40972, 3.99811, 22.4243)
+
+[node name="EA_Puddle_01a_Default (2)" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(0.130977, -0.000801861, -0.547996, 0.0306868, 0.562558, 0.00651131, 0.547137, -0.0313597, 0.130818, 6.91568, -1.84106, -8.09966)
+
+[node name="EA_Puddle_01a_Default" parent="EA_Puddles" instance=ExtResource("17_q61wq")]
+transform = Transform3D(0.726396, 0.0716738, 0.0585715, -0.074527, 0.727682, 0.0338096, -0.0548953, -0.0394995, 0.72914, 16.0938, -1.61963, 0.518578)
+
+[node name="EA_Clifs" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.1627, -1.73585, 14.4051)
+
+[node name="EA_Clif_01c_Default (2)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.43223, 2.63848, 5.9579)
+
+[node name="EA_Clif_01b_Default (1)" parent="EA_Clifs" instance=ExtResource("21_cgcdo")]
+transform = Transform3D(2.7814, 0, 0, 0, 5.87348, 0, 0, 0, 2.7814, -14.5373, -8.85415, 61.1949)
+
+[node name="EA_Clif_01c_Default (1)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.8473, 4.83805, 9.2649)
+
+[node name="EA_Clif_01a_Default (1)" parent="EA_Clifs" instance=ExtResource("22_weoqb")]
+transform = Transform3D(3.82563, -0.0353715, 0.895594, -0.0425738, 3.91455, 0.336464, -0.89528, -0.337297, 3.81096, -55.6, -6, -62.4)
+
+[node name="EA_Clif_01a_Default" parent="EA_Clifs" instance=ExtResource("22_weoqb")]
+transform = Transform3D(0.444976, 0.514603, 3.86988, -0.411109, 3.87945, -0.468606, -3.88223, -0.351831, 0.493183, -89.0373, -7.36415, 52.4949)
+
+[node name="EA_Clif_01c_Default (11)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(0.624721, 0, 0, 0, 0.624721, 0, 0, 0, 0.624721, 17.348, 1.73585, -35.5992)
+
+[node name="EA_Clif_01d_Default (1)" parent="EA_Clifs" instance=ExtResource("23_6vi7x")]
+transform = Transform3D(-0.759963, 0, -0.649967, 0, 1, 0, 0.649967, 0, -0.759963, 43.3714, 0.346624, 30.57)
+
+[node name="EA_Clif_01c_Default (3)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(-0.612678, 0, -0.790333, 0, 1, 0, 0.790333, 0, -0.612678, 45.637, 0.494064, 29.5708)
+
+[node name="EA_Clif_01c_Default (8)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(-0.383762, 0, 0.170361, 0, 0.419876, 0, -0.170361, 0, -0.383762, -1.6673, 1.60585, -20.9051)
+
+[node name="EA_Clif_01c_Default" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.9923, 4.83805, 29.7313)
+
+[node name="EA_Clif_01c_Default (9)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(-0.383762, 0, 0.170361, 0, 0.419876, 0, -0.170361, 0, -0.383762, -3.4573, 1.60585, -0.135096)
+
+[node name="EA_Clif_01c_Default (10)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(0.192169, 0.0794197, -0.364774, -3.12832e-09, 0.410265, 0.0893242, 0.373319, -0.0408819, 0.18777, -1.4873, 2.44585, 3.4449)
+
+[node name="EA_Clif_01c_Default2" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(1, 0, 0, 0, 0.64117, 0, 0, 0, 1, 39.8127, -0.0341469, -7.2251)
+
+[node name="EA_Clif_01d_Default (2)" parent="EA_Clifs" instance=ExtResource("23_6vi7x")]
+transform = Transform3D(0.605749, 0, 0, 0, 0.605749, 0, 0, 0, 0.605749, -27.8621, 4.99848, 16.8706)
+
+[node name="EA_Clif_01c_Default (12)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(0.847378, 0, 0.164526, 0, 0.863202, 0, -0.164526, 0, 0.847378, 18.9927, 1.73585, -37.3651)
+
+[node name="EA_Clif_01b_Default" parent="EA_Clifs" instance=ExtResource("21_cgcdo")]
+transform = Transform3D(-0.936905, 0, -0.349587, 0, 1, 0, 0.349587, 0, -0.936905, 0.382696, 1.92585, -29.5751)
+
+[node name="EA_Clif_01c_Default (4)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.687305, 1.81585, -23.1451)
+
+[node name="EA_Clif_01c_Default (5)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(0.129624, 0, -0.610131, 0, 0.623749, 0, 0.610131, 0, 0.129624, -3.11731, 2.09585, 2.1249)
+
+[node name="EA_Clif_01c_Default (6)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(0.0872567, 0, -0.41071, 0, 0.419876, 0, 0.41071, 0, 0.0872567, -7.8913, 2.95755, -6.1772)
+
+[node name="EA_Clif_01c_Default (7)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(0.0872567, 0, -0.41071, 0, 0.419876, 0, 0.41071, 0, 0.0872567, -6.0073, 1.60585, -17.3451)
+
+[node name="EA_Clif_01d_Default" parent="EA_Clifs" instance=ExtResource("23_6vi7x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44.3317, 0.132616, 4.852)
+
+[node name="EA_Clif_01c_Default (13)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(-0.410242, 0, 0.911977, 0, 1, 0, -0.911977, 0, -0.410242, -14.8656, 0.59, 3.13255)
+
+[node name="EA_Clif_01c_Default (14)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(-0.417703, 0, -0.908583, 0, 1, 0, 0.908583, 0, -0.417703, -14.5205, -0.17, -1.25323)
+
+[node name="EA_Clif_01c_Default (15)" parent="EA_Clifs" instance=ExtResource("20_33hwj")]
+transform = Transform3D(0.568695, 0, 0.257146, 0, 0.62413, 0, -0.257146, 0, 0.568695, -17.11, 2.32, 5.87)
+
+[editable path="EA_Terrain_Default"]
+[editable path="EA_Clif_01e_PRE (2)"]
+[editable path="EA_Plants/EA_Plant_01b_Default (2)"]
+[editable path="EA_Plants/EA_Plant_01b_Default (3)"]
+[editable path="EA_Plants/EA_Plant_01a_Default"]
+[editable path="EA_Plants/EA_Plant_01a_Default (1)"]
+[editable path="EA_Plants/EA_Plant_01a_Default (3)"]
+[editable path="EA_Plants/EA_Plant_01a_Default (2)"]
+[editable path="EA_Plants/EA_Plant_01d_Default"]
+[editable path="EA_Plants/EA_Plant_01b_Default (1)"]
+[editable path="EA_Plants/EA_Plant_01e_Default"]
+[editable path="EA_Plants/EA_Plant_01e_Default2"]
+[editable path="EA_Plants/EA_Plant_01e_Default3"]
+[editable path="EA_Plants/EA_Plant_01e_Default4"]
+[editable path="EA_Plants/EA_Plant_01e_Default5"]
+[editable path="EA_Plants/EA_Plant_01e_Default6"]
+[editable path="EA_Plants/EA_Plant_01e_Default7"]
+[editable path="EA_Plants/EA_Plant_01e_Default8"]
+[editable path="EA_Plants/EA_Plant_01e_Default9"]
+[editable path="EA_Plants/EA_Plant_01e_Default10"]
+[editable path="EA_Plants/EA_Plant_01e_Default11"]
+[editable path="EA_Plants/EA_Plant_01e_Default12"]
+[editable path="EA_Plants/EA_Plant_01e_Default13"]
+[editable path="EA_Plants/EA_Plant_01c_Default"]
+[editable path="EA_Plants/EA_Plant_01c_Default2"]
+[editable path="EA_Plants/EA_Plant_01c_Default3"]
+[editable path="EA_Plants/EA_Plant_01c_Default4"]
+[editable path="EA_Plants/EA_Plant_01c_Default5"]
+[editable path="EA_Plants/EA_Plant_01c_Default6"]
+[editable path="EA_Plants/EA_Plant_01c_Default7"]
+[editable path="EA_Rocks/Rocks_01c_Default (2)"]
+[editable path="EA_Rocks/Rocks_01b_Default (1)"]
+[editable path="EA_Rocks/Rocks_01d_Default (3)"]
+[editable path="EA_Rocks/Rocks_01a_Default"]
+[editable path="EA_Rocks/Rocks_01d_Default"]
+[editable path="EA_Rocks/Rocks_01d_Default (1)"]
+[editable path="EA_Rocks/Rocks_01c_Default"]
+[editable path="EA_Rocks/Rocks_01c_Default (1)"]
+[editable path="EA_Rocks/Rocks_01d_Default (2)"]
+[editable path="EA_Rocks/Rocks_01b_Default"]
+[editable path="EA_Clif_01e_PRE"]
+[editable path="EA_Clif_01e_PRE (1)"]
+[editable path="EA_Fruit/EA_Fruit_01b_Default"]
+[editable path="EA_Fruit/EA_Fruit_01a_Default"]
+[editable path="EA_Fruit/EA_Fruit_01d_Default"]
+[editable path="EA_Fruit/EA_Fruit_PRE (4)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (67)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (62)"]
+[editable path="EA_Fruit/EA_Fruit_PRE"]
+[editable path="EA_Fruit/EA_Fruit_PRE (98)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (9)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (58)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (105)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (7)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (64)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (72)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (24)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (22)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (16)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (68)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (77)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (57)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (10)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (32)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (107)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (3)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (93)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (65)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (102)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (53)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (104)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (38)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (106)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (100)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (108)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (44)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (54)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (89)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (29)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (81)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (42)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (78)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (18)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (70)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (39)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (86)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (49)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (99)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (80)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (85)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (17)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (14)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (75)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (92)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (28)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (94)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (110)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (74)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (19)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (13)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (48)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (82)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (61)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (5)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (101)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (23)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (87)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (45)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (11)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (31)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (47)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (83)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (90)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (35)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (40)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (66)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (111)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (55)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (60)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (41)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (25)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (46)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (27)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (12)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (91)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (63)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (56)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (73)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (26)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (76)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (20)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (112)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (69)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (33)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (95)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (88)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (6)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (52)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (30)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (36)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (97)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (1)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (43)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (84)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (21)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (15)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (79)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (8)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (37)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (50)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (103)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (59)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (109)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (34)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (96)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (71)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (51)"]
+[editable path="EA_Fruit/EA_Fruit_PRE (2)"]
+[editable path="EA_Fruit/EA_Fruit_01b_Default (2)"]
+[editable path="EA_Fruit/EA_Fruit_01d_Default2"]
+[editable path="EA_Fruit/EA_Fruit_01c_Default (1)"]
+[editable path="EA_Fruit/EA_Fruit_01a_Default2"]
+[editable path="EA_Fruit/EA_Fruit_01b_Default2"]
+[editable path="EA_Fruit/EA_Fruit_01c_Default"]
+[editable path="EA_Fruit/EA_Fruit_01d_Default (1)"]
+[editable path="EA_Fruit/EA_Fruit_01c_Default (2)"]
+[editable path="EA_Fruit/EA_Fruit_01c_Default (3)"]
+[editable path="EA_Fruit/EA_Fruit_PRE2"]
+[editable path="EA_Fruit/EA_Fruit_PRE3"]
+[editable path="EA_Fruit/EA_Fruit_PRE4"]
+[editable path="EA_Fruit/EA_Fruit_PRE5"]
+[editable path="EA_Fruit/EA_Fruit_PRE6"]
+[editable path="EA_Fruit/EA_Fruit_PRE7"]
+[editable path="EA_Fruit/EA_Fruit_PRE8"]
+[editable path="EA_Fruit/EA_Fruit_PRE9"]
+[editable path="EA_Fruit/EA_Fruit_PRE10"]
+[editable path="EA_Fruit/EA_Fruit_PRE11"]
+[editable path="EA_Fruit/EA_Fruit_PRE12"]
+[editable path="EA_Fruit/EA_Fruit_PRE13"]
+[editable path="EA_Fruit/EA_Fruit_PRE14"]
+[editable path="EA_Fruit/EA_Fruit_PRE15"]
+[editable path="EA_Fruit/EA_Fruit_PRE16"]
+[editable path="EA_Fruit/EA_Fruit_PRE17"]
+[editable path="EA_Fruit/EA_Fruit_PRE18"]
+[editable path="EA_Fruit/EA_Fruit_PRE19"]
+[editable path="EA_Fruit/EA_Fruit_PRE20"]
+[editable path="EA_Fruit/EA_Fruit_PRE21"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default (3)"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default (5)"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default (7)"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default (8)"]
+[editable path="EA_Puddles/EA_Puddle_01c_Default (8)"]
+[editable path="EA_Puddles/EA_Puddle_01c_Default"]
+[editable path="EA_Puddles/EA_Puddle_01c_Default (5)"]
+[editable path="EA_Puddles/EA_Puddle_01c_Default (7)"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default (10)"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default (4)"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default (1)"]
+[editable path="EA_Puddles/EA_Puddle_01c_Default (1)"]
+[editable path="EA_Puddles/EA_Puddle_01b_Default"]
+[editable path="EA_Puddles/EA_Puddle_01c_Default (6)"]
+[editable path="EA_Puddles/EA_Puddle_01c_Default (3)"]
+[editable path="EA_Puddles/EA_Puddle_01c_Default (4)"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default (6)"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default (9)"]
+[editable path="EA_Puddles/EA_Puddle_01c_Default (2)"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default (2)"]
+[editable path="EA_Puddles/EA_Puddle_01a_Default"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (2)"]
+[editable path="EA_Clifs/EA_Clif_01b_Default (1)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (1)"]
+[editable path="EA_Clifs/EA_Clif_01a_Default (1)"]
+[editable path="EA_Clifs/EA_Clif_01a_Default"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (11)"]
+[editable path="EA_Clifs/EA_Clif_01d_Default (1)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (3)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (8)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (9)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (10)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default2"]
+[editable path="EA_Clifs/EA_Clif_01d_Default (2)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (12)"]
+[editable path="EA_Clifs/EA_Clif_01b_Default"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (4)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (5)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (6)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (7)"]
+[editable path="EA_Clifs/EA_Clif_01d_Default"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (13)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (14)"]
+[editable path="EA_Clifs/EA_Clif_01c_Default (15)"]

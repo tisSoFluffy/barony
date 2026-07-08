@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://dnnmbyxna54nu"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_8i87d"]
+animations = [{
+"frames": [],
+"loop": 1,
+"name": &"attack",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": 1,
+"name": &"idle",
+"speed": 5.0
+}]
+
+[node name="Weapon" type="Node2D" unique_id=279812276]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1839656546]
+
+[node name="AnimatedSprite3D" type="AnimatedSprite3D" parent="." unique_id=1463622099]
+sprite_frames = SubResource("SpriteFrames_8i87d")
+animation = &"attack"

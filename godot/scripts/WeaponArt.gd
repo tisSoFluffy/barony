@@ -4,16 +4,30 @@ class_name WeaponArt
 ## class. Drawn on a 180x200 canvas; the weapon rises from the bottom edge.
 
 static func get_weapon(cls: String) -> ImageTexture:
+	const PNG := {
+		"war":     "res://sprites/weapon-war.png",
+		"paladin": "res://sprites/weapon-paladin.png",
+		"rogue":   "res://sprites/weapon-rogue.png",
+		"hunter":  "res://sprites/weapon-hunter.png",
+		"mage":    "res://sprites/staff-mage.png",
+		"warlock": "res://sprites/staff-warlock.png",
+	}
+	if PNG.has(cls):
+		return _load_staff(PNG[cls])
 	var g := Painter.new(180, 200)
-	match cls:
-		"war": _sword(g)
-		"paladin": _hammer(g)
-		"rogue": _daggers(g)
-		"mage": _staff(g, "70d8ff", "e8fbff", "4a3a78")
-		"warlock": _staff(g, "5ad838", "bcff8a", "2e2440")
-		"hunter": _bow(g)
-		_: _sword(g)
+	_sword(g)
 	return g.texture()
+
+static func _load_staff(path: String) -> ImageTexture:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		var g := Painter.new(180, 200)
+		_staff(g, "70d8ff", "e8fbff", "4a3a78")
+		return g.texture()
+	var img := Image.new()
+	img.load_png_from_buffer(f.get_buffer(f.get_length()))
+	f.close()
+	return ImageTexture.create_from_image(img)
 
 static func _arm(g: Painter, col: String, x: float) -> void:
 	g.rrect(Painter.hex(col), x, 150, 40, 60, 8)

@@ -1,0 +1,111 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://m5ehhjtun0wu"
+path="res://.godot/imported/EA_Plant_01d.gltf-55d3aa46edd52fd10f5bf03799edcd92.scn"
+
+[deps]
+
+source_file="res://Assets/EmaceArt_LavaPlant/Meshes/EA_Plant_01d.gltf"
+dest_files=["res://.godot/imported/EA_Plant_01d.gltf-55d3aa46edd52fd10f5bf03799edcd92.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=100.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=1
+meshes/generate_lods=true
+meshes/create_shadow_meshes=false
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=false
+animation/fps=30.0
+animation/trimming=false
+animation/remove_immutable_tracks=false
+animation/import_rest_as_RESET=true
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"animations": {},
+"materials": {
+"Material.008": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://Assets/EmaceArt_LavaPlant/Meshes/extracted/EA_Plant_01d.Material008.material",
+"use_external/path": "uid://gycsnn6glppg"
+}
+},
+"meshes": {
+"EA_Plant_01d_LOD0": {
+"save_to_file/enabled": true,
+"save_to_file/fallback_path": "res://Assets/EmaceArt_LavaPlant/Meshes/extracted/EA_Plant_01d.EA_Plant_01d_LOD0.mesh",
+"save_to_file/make_streamable": "",
+"save_to_file/path": "uid://c0il17lpv6v24"
+},
+"EA_Plant_01d_LOD1": {
+"save_to_file/enabled": true,
+"save_to_file/fallback_path": "res://Assets/EmaceArt_LavaPlant/Meshes/extracted/EA_Plant_01d.EA_Plant_01d_LOD1.mesh",
+"save_to_file/make_streamable": "",
+"save_to_file/path": "uid://b20righv20khd"
+},
+"EA_Plant_01d_LOD2": {
+"save_to_file/enabled": true,
+"save_to_file/fallback_path": "res://Assets/EmaceArt_LavaPlant/Meshes/extracted/EA_Plant_01d.EA_Plant_01d_LOD2.mesh",
+"save_to_file/make_streamable": "",
+"save_to_file/path": "uid://csxl17n8s4j3t"
+},
+"Root Scene_EA_Plant_01d_LOD0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/fallback_path": "res://Assets/EmaceArt_LavaPlant/Meshes/extracted/EA_Plant_01d.EA_Plant_01d_LOD0.mesh",
+"save_to_file/make_streamable": "",
+"save_to_file/path": "uid://c0il17lpv6v24"
+},
+"Root Scene_EA_Plant_01d_LOD1": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/fallback_path": "res://Assets/EmaceArt_LavaPlant/Meshes/extracted/EA_Plant_01d.EA_Plant_01d_LOD1.mesh",
+"save_to_file/make_streamable": "",
+"save_to_file/path": "uid://c8csg1avarglv"
+},
+"Root Scene_EA_Plant_01d_LOD2": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/fallback_path": "res://Assets/EmaceArt_LavaPlant/Meshes/extracted/EA_Plant_01d.EA_Plant_01d_LOD2.mesh",
+"save_to_file/make_streamable": "",
+"save_to_file/path": "uid://enra66gcldg7"
+}
+},
+"nodes": {
+"PATH:AnimationPlayer": {
+"optimizer/enabled": true,
+"optimizer/max_angular_error": 0.00277778,
+"optimizer/max_linear_error": 0.5
+}
+}
+}
+gltf/naming_version=0
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=0

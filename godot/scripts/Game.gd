@@ -22,11 +22,13 @@ var player: Player
 var hud: HUD
 var inv_ui: InventoryUI
 var shop_ui: ShopUI
+var dev_wheel: DevSpawnWheel
 var floor_root: Node3D
 var level: Dictionary
 var items: Array = []     # [{type,amt,gear,pos,node,used}]
 var depth := 1
 var run_seed := ""
+var _t_held := false
 var ended := false
 
 func _ready() -> void:
@@ -41,6 +43,7 @@ func start(cls: String, seed_str := "", start_depth := 1) -> void:
 	hud = HUD.new(); hud.player = player; add_child(hud)
 	inv_ui = InventoryUI.new(); add_child(inv_ui)
 	shop_ui = ShopUI.new(); add_child(shop_ui)
+	dev_wheel = DevSpawnWheel.new(); add_child(dev_wheel)
 	_build_floor(true)
 
 func _build_floor(_first: bool) -> void:
@@ -105,6 +108,11 @@ func _process(_dt: float) -> void:
 	if Input.is_action_just_pressed("inventory"):
 		if shop_ui.is_open: shop_ui.close()
 		else: inv_ui.toggle(player)
+	if Input.is_key_pressed(KEY_T) and not _t_held:
+		_t_held = true
+		dev_wheel.toggle()
+	elif not Input.is_key_pressed(KEY_T):
+		_t_held = false
 	if Input.is_action_just_pressed("use_action"):
 		_use_action()
 	if not (inv_ui.is_open or shop_ui.is_open) and not player.dead:

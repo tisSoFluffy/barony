@@ -1,233 +1,463 @@
 extends CanvasLayer
-class_name HUD
-## Health/resource bars, crosshair, floating messages, damage flash, the
-## first-person weapon view (with swing/cast bob), and the death screen.
+## HD 2D isometric HUD — health/stamina bars + floating message log.
+## All data comes from SignalBus; no direct player reference needed.
+## Octopath parchment/bronze styling — see UITheme.gd for the shared palette.
 
-var player: Player
-var t := 0.0
+const UITheme = preload("res://scripts/ui/UITheme.gd")
 
-var flash_rect: ColorRect
-var crosshair: Label
-var weapon: TextureRect
-var hp_bg: ColorRect
-var hp_fill: ColorRect
-var hp_label: Label
-var res_bg: ColorRect
-var res_fill: ColorRect
-var res_label: Label
-var info: Label
-var cons_label: Label
-var food_bg: ColorRect
-var food_fill: ColorRect
-var stam_bg: ColorRect
-var stam_fill: ColorRect
-var msg_box: VBoxContainer
-var death_panel: Control
-var win_panel: Control
-var minimap: Minimap
+# ── palette (delegates to UITheme) ─────────────────────────────────────────────
+const _HP_COL   := UITheme.BLOOD
+const _STM_COL  := UITheme.OLIVE
+const _MANA_COL := UITheme.MANA
+const _XP_COL   := UITheme.GOLD
+const _TXT      := UITheme.IVORY
+const _GOLD     := UITheme.GOLD
 
-const RES_COL := {"RAGE": "c85820", "MANA": "2858c8", "FOCUS": "2a9a4a", "FAITH": "c8a828", "ENERGY": "c8b028"}
+# ── layout ────────────────────────────────────────────────────────────────────
+const _PANEL_MARGIN := 20.0   # 9-slice inset for the slim HUD strip (vs UITheme default 48)
+const _PAD     := 22.0
+const _BAR_W   := 190.0
+const _BAR_H   := 14.0
+const _XP_BAR_H := 9.0        # thin XP bar — ~60% of the other bars' height
+const _ROW_H   := 28.0
+const _XP_ROW_H := 22.0
+const _ICON_W  := 20.0
+const _LABEL_W := 62.0
+const _LVL_W   := 44.0        # "Lv N" numeral width, left of the XP bar
+const _P_W     := _PAD + _ICON_W + _BAR_W + _PAD + _LABEL_W + _PAD
+const _P_H     := _PAD + _ROW_H * 3.0 + _XP_ROW_H + 30.0  # extra bottom room clears the corner filigree
+const _ML      := 20.0   # left margin from screen edge
+const _MB      := 84.0   # distance from screen bottom to panel top
+
+# ── runtime state ─────────────────────────────────────────────────────────────
+var _hp_ratio   := 1.0
+var _stam_ratio := 1.0
+var _mana_ratio := 1.0
+var _xp_ratio   := 0.0
+
+# ── node refs ─────────────────────────────────────────────────────────────────
+var _flash      : ColorRect
+var _panel      : Panel
+var _hp_bg      : Panel
+var _hp_fill    : ColorRect
+var _hp_icon    : Label
+var _hp_label   : Label
+var _mana_bg    : Panel
+var _mana_fill  : ColorRect
+var _mana_icon  : Label
+var _stam_bg    : Panel
+var _stam_fill  : ColorRect
+var _stam_icon  : Label
+var _xp_bg      : Panel
+var _xp_fill    : ColorRect
+var _xp_label   : Label
+var _lvl_label  : Label
+var _msg_box    : VBoxContainer
+var _death_scr  : ColorRect
+
+# ── skill slots ───────────────────────────────────────────────────────────────
+const _SLOT_SIZE := 48.0
+const _SLOT_GAP  := 10.0
+const _SLOT_MB   := 24.0   # distance from screen bottom
+const _SLOT_MR   := 24.0   # distance from screen right
+const _SKILLS := [
+	{"id": "whirlwind", "key": "Q", "level": 2, "icon": "res://sprites/skill-whirlwind.png"},
+	{"id": "charge",    "key": "B", "level": 4, "icon": "res://sprites/skill-charge.png"},
+]
+var _skill_slots: Array = []   # one Dictionary of node refs per entry in _SKILLS
+var _player_level := 1
+
 
 func _ready() -> void:
 	layer = 10
-	flash_rect = ColorRect.new()
-	flash_rect.color = Color(1, 0, 0, 0)
-	flash_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(flash_rect)
+	_build()
+	_connect_signals()
 
-	weapon = TextureRect.new()
-	weapon.texture = WeaponArt.get_weapon(player.cls)
-	weapon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	weapon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	weapon.custom_minimum_size = Vector2(360, 400)
-	weapon.pivot_offset = Vector2(180, 400)
-	add_child(weapon)
 
-	crosshair = Label.new()
-	crosshair.text = "+"
-	crosshair.add_theme_font_size_override("font_size", 22)
-	crosshair.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
-	add_child(crosshair)
+# ── signal connections ────────────────────────────────────────────────────────
 
-	hp_bg = _bar(Color("180808")); hp_fill = _bar(Color("c82818"))
-	res_bg = _bar(Color("0a0a18")); res_fill = _bar(Color("2858c8"))
-	hp_label = _bar_label(); res_label = _bar_label()
-	info = Label.new(); info.add_theme_color_override("font_color", Color("ffce42"))
-	info.add_theme_font_size_override("font_size", 16); add_child(info)
-	cons_label = Label.new(); cons_label.add_theme_color_override("font_color", Color("ffce42"))
-	cons_label.add_theme_font_size_override("font_size", 13); add_child(cons_label)
-	food_bg = _bar(Color("1a1208")); food_fill = _bar(Color("c8862a"))
-	stam_bg = _bar(Color("181408")); stam_fill = _bar(Color("c8b028"))
+func _connect_signals() -> void:
+	SignalBus.player_health_changed.connect(_on_health)
+	SignalBus.player_stamina_changed.connect(_on_stamina)
+	SignalBus.player_mana_changed.connect(_on_mana)
+	SignalBus.player_xp_changed.connect(_on_xp)
+	SignalBus.player_died.connect(_on_died)
+	SignalBus.hud_message.connect(_post_message)
+	SignalBus.player_level_up.connect(_on_level_up)
+	SignalBus.player_skill_cooldown.connect(_on_skill_cooldown)
 
-	msg_box = VBoxContainer.new()
-	msg_box.alignment = BoxContainer.ALIGNMENT_END
-	add_child(msg_box)
+func _on_health(hp: int, mhp: int) -> void:
+	_hp_ratio = clampf(float(hp) / float(max(1, mhp)), 0.0, 1.0)
+	_hp_label.text = "%d/%d" % [hp, mhp]
 
-	minimap = Minimap.new()
-	add_child(minimap)
+func _on_stamina(s: float, ms: float) -> void:
+	_stam_ratio = clampf(s / max(1.0, ms), 0.0, 1.0)
 
-	death_panel = _make_end("YOU HAVE FALLEN", Color("e03c2c"))
-	add_child(death_panel)
-	win_panel = _make_end("THE BARONY IS YOURS", Color("62d8ff"))
-	add_child(win_panel)
+func _on_mana(m: float, mm: float) -> void:
+	_mana_ratio = clampf(m / max(1.0, mm), 0.0, 1.0)
 
-func _bar(c: Color) -> ColorRect:
-	var r := ColorRect.new(); r.color = c; r.mouse_filter = Control.MOUSE_FILTER_IGNORE; add_child(r); return r
+func _on_xp(xp: int, xp_needed: int, level: int) -> void:
+	_xp_ratio = clampf(float(xp) / float(max(1, xp_needed)), 0.0, 1.0)
+	_lvl_label.text = "Lv %d" % level
+	_xp_label.text = "%d/%d" % [xp, xp_needed]
+	_player_level = level
 
-func _bar_label() -> Label:
-	var l := Label.new(); l.add_theme_font_size_override("font_size", 12)
-	l.add_theme_color_override("font_color", Color.WHITE); add_child(l); return l
+func _on_level_up(_level: int) -> void:
+	for slot in _skill_slots:
+		if slot["def"]["level"] == _level:
+			_flash_slot(slot)
 
-func _make_end(title_text: String, color: Color) -> Control:
-	var p := ColorRect.new()
-	p.color = Color(0.06, 0.03, 0.03, 0.82)
-	p.set_anchors_preset(Control.PRESET_FULL_RECT)
-	p.visible = false
-	var c := CenterContainer.new()
-	c.set_anchors_preset(Control.PRESET_FULL_RECT)
-	p.add_child(c)
-	var v := VBoxContainer.new(); v.alignment = BoxContainer.ALIGNMENT_CENTER
-	c.add_child(v)
-	var title := Label.new(); title.text = title_text
+func _on_skill_cooldown(id: String, cur: float, mx: float) -> void:
+	if cur >= mx:
+		for slot in _skill_slots:
+			if slot["def"]["id"] == id:
+				_flash_slot(slot)
+
+func _on_died() -> void:
+	_death_scr.visible = true
+	var tw := _death_scr.create_tween()
+	tw.tween_property(_death_scr, "color:a", 0.88, 0.8)
+
+
+# ── UI construction ───────────────────────────────────────────────────────────
+
+func _build() -> void:
+	# full-screen damage flash (topmost layer)
+	_flash = ColorRect.new()
+	_flash.color = Color.TRANSPARENT
+	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_flash)
+
+	# parchment panel behind bars — smaller 9-slice margin so the strip isn't swallowed
+	_panel = Panel.new()
+	_panel.add_theme_stylebox_override("panel", UITheme.panel_style(_PANEL_MARGIN))
+	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_panel)
+
+	# HP row
+	_hp_bg    = _track()
+	_hp_fill  = _fill(_HP_COL)
+	_hp_icon  = _lbl("♥", 14, _HP_COL)
+	_hp_label = _num_lbl("120/120", 13, _TXT)
+
+	# Mana row
+	_mana_bg   = _track()
+	_mana_fill = _fill(_MANA_COL)
+	_mana_icon = _lbl("✦", 14, _MANA_COL)
+
+	# Stamina row
+	_stam_bg   = _track()
+	_stam_fill = _fill(_STM_COL)
+	_stam_icon = _lbl("⚡", 14, _STM_COL)
+
+	# XP row — "Lv N" left, thin bar center, xp numerals right
+	_xp_bg    = _track()
+	_xp_fill  = _fill(_XP_COL)
+	_lvl_label = _num_lbl("Lv 1", 15, _GOLD)
+	_xp_label  = _num_lbl("0/100", 12, _TXT)
+
+	# message log — stacks vertically, most recent at bottom
+	_msg_box = VBoxContainer.new()
+	_msg_box.alignment = BoxContainer.ALIGNMENT_END
+	_msg_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_msg_box)
+
+	# death screen (starts invisible, fades in on player_died)
+	_death_scr = ColorRect.new()
+	_death_scr.color = Color(0.04, 0.02, 0.02, 0.0)
+	_death_scr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_death_scr.visible = false
+	_death_scr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_build_death_content(_death_scr)
+	add_child(_death_scr)
+
+	_build_skill_slots()
+
+
+func _build_death_content(parent: ColorRect) -> void:
+	var cc := CenterContainer.new()
+	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	parent.add_child(cc)
+
+	var vb := VBoxContainer.new()
+	vb.alignment = BoxContainer.ALIGNMENT_CENTER
+	vb.add_theme_constant_override("separation", 16)
+	cc.add_child(vb)
+
+	var title := Label.new()
+	title.text = "YOU HAVE FALLEN"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 44)
-	title.add_theme_color_override("font_color", color)
-	v.add_child(title)
-	var sub := Label.new(); sub.name = "Sub"
+	UITheme.apply_header_font(title, 54)
+	title.add_theme_color_override("font_color", _HP_COL)
+	vb.add_child(title)
+
+	var sub := Label.new()
+	sub.text = "press Escape to return"
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub.add_theme_color_override("font_color", Color("c9b37e")); v.add_child(sub)
-	var b := Button.new(); b.text = "Return to the Title"
-	b.pressed.connect(func(): get_tree().reload_current_scene())
-	v.add_child(b)
+	sub.add_theme_font_size_override("font_size", 16)
+	sub.add_theme_color_override("font_color", _GOLD)
+	vb.add_child(sub)
+
+
+# ── skill slots ───────────────────────────────────────────────────────────────
+
+func _build_skill_slots() -> void:
+	for def in _SKILLS:
+		var root := Panel.new()
+		root.add_theme_stylebox_override("panel", UITheme.slot_style(UITheme.PARCHMENT, UITheme.BRONZE))
+		root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.custom_minimum_size = Vector2(_SLOT_SIZE, _SLOT_SIZE)
+		root.clip_contents = true
+		add_child(root)
+
+		var icon := TextureRect.new()
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.clip_contents = true
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if ResourceLoader.exists(def["icon"]):
+			icon.texture = load(def["icon"])
+		root.add_child(icon)
+
+		# cooldown sweep — dark overlay that shrinks from full height as cd elapses
+		var cd_overlay := ColorRect.new()
+		cd_overlay.color = Color(0.0, 0.0, 0.0, 0.72)
+		cd_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(cd_overlay)
+
+		var cd_label := Label.new()
+		cd_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cd_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		cd_label.add_theme_color_override("font_color", _TXT)
+		cd_label.add_theme_font_size_override("font_size", 16)
+		cd_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(cd_label)
+
+		var lock_label := Label.new()
+		lock_label.text = "Lv %d" % def["level"]
+		lock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lock_label.add_theme_color_override("font_color", _GOLD)
+		UITheme.apply_header_font(lock_label, 12)
+		lock_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(lock_label)
+
+		var key_label := Label.new()
+		key_label.text = def["key"]
+		key_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		key_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		key_label.add_theme_color_override("font_color", _GOLD)
+		key_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+		key_label.add_theme_constant_override("shadow_offset_x", 1)
+		key_label.add_theme_constant_override("shadow_offset_y", 1)
+		UITheme.apply_header_font(key_label, 11)
+		key_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(key_label)
+
+		_skill_slots.append({
+			"def": def, "root": root, "icon": icon, "cd_overlay": cd_overlay,
+			"cd_label": cd_label, "lock_label": lock_label, "key_label": key_label,
+		})
+
+
+func _flash_slot(slot: Dictionary) -> void:
+	var root: Panel = slot["root"]
+	root.modulate = Color(1.6, 1.5, 1.0, 1.0)
+	var tw := create_tween()
+	tw.tween_property(root, "modulate", Color(1, 1, 1, 1), 0.4)
+
+
+func _layout_skill_slots(vs: Vector2) -> void:
+	var n := _skill_slots.size()
+	for i in range(n):
+		var slot: Dictionary = _skill_slots[i]
+		var root: Panel = slot["root"]
+		var rx := vs.x - _SLOT_MR - (n - i) * _SLOT_SIZE - (n - i - 1) * _SLOT_GAP
+		var ry := vs.y - _SLOT_MB - _SLOT_SIZE
+		root.position = Vector2(rx, ry)
+		root.size     = Vector2(_SLOT_SIZE, _SLOT_SIZE)
+
+		# icon/overlay/labels are children of root (a Panel) — their position is
+		# LOCAL to root's top-left corner, not canvas space. Do not add root.position.
+		var icon: TextureRect = slot["icon"]
+		var inset := 4.0
+		icon.position = Vector2(inset, inset)
+		icon.size     = Vector2(_SLOT_SIZE - inset * 2.0, _SLOT_SIZE - inset * 2.0)
+
+		var cd_overlay: ColorRect = slot["cd_overlay"]
+		cd_overlay.position = Vector2.ZERO  # height set per-frame in _update_skill_slots
+
+		var lock_label: Label = slot["lock_label"]
+		lock_label.position = Vector2.ZERO
+		lock_label.size     = Vector2(_SLOT_SIZE, _SLOT_SIZE)
+
+		var key_label: Label = slot["key_label"]
+		key_label.position = Vector2.ZERO
+		key_label.size     = Vector2(_SLOT_SIZE - 3.0, _SLOT_SIZE - 2.0)
+
+
+const _SKILL_CD_MAX := {"whirlwind": 6.0, "charge": 8.0}
+const _SKILL_CD_FIELD := {"whirlwind": "_ww_cd", "charge": "_charge_cd"}
+
+func _update_skill_slots() -> void:
+	# Cooldown floats live on Player, not SignalBus — polling one group lookup
+	# per frame is the cheapest way to read them (matches InventoryUI's pattern).
+	var player := get_tree().get_first_node_in_group("player")
+	for slot in _skill_slots:
+		var def: Dictionary = slot["def"]
+		var icon: TextureRect = slot["icon"]
+		var cd_overlay: ColorRect = slot["cd_overlay"]
+		var cd_label: Label = slot["cd_label"]
+		var lock_label: Label = slot["lock_label"]
+
+		var locked := _player_level < int(def["level"])
+		var cd: float = 0.0
+		if player != null:
+			cd = float(player.get(_SKILL_CD_FIELD[def["id"]]))
+		var cd_max: float = _SKILL_CD_MAX[def["id"]]
+
+		icon.modulate = Color(0.25, 0.25, 0.25, 1.0) if locked else Color(1, 1, 1, 1)
+		lock_label.visible = locked
+		cd_overlay.visible = not locked and cd > 0.0
+		cd_label.visible = not locked and cd > 1.0
+		if cd_overlay.visible:
+			# Local to root — sweeps down from the top as cooldown elapses.
+			var frac := clampf(cd / cd_max, 0.0, 1.0)
+			cd_overlay.position = Vector2.ZERO
+			cd_overlay.size     = Vector2(_SLOT_SIZE, _SLOT_SIZE * frac)
+		if cd_label.visible:
+			cd_label.text = str(int(ceil(cd)))
+
+
+# ── per-frame layout ──────────────────────────────────────────────────────────
+
+func _process(_dt: float) -> void:
+	var vs  := get_viewport().get_visible_rect().size
+	var px  := _ML
+	var py  := vs.y - _MB - _P_H
+
+	# panel background
+	_panel.position = Vector2(px, py)
+	_panel.size     = Vector2(_P_W, _P_H)
+
+	# HP row
+	_layout_row(_hp_icon, _hp_bg, _hp_fill, px, py + _PAD, _hp_ratio)
+	_hp_label.position = Vector2(px + _PAD + _ICON_W + _BAR_W + 4.0, py + _PAD - 2.0)
+
+	# Mana row
+	_layout_row(_mana_icon, _mana_bg, _mana_fill, px, py + _PAD + _ROW_H, _mana_ratio)
+
+	# Stamina row — colour shifts orange when low
+	_layout_row(_stam_icon, _stam_bg, _stam_fill, px, py + _PAD + _ROW_H * 2.0, _stam_ratio)
+	var low_t := 1.0 - clampf(_stam_ratio / 0.25, 0.0, 1.0)
+	_stam_fill.color = _STM_COL.lerp(Color(0.87, 0.35, 0.08), low_t)
+
+	# XP row — "Lv N" (gold, prominent) left, bar center, "xp/needed" right.
+	# All three share the row's vertical center so nothing clips the border art.
+	var xp_row_y := py + _PAD + _ROW_H * 3.0
+	var bar_x := px + _PAD + _LVL_W + 4.0
+	var bar_w := _ICON_W + _BAR_W - _LVL_W - 4.0
+	_lvl_label.position = Vector2(px + _PAD, xp_row_y)
+	_lvl_label.size     = Vector2(_LVL_W, _XP_ROW_H)
+	_lvl_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_lvl_label.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	_xp_bg.position   = Vector2(bar_x, xp_row_y + (_XP_ROW_H - _XP_BAR_H) * 0.5)
+	_xp_bg.size       = Vector2(bar_w, _XP_BAR_H)
+	_xp_fill.position = _xp_bg.position + Vector2(1.5, 1.5)
+	_xp_fill.size     = Vector2((bar_w - 3.0) * _xp_ratio, _XP_BAR_H - 3.0)
+	_xp_label.position = Vector2(px + _PAD + _ICON_W + _BAR_W + 4.0, xp_row_y)
+	_xp_label.size     = Vector2(_LABEL_W, _XP_ROW_H)
+	_xp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
+	# message log above the panel
+	_msg_box.position = Vector2(px, py - 118.0)
+	_msg_box.size     = Vector2(380.0, 110.0)
+
+	_layout_skill_slots(vs)
+	_update_skill_slots()
+
+
+func _layout_row(icon: Label, bg: Panel, fill: ColorRect,
+		px: float, row_y: float, ratio: float) -> void:
+	icon.position = Vector2(px + _PAD, row_y)
+	var bx        := px + _PAD + _ICON_W
+	bg.position   = Vector2(bx, row_y + 2.0)
+	bg.size       = Vector2(_BAR_W, _BAR_H)
+	fill.position = bg.position + Vector2(1.5, 1.5)
+	fill.size     = Vector2((_BAR_W - 3.0) * ratio, _BAR_H - 3.0)
+
+
+# ── messages ──────────────────────────────────────────────────────────────────
+
+func _post_message(text: String, duration: float) -> void:
+	var strip := Panel.new()
+	# small strip — thin 9-slice inset so the border doesn't swallow a one-line toast
+	strip.add_theme_stylebox_override("panel", UITheme.panel_style(10.0))
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.custom_minimum_size = Vector2(0, 26)
+
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", _TXT)
+	lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.7))
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var pad := MarginContainer.new()
+	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		pad.add_theme_constant_override(s, 4)
+	pad.add_child(lbl)
+	strip.add_child(pad)
+	_msg_box.add_child(strip)
+
+	while _msg_box.get_child_count() > 6:
+		_msg_box.get_child(0).queue_free()
+
+	var tw := create_tween()
+	tw.tween_interval(duration)
+	tw.tween_property(strip, "modulate:a", 0.0, 0.8)
+	tw.tween_callback(func() -> void:
+		if is_instance_valid(strip): strip.queue_free())
+
+
+func flash_damage() -> void:
+	_flash.color = Color(0.8, 0.1, 0.05, 0.30)
+	var tw := create_tween()
+	tw.tween_property(_flash, "color:a", 0.0, 0.4)
+
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+func _track() -> Panel:
+	var p := Panel.new()
+	p.add_theme_stylebox_override("panel", UITheme.bar_track_style())
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(p)
 	return p
 
-func flash(c: Color) -> void:
-	flash_rect.color = c
-	var tw := create_tween()
-	tw.tween_property(flash_rect, "color:a", 0.0, 0.4)
 
-func message(text: String, col: Color) -> void:
+func _fill(c: Color) -> ColorRect:
+	var r := ColorRect.new()
+	r.color = c
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(r)
+	return r
+
+
+func _lbl(text: String, size: int, c: Color) -> Label:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_color_override("font_color", col)
-	l.add_theme_font_size_override("font_size", 15)
-	msg_box.add_child(l)
-	while msg_box.get_child_count() > 5:
-		msg_box.get_child(0).free()
-	var tw := create_tween()
-	tw.tween_interval(4.0)
-	tw.tween_property(l, "modulate:a", 0.0, 1.5)
-	tw.tween_callback(func(): if is_instance_valid(l): l.queue_free())
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", c)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(l)
+	return l
 
-func show_death(src: String) -> void:
-	var sub := death_panel.find_child("Sub", true, false)
-	if sub: sub.text = "Slain by %s on depth %d, at level %d." % [src, Game.instance.depth, player.level]
-	death_panel.visible = true
-	if not OS.has_feature("headless"): Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
-func show_win(text: String) -> void:
-	var sub := win_panel.find_child("Sub", true, false)
-	if sub: sub.text = text
-	win_panel.visible = true
-	if not OS.has_feature("headless"): Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-
-func _process(dt: float) -> void:
-	t += dt
-	if player == null or not is_instance_valid(player):
-		return
-	var vs := get_viewport().get_visible_rect().size
-
-	# crosshair
-	crosshair.position = vs * 0.5 - Vector2(7, 14)
-
-	# weapon view bob + swing
-	var spd_factor := clampf(player.velocity.length() / 4.2, 0.0, 1.0)
-	var bob := Vector2(sin(t * 2.0) * 7.0 * spd_factor, abs(cos(t * 2.0)) * 6.0 * spd_factor)
-	var off_x := 0.0
-	var off_y := 0.0
-	var rot  := 0.0
-
-	if player.atk_t > 0.0 and player.atk_cd > 0.0:
-		var n := clampf(player.atk_t / player.atk_cd, 0.0, 1.0)
-		var is_heavy: bool = player.atk_cd > float(Classes.melee_cd.get(player.cls, 0.45)) * 1.2
-		if player.cls == "rogue":
-			# undercut: draw dagger low-left → slash up-right
-			if n > 0.60:
-				var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.40)
-				off_x = -15.0 * p;  off_y = 32.0 * p;  rot = -0.18 * p
-			elif n > 0.12:
-				var p := smoothstep(0.0, 1.0, (0.60 - n) / 0.48)
-				off_x = lerp(-15.0, 28.0, p);  off_y = lerp(32.0, -50.0, p);  rot = lerp(-0.18, 0.15, p)
-			else:
-				var p := smoothstep(0.0, 1.0, (0.12 - n) / 0.12)
-				off_x = lerp(28.0, 0.0, p);  off_y = lerp(-50.0, 0.0, p);  rot = lerp(0.15, 0.0, p)
-		elif is_heavy:
-			# heavy overhead: slow massive arc with extra wind-up
-			if n > 0.55:
-				var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.45)
-				off_x = 52.0 * p;  off_y = -170.0 * p;  rot = 0.55 * p
-			elif n > 0.10:
-				var p := smoothstep(0.0, 1.0, (0.55 - n) / 0.45)
-				off_x = lerp(52.0, -42.0, p);  off_y = lerp(-170.0, 70.0, p);  rot = lerp(0.55, -0.45, p)
-			else:
-				var p := smoothstep(0.0, 1.0, (0.10 - n) / 0.10)
-				off_x = lerp(-42.0, 0.0, p);  off_y = lerp(70.0, 0.0, p);  rot = lerp(-0.45, 0.0, p)
-		else:
-			# overhead diagonal cut: raise sword up → crash diagonally down-left
-			if n > 0.55:
-				var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.45)
-				off_x = 32.0 * p;  off_y = -130.0 * p;  rot = 0.32 * p
-			elif n > 0.10:
-				var p := smoothstep(0.0, 1.0, (0.55 - n) / 0.45)
-				off_x = lerp(32.0, -28.0, p);  off_y = lerp(-130.0, 52.0, p);  rot = lerp(0.32, -0.28, p)
-			else:
-				var p := smoothstep(0.0, 1.0, (0.10 - n) / 0.10)
-				off_x = lerp(-28.0, 0.0, p);  off_y = lerp(52.0, 0.0, p);  rot = lerp(-0.28, 0.0, p)
-
-	elif player.cast_t > 0.0 and player.cast_cd > 0.0:
-		var n := clampf(player.cast_t / player.cast_cd, 0.0, 1.0)
-		if n > 0.55:
-			var p := smoothstep(0.0, 1.0, (1.0 - n) / 0.45)
-			off_y = -36.0 * p;  rot = -0.14 * p
-		elif n > 0.20:
-			var p := smoothstep(0.0, 1.0, (0.55 - n) / 0.35)
-			off_x = -15.0 * sin(p * PI);  off_y = lerp(-36.0, 22.0, p);  rot = lerp(-0.14, 0.18, p)
-		else:
-			var p := smoothstep(0.0, 1.0, (0.20 - n) / 0.20)
-			off_y = lerp(22.0, 0.0, p);  rot = lerp(0.18, 0.0, p)
-
-	weapon.size = weapon.custom_minimum_size
-	weapon.position = Vector2(vs.x * 0.5 - 120 + bob.x + off_x, vs.y - 300 + bob.y + off_y)
-	weapon.rotation = rot
-
-	# bars (bottom-left)
-	var bw := 200.0
-	var bx := 20.0
-	var by := vs.y - 56.0
-	hp_bg.position = Vector2(bx, by); hp_bg.size = Vector2(bw, 16)
-	hp_fill.position = Vector2(bx, by); hp_fill.size = Vector2(bw * clampf(player.hp / player.tot_maxhp(), 0, 1), 16)
-	hp_label.position = Vector2(bx + 6, by - 1); hp_label.text = "%d / %d" % [ceili(player.hp), player.tot_maxhp()]
-	var rc: String = RES_COL.get(player.def.res, "2858c8")
-	res_fill.color = Painter.hex(rc)
-	res_bg.position = Vector2(bx, by + 20); res_bg.size = Vector2(bw, 12)
-	res_fill.position = Vector2(bx, by + 20); res_fill.size = Vector2(bw * clampf(player.mana / player.tot_maxmana(), 0, 1), 12)
-	res_label.position = Vector2(bx + 6, by + 19); res_label.text = "%s %d / %d" % [player.def.res, int(player.mana), player.tot_maxmana()]
-	food_bg.position = Vector2(bx, by + 36); food_bg.size = Vector2(bw, 6)
-	food_fill.color = Painter.hex("c8862a") if player.food > 30.0 else Painter.hex("e03c2c")
-	food_fill.position = Vector2(bx, by + 36); food_fill.size = Vector2(bw * clampf(player.food / 100.0, 0, 1), 6)
-	stam_bg.position = Vector2(bx, by + 46); stam_bg.size = Vector2(bw, 8)
-	stam_fill.color = Painter.hex("c8b028") if player.stamina > 25.0 else Painter.hex("e05820")
-	stam_fill.position = Vector2(bx, by + 46); stam_fill.size = Vector2(bw * clampf(player.stamina / player.max_stamina, 0, 1), 8)
-	cons_label.text = "H:%d  M:%d  G:%d    pack %d/6" % [player.hpots, player.mpots, player.meat, player.bag.size()]
-	cons_label.position = Vector2(bx + bw + 16, by + 8)
-
-	# minimap — top-right corner; info label sits just below it
-	var mm_w := minimap.size.x
-	minimap.position = Vector2(vs.x - mm_w - 12, 8)
-	info.text = "%s  LV %d   DEPTH %d" % [player.def.name, player.level, Game.instance.depth]
-	info.position = Vector2(vs.x - mm_w - 12, mm_w + 14)
-
-	# message box bottom-left above bars
-	msg_box.position = Vector2(bx, by - 130)
-	msg_box.size = Vector2(400, 120)
+func _num_lbl(text: String, size: int, c: Color) -> Label:
+	var l := _lbl(text, size, c)
+	UITheme.apply_header_font(l, size)
+	return l

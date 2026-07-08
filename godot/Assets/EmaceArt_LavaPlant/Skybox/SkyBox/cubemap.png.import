@@ -1,0 +1,27 @@
+[remap]
+
+importer="cubemap_texture"
+type="CompressedCubemap"
+uid="uid://b7uttuxf6j2jd"
+path="res://.godot/imported/cubemap.png-f892e4e40b2fdb346da7c2bf84dd806e.ccube"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://Assets/EmaceArt_LavaPlant/Skybox/SkyBox/cubemap.png"
+dest_files=["res://.godot/imported/cubemap.png-f892e4e40b2fdb346da7c2bf84dd806e.ccube"]
+
+[params]
+
+compress/mode=0
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/uastc_level=0
+compress/rdo_quality_loss=0.0
+compress/hdr_compression=1
+compress/channel_pack=0
+mipmaps/generate=false
+mipmaps/limit=-1
+slices/arrangement=0

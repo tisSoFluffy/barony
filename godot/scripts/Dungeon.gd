@@ -101,12 +101,11 @@ static func generate(depth: int) -> Dictionary:
 		items.append({ "type": "stairs", "pos": Vector2(rl.cx, rl.cy) })
 	else:
 		boss = true
-		enemies.append({ "type": "ogre", "pos": Vector2(rl.cx, rl.cy), "has_key": false })
+		enemies.append({ "type": "gormaul", "pos": Vector2(rl.cx, rl.cy), "has_key": false })
 
-	# enemies
-	var sp: Dictionary = Bestiary.spawn_table(depth)
-	var pool: Array = sp.pool
-	var n: int = sp.n
+	# enemies — weighted spawn table; add new types here as sprites land
+	var pool: Array = [["kobold", 3], ["murloc", 2], ["skeleton", 2], ["orc", 2], ["troll", 2], ["necro", 1]]
+	var n: int = 2 + depth * 2
 	for i in range(n):
 		var r: Dictionary = rooms[Util.ri(1, rooms.size() - 1)]
 		var ex: float = Util.rf(r.x + 0.8, r.x + r.w - 0.8)
@@ -133,6 +132,17 @@ static func generate(depth: int) -> Dictionary:
 	for r in rooms:
 		if Util.chance(0.8):
 			items.append({ "type": "torch", "pos": Vector2(r.x + 0.55, r.y + 0.55) })
+
+	# cave waterfalls — 1-2 per floor, against north walls of rooms far from start
+	var far_rooms: Array = []
+	for r in rooms:
+		if dist2(float(r.cx), float(r.cy), start.x, start.y) > 36.0:
+			far_rooms.append(r)
+	for _i in range(mini(Util.ri(1, 2), far_rooms.size())):
+		var ri := Util.ri(0, far_rooms.size() - 1)
+		var r: Dictionary = far_rooms[ri]
+		items.append({ "type": "waterfall", "pos": Vector2(r.cx + 0.5, r.y + 0.8) })
+		far_rooms.remove_at(ri)
 
 	# spike traps (depth 2+)
 	if depth >= 2:
@@ -176,8 +186,42 @@ static func generate(depth: int) -> Dictionary:
 		var r: Dictionary = rooms[Util.ri(1, rooms.size() - 2)]
 		items.append({ "type": "shop", "pos": Vector2(r.cx + 0.4, r.cy) })
 
+	# Decorative 3D props — lava plants for depth 1 (the Old Mines)
+	var props: Array = []
+	if depth == 1:
+		var base    := "res://Assets/EmaceArt_LavaPlant/Tscn/"
+		var plants  := ["EA_Plant_01a","EA_Plant_01b","EA_Plant_01c","EA_Plant_01d","EA_Plant_01e"]
+		var puddles := ["EA_Puddle_01a","EA_Puddle_01b","EA_Puddle_01c"]
+
+		# 3 lava puddles in room interiors (skip start room + require min room size)
+		for i in range(3):
+			var r: Dictionary = rooms[Util.ri(1, rooms.size() - 1)]
+			if r.w < 6 or r.h < 6:
+				continue
+			var px := Util.rf(float(r.x) + 2.0, float(r.x + r.w) - 2.0)
+			var py := Util.rf(float(r.y) + 2.0, float(r.y + r.h) - 2.0)
+			if dist2(px, py, start.x, start.y) > 25.0:
+				props.append({ "scene": base + puddles[i % 3] + "_Default.prefab.tscn",
+					"pos": Vector2(px, py), "rot_y": Util.rf(0.0, TAU), "glow": true })
+
+		# 5 plants placed against walls
+		for i in range(5):
+			var r: Dictionary = rooms[Util.ri(1, rooms.size() - 1)]
+			if r.w < 4 or r.h < 4:
+				continue
+			var side := Util.ri(0, 3)
+			var px := 0.0; var py := 0.0
+			match side:
+				0: px = float(r.x) + 0.8;      py = Util.rf(float(r.y)+1.0, float(r.y+r.h)-1.0)
+				1: px = float(r.x+r.w) - 0.8;  py = Util.rf(float(r.y)+1.0, float(r.y+r.h)-1.0)
+				2: px = Util.rf(float(r.x)+1.0, float(r.x+r.w)-1.0); py = float(r.y) + 0.8
+				3: px = Util.rf(float(r.x)+1.0, float(r.x+r.w)-1.0); py = float(r.y+r.h) - 0.8
+			if dist2(px, py, start.x, start.y) > 25.0:
+				props.append({ "scene": base + plants[i % 5] + "_Default.prefab.tscn",
+					"pos": Vector2(px, py), "rot_y": Util.rf(0.0, TAU), "glow": false })
+
 	return {
 		"w": MS, "h": MS, "tiles": tiles, "rooms": rooms,
 		"start": start, "stairs": stairs, "boss": boss,
-		"enemies": enemies, "items": items, "theme": min(depth, 5),
+		"enemies": enemies, "items": items, "props": props, "theme": min(depth, 5),
 	}

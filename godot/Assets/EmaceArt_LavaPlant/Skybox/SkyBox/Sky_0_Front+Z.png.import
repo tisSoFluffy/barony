@@ -1,0 +1,28 @@
+[remap]
+
+importer="cubemap_texture"
+type="CompressedCubemap"
+uid="uid://bir1s8deqsbdu"
+path.s3tc="res://.godot/imported/Sky_0_Front+Z.png-63a56beae7aad25d87732401ec161594.s3tc.ccube"
+metadata={
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
+
+[deps]
+
+source_file="res://Assets/EmaceArt_LavaPlant/Skybox/SkyBox/Sky_0_Front+Z.png"
+dest_files=["res://.godot/imported/Sky_0_Front+Z.png-63a56beae7aad25d87732401ec161594.s3tc.ccube"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=false
+compress/lossy_quality=0.5
+compress/uastc_level=0
+compress/rdo_quality_loss=0.0
+compress/hdr_compression=1
+compress/channel_pack=0
+mipmaps/generate=false
+mipmaps/limit=-1
+slices/arrangement=1

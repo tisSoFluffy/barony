@@ -1,0 +1,94 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/attack_0.png" id="1_es3yd"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/attack_1.png" id="2_kjxtc"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/attack_2.png" id="3_gccsv"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/death_0.png" id="4_xl20j"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/death_1.png" id="5_hrrrm"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/death_2.png" id="6_ty0ho"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/death_3.png" id="7_daxph"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/death_4.png" id="8_88ibb"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/hurt_0.png" id="9_ndavq"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/hurt_1.png" id="10_b58h0"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/idle_0.png" id="11_mg8ax"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/idle_1.png" id="12_qaoh2"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/idle_2.png" id="13_bh6ee"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/walk_0.png" id="14_o78mq"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/walk_1.png" id="15_ltufc"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/warrior-base/walk_2.png" id="16_1feb0"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_es3yd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_kjxtc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_gccsv")
+}],
+"loop": 0,
+"name": &"attack",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_xl20j")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_hrrrm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_ty0ho")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_daxph")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_88ibb")
+}],
+"loop": 0,
+"name": &"death",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_ndavq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_b58h0")
+}],
+"loop": 0,
+"name": &"hurt",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("11_mg8ax")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_qaoh2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_bh6ee")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("14_o78mq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_ltufc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_1feb0")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 8.0
+}]

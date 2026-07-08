@@ -1,0 +1,94 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/attack_0.png" id="1_r7voy"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/attack_1.png" id="2_ay2ee"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/attack_2.png" id="3_ma2hb"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/death_0.png" id="4_t7u8w"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/death_1.png" id="5_61110"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/death_2.png" id="6_qkspr"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/death_3.png" id="7_e5x7l"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/death_4.png" id="8_hquf2"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/hurt_0.png" id="9_s4mc0"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/hurt_1.png" id="10_uaudg"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/idle_0.png" id="11_yr4wm"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/idle_1.png" id="12_vkafs"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/idle_2.png" id="13_scma8"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/walk_0.png" id="14_6ehmx"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/walk_1.png" id="15_vg14l"]
+[ext_resource type="Texture2D" path="res://sprites/sliced/troll/walk_2.png" id="16_6ox2f"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_r7voy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_ay2ee")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_ma2hb")
+}],
+"loop": 0,
+"name": &"attack",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_t7u8w")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_61110")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_qkspr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_e5x7l")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_hquf2")
+}],
+"loop": 0,
+"name": &"death",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_s4mc0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_uaudg")
+}],
+"loop": 0,
+"name": &"hurt",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("11_yr4wm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_vkafs")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_scma8")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("14_6ehmx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_vg14l")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_6ox2f")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 8.0
+}]
