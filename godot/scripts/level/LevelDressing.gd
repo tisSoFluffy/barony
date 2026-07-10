@@ -23,6 +23,28 @@ const PROP_COLLIDER_RADIUS := 0.35
 # Solid props get a walk-blocking StaticBody3D cylinder.
 const PROP_SOLID := {PROP_BARREL: true, PROP_CRATE: true, PROP_BRAZIER: true}
 
+# Fraction of barrel rolls that become the breakable 3D BreakableBarrel.gd
+# prop instead of the flat decorative sprite — keeps most barrels purely
+# decorative (avoids trivializing every barrel in the dungeon) while still
+# giving players something to smash reasonably often.
+const BREAKABLE_BARREL_CHANCE := 1.0
+const _BREAKABLE_BARREL_SCRIPT := "res://scripts/BreakableBarrel.gd"
+
+# All crate rolls become the breakable 3D BreakableCrate.gd prop.
+const BREAKABLE_CRATE_CHANCE := 1.0
+const _BREAKABLE_CRATE_SCRIPT := "res://scripts/BreakableCrate.gd"
+
+# All pot rolls become the breakable 3D BreakablePots.gd prop.
+const BREAKABLE_POTS_CHANCE := 1.0
+const _BREAKABLE_POTS_SCRIPT := "res://scripts/BreakablePots.gd"
+
+# All rubble rolls become the breakable 3D BreakableStones.gd prop.
+const BREAKABLE_STONES_CHANCE := 1.0
+const _BREAKABLE_STONES_SCRIPT := "res://scripts/BreakableStones.gd"
+
+# Bones are purely visual — no chance roll needed, always 100%.
+const _BONES_3D_SCRIPT := "res://scripts/Bones3D.gd"
+
 static var _prop_textures: Array = []          # Array[Texture2D], index-aligned to PROP_*
 static var _sconce_textures: Array = []        # Array[Texture2D], flame_0..2
 static var _decal_textures: Array = []         # Array[Texture2D], decal_0..3
@@ -190,6 +212,30 @@ static func _pick_prop_type(depth_frac: float, rng: RandomNumberGenerator) -> in
 
 static func _place_prop(parent: Node3D, room: Dictionary, col: int, row: int,
 		prop_type: int, rng: RandomNumberGenerator) -> void:
+	if prop_type == PROP_BARREL and rng.randf() < BREAKABLE_BARREL_CHANCE \
+			and ResourceLoader.exists(_BREAKABLE_BARREL_SCRIPT):
+		_place_breakable_barrel(parent, room, col, row)
+		return
+
+	if prop_type == PROP_CRATE and rng.randf() < BREAKABLE_CRATE_CHANCE \
+			and ResourceLoader.exists(_BREAKABLE_CRATE_SCRIPT):
+		_place_breakable_crate(parent, room, col, row)
+		return
+
+	if prop_type == PROP_POTS and rng.randf() < BREAKABLE_POTS_CHANCE \
+			and ResourceLoader.exists(_BREAKABLE_POTS_SCRIPT):
+		_place_breakable_pots(parent, room, col, row)
+		return
+
+	if prop_type == PROP_RUBBLE and rng.randf() < BREAKABLE_STONES_CHANCE \
+			and ResourceLoader.exists(_BREAKABLE_STONES_SCRIPT):
+		_place_breakable_stones(parent, room, col, row)
+		return
+
+	if prop_type == PROP_BONES and ResourceLoader.exists(_BONES_3D_SCRIPT):
+		_place_bones_3d(parent, room, col, row)
+		return
+
 	var tex: Texture2D = _prop_textures[prop_type]
 	if tex == null:
 		return
@@ -240,6 +286,78 @@ static func _place_prop(parent: Node3D, room: Dictionary, col: int, row: int,
 			var motes: GPUParticles3D = pf.dust_motes()
 			motes.position = sprite.position + Vector3(0, 0.8, 0)
 			parent.add_child(motes)
+
+
+# 3D breakable variant of PROP_BARREL — mirrors _place_prop's wall-hugging
+# placement but instances scripts/BreakableBarrel.gd (real mesh, own
+# collision/hit-handling) instead of a flat Sprite3D + StaticBody3D pair.
+static func _place_breakable_barrel(parent: Node3D, room: Dictionary, col: int, row: int) -> void:
+	var cx: float = room.cx
+	var cy: float = room.cy
+	var away := Vector2(col - cx, row - cy).normalized()
+	var wx := col * TILE_SIZE + away.x * 0.4
+	var wz := row * TILE_SIZE + away.y * 0.4
+
+	var barrel: StaticBody3D = load(_BREAKABLE_BARREL_SCRIPT).new()
+	parent.add_child(barrel)
+	barrel.position = Vector3(wx, 0.0, wz)
+
+
+# 3D breakable variant of PROP_CRATE — mirrors _place_breakable_barrel's
+# wall-hugging placement but instances scripts/BreakableCrate.gd (real mesh,
+# own collision/hit-handling) instead of a flat Sprite3D + StaticBody3D pair.
+static func _place_breakable_crate(parent: Node3D, room: Dictionary, col: int, row: int) -> void:
+	var cx: float = room.cx
+	var cy: float = room.cy
+	var away := Vector2(col - cx, row - cy).normalized()
+	var wx := col * TILE_SIZE + away.x * 0.4
+	var wz := row * TILE_SIZE + away.y * 0.4
+
+	var crate: StaticBody3D = load(_BREAKABLE_CRATE_SCRIPT).new()
+	parent.add_child(crate)
+	crate.position = Vector3(wx, 0.0, wz)
+
+
+# 3D breakable variant of PROP_POTS — mirrors _place_breakable_crate's
+# wall-hugging placement but instances scripts/BreakablePots.gd (real mesh,
+# own collision/hit-handling) instead of a flat Sprite3D pair.
+static func _place_breakable_pots(parent: Node3D, room: Dictionary, col: int, row: int) -> void:
+	var cx: float = room.cx
+	var cy: float = room.cy
+	var away := Vector2(col - cx, row - cy).normalized()
+	var wx := col * TILE_SIZE + away.x * 0.4
+	var wz := row * TILE_SIZE + away.y * 0.4
+
+	var pots: StaticBody3D = load(_BREAKABLE_POTS_SCRIPT).new()
+	parent.add_child(pots)
+	pots.position = Vector3(wx, 0.0, wz)
+
+
+# 3D breakable stone rubble pile — angular low-poly stones, harder than pots (hp 50).
+static func _place_breakable_stones(parent: Node3D, room: Dictionary, col: int, row: int) -> void:
+	var cx: float = room.cx
+	var cy: float = room.cy
+	var away := Vector2(col - cx, row - cy).normalized()
+	var wx := col * TILE_SIZE + away.x * 0.4
+	var wz := row * TILE_SIZE + away.y * 0.4
+
+	var stones: StaticBody3D = load(_BREAKABLE_STONES_SCRIPT).new()
+	parent.add_child(stones)
+	stones.position = Vector3(wx, 0.0, wz)
+
+
+# 3D visual-only bones scatter — pure atmospheric decoration, no collision/HP/loot.
+# Bones3D.gd (Node3D) handles shadow + random rotation in its _ready().
+static func _place_bones_3d(parent: Node3D, room: Dictionary, col: int, row: int) -> void:
+	var cx: float = room.cx
+	var cy: float = room.cy
+	var away := Vector2(col - cx, row - cy).normalized()
+	var wx := col * TILE_SIZE + away.x * 0.4
+	var wz := row * TILE_SIZE + away.y * 0.4
+
+	var bones: Node3D = load(_BONES_3D_SCRIPT).new()
+	parent.add_child(bones)
+	bones.position = Vector3(wx, 0.0, wz)
 
 
 static func _add_prop_collision(parent: Node3D, pos: Vector3) -> void:

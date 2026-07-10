@@ -14,6 +14,14 @@ var _base_y: float = 0.3
 var _t: float      = 0.0
 var _collected: bool = false
 
+# Real 3D potion bottle mesh (Blender-modeled glass body + glowing liquid,
+# red=health / blue=mana) — swaps in for the generic glow-sphere on
+# "hpot"/"mpot" only; every other item_type keeps the sphere+icon look.
+const _POTION_MODELS: Dictionary = {
+	"hpot": "res://Assets/PotionBottle/Meshes/potion_health.glb",
+	"mpot": "res://Assets/PotionBottle/Meshes/potion_mana.glb",
+}
+
 # Colors per item type
 const _COLORS: Dictionary = {
 	"gold":   Color(1.0, 0.82, 0.12),
@@ -52,29 +60,38 @@ func _build_visuals() -> void:
 	var col: Color = _COLORS.get(item_type, Color(1, 1, 1))
 	var icon: String = _ICONS.get(item_type, "?")
 
-	# Glow sphere
-	var mi   := MeshInstance3D.new()
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.18
-	mesh.height = 0.36
-	mi.mesh = mesh
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = col
-	mat.emission_enabled = true
-	mat.emission         = col
-	mat.emission_energy_multiplier = 1.2
-	mi.material_override = mat
-	add_child(mi)
+	var model_path: String = _POTION_MODELS.get(item_type, "")
+	if model_path != "" and ResourceLoader.exists(model_path):
+		# Potion bottle model — no sphere/icon; the mesh itself reads as
+		# health (red glass liquid) vs mana (blue) at pickup size.
+		var potion := (load(model_path) as PackedScene).instantiate()
+		potion.position = Vector3(0, -0.05, 0)  # bottle base sits near the bob origin
+		add_child(potion)
+	else:
+		# Glow sphere (fallback for every other item_type, and if the
+		# model asset is ever missing)
+		var mi   := MeshInstance3D.new()
+		var mesh := SphereMesh.new()
+		mesh.radius = 0.18
+		mesh.height = 0.36
+		mi.mesh = mesh
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = col
+		mat.emission_enabled = true
+		mat.emission         = col
+		mat.emission_energy_multiplier = 1.2
+		mi.material_override = mat
+		add_child(mi)
 
-	# Billboard label
-	var label           := Label3D.new()
-	label.text          = icon
-	label.billboard     = BaseMaterial3D.BILLBOARD_ENABLED
-	label.font_size     = 44
-	label.modulate      = col
-	label.no_depth_test = true
-	label.position      = Vector3(0, 0.32, 0)
-	add_child(label)
+		# Billboard label
+		var label           := Label3D.new()
+		label.text          = icon
+		label.billboard     = BaseMaterial3D.BILLBOARD_ENABLED
+		label.font_size     = 44
+		label.modulate      = col
+		label.no_depth_test = true
+		label.position      = Vector3(0, 0.32, 0)
+		add_child(label)
 
 	# Collision
 	var cshape := CollisionShape3D.new()

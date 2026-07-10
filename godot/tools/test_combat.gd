@@ -34,6 +34,18 @@ func _run() -> void:
 	all_pass = all_pass and facing_ok
 	print("[%s] facing-to-flip_h mapping matches ART_FACES_LEFT (2026-07-08)" % ("PASS" if facing_ok else "FAIL"))
 
+	var barrel_ok := await _run_breakable_barrel_case()
+	all_pass = all_pass and barrel_ok
+	print("[%s] melee damages and breaks BreakableBarrel (2026-07-09)" % ("PASS" if barrel_ok else "FAIL"))
+
+	var crate_ok := await _run_breakable_crate_case()
+	all_pass = all_pass and crate_ok
+	print("[%s] melee damages and breaks BreakableCrate (2026-07-09)" % ("PASS" if crate_ok else "FAIL"))
+
+	var pots_ok := await _run_breakable_pots_case()
+	all_pass = all_pass and pots_ok
+	print("[%s] melee damages and breaks BreakablePots (2026-07-09)" % ("PASS" if pots_ok else "FAIL"))
+
 	print("=== %s ===" % ("ALL PASS" if all_pass else "SOME FAILED"))
 	quit(0 if all_pass else 1)
 
@@ -104,6 +116,168 @@ func _run_nearest_target_case() -> bool:
 	player.queue_free(); near.queue_free(); far.queue_free()
 	await process_frame
 	return ok
+
+## Proves BreakableBarrel.gd plugs into the same group-scan hit detection
+## melee/skills use for real enemies (group "enemy" + take_damage(amt,
+## poise_mult)) without requiring any special-casing in Player.gd, and that
+## enough hits actually breaks it (queue_free's itself).
+func _run_breakable_barrel_case() -> bool:
+	var player: Node3D = PlayerScript.new()
+	_root.add_child(player)
+	player._ready()
+	player.global_position = Vector3.ZERO
+	player.rotation.y = 0.0
+	player._facing_dir = Vector3(0, 0, -1)
+
+	var BarrelScript := load("res://scripts/BreakableBarrel.gd")
+	var barrel: Node3D = BarrelScript.new()
+	_root.add_child(barrel)
+	barrel._ready()
+	barrel.global_position = Vector3(0, 0, -1.0)
+	barrel.hp = 35.0
+
+	var start_hp: float = barrel.hp
+	var dt := 1.0 / 60.0
+
+	player._melee()
+	var steps := 0
+	while player.atk_t > 0.0 and steps < 120:
+		player._physics_process(dt)
+		steps += 1
+
+	var first_hit_ok: bool = barrel.hp < start_hp and is_instance_valid(barrel)
+
+	# Keep swinging until the barrel's hp is exhausted and _break() fires
+	# (queue_free is deferred behind a short timer for the burst effect — we
+	# check the _broken flag rather than instance validity so this test
+	# doesn't depend on real wall-clock time elapsing).
+	var swings := 0
+	while is_instance_valid(barrel) and not barrel._broken and swings < 6:
+		player._melee()  # direct call bypasses the input-gated atk_t<=0 check in _physics_process
+		steps = 0
+		while player.atk_t > 0.0 and steps < 120:
+			player._physics_process(dt)
+			steps += 1
+		await process_frame
+		swings += 1
+
+	var broke_ok: bool = is_instance_valid(barrel) and barrel._broken
+
+	player.queue_free()
+	if is_instance_valid(barrel):
+		barrel.queue_free()
+	await process_frame
+	await process_frame
+
+	return first_hit_ok and broke_ok
+
+## Proves BreakableCrate.gd plugs into the same group-scan hit detection
+## melee/skills use for real enemies (group "enemy" + take_damage(amt,
+## poise_mult)) without requiring any special-casing in Player.gd, and that
+## enough hits actually breaks it (_broken flag set before queue_free defers).
+func _run_breakable_crate_case() -> bool:
+	var player: Node3D = PlayerScript.new()
+	_root.add_child(player)
+	player._ready()
+	player.global_position = Vector3.ZERO
+	player.rotation.y = 0.0
+	player._facing_dir = Vector3(0, 0, -1)
+
+	var CrateScript := load("res://scripts/BreakableCrate.gd")
+	var crate: Node3D = CrateScript.new()
+	_root.add_child(crate)
+	crate._ready()
+	crate.global_position = Vector3(0, 0, -1.0)
+	crate.hp = 30.0
+
+	var start_hp: float = crate.hp
+	var dt := 1.0 / 60.0
+
+	player._melee()
+	var steps := 0
+	while player.atk_t > 0.0 and steps < 120:
+		player._physics_process(dt)
+		steps += 1
+
+	var first_hit_ok: bool = crate.hp < start_hp and is_instance_valid(crate)
+
+	# Keep swinging until hp is exhausted and _break() fires.
+	# Check _broken flag rather than instance validity — queue_free is deferred
+	# behind a 0.7s timer for the burst effect; synthetic test time doesn't elapse.
+	var swings := 0
+	while is_instance_valid(crate) and not crate._broken and swings < 6:
+		player._melee()
+		steps = 0
+		while player.atk_t > 0.0 and steps < 120:
+			player._physics_process(dt)
+			steps += 1
+		await process_frame
+		swings += 1
+
+	var broke_ok: bool = is_instance_valid(crate) and crate._broken
+
+	player.queue_free()
+	if is_instance_valid(crate):
+		crate.queue_free()
+	await process_frame
+	await process_frame
+
+	return first_hit_ok and broke_ok
+
+
+## Proves BreakablePots.gd plugs into the same group-scan hit detection
+## melee/skills use for real enemies (group "enemy" + take_damage(amt,
+## poise_mult)) without requiring any special-casing in Player.gd, and that
+## enough hits actually breaks it (_broken flag set before queue_free defers).
+func _run_breakable_pots_case() -> bool:
+	var player: Node3D = PlayerScript.new()
+	_root.add_child(player)
+	player._ready()
+	player.global_position = Vector3.ZERO
+	player.rotation.y = 0.0
+	player._facing_dir = Vector3(0, 0, -1)
+
+	var PotsScript := load("res://scripts/BreakablePots.gd")
+	var pots: Node3D = PotsScript.new()
+	_root.add_child(pots)
+	pots._ready()
+	pots.global_position = Vector3(0, 0, -1.0)
+	pots.hp = 10.0
+
+	var start_hp: float = pots.hp
+	var dt := 1.0 / 60.0
+
+	player._melee()
+	var steps := 0
+	while player.atk_t > 0.0 and steps < 120:
+		player._physics_process(dt)
+		steps += 1
+
+	var first_hit_ok: bool = pots.hp < start_hp and is_instance_valid(pots)
+
+	# Keep swinging until hp is exhausted and _break() fires.
+	# Check _broken flag rather than instance validity — queue_free is deferred
+	# behind a short timer for the burst effect; synthetic test time doesn't elapse.
+	var swings := 0
+	while is_instance_valid(pots) and not pots._broken and swings < 6:
+		player._melee()
+		steps = 0
+		while player.atk_t > 0.0 and steps < 120:
+			player._physics_process(dt)
+			steps += 1
+		await process_frame
+		swings += 1
+
+	var broke_ok: bool = is_instance_valid(pots) and pots._broken
+
+	player.queue_free()
+	if is_instance_valid(pots):
+		pots.queue_free()
+	await process_frame
+	await process_frame
+
+	return first_hit_ok and broke_ok
+
 
 func _run_case(angle_deg: float) -> bool:
 	var player: Node3D = PlayerScript.new()
