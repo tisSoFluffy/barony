@@ -12,6 +12,8 @@ var _gates_label: Label
 var _notice: Label
 var _crosshair: Label
 var _overlay: Control
+var _boss_bar: ProgressBar
+var _boss_label: Label
 var _notices: Array = []
 
 func _ready() -> void:
@@ -66,7 +68,40 @@ func _build() -> void:
 	_notice.custom_minimum_size = Vector2(600, 0)
 	add_child(_notice)
 
+	# top-center: boss bar (hidden until a boss is present)
+	_boss_label = Label.new()
+	_boss_label.add_theme_font_size_override("font_size", 15)
+	_boss_label.add_theme_color_override("font_color", Color("ff8a9a"))
+	_boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_boss_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_boss_label.position = Vector2(-220, 16)
+	_boss_label.custom_minimum_size = Vector2(440, 0)
+	_boss_label.visible = false
+	add_child(_boss_label)
+	_boss_bar = ProgressBar.new()
+	_boss_bar.min_value = 0.0
+	_boss_bar.max_value = 1.0
+	_boss_bar.value = 1.0
+	_boss_bar.show_percentage = false
+	_boss_bar.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_boss_bar.position = Vector2(-220, 38)
+	_boss_bar.custom_minimum_size = Vector2(440, 16)
+	_boss_bar.visible = false
+	add_child(_boss_bar)
+
 	refresh_gates()
+
+func set_boss_bar(frac: float, label: String) -> void:
+	_boss_label.text = label
+	_boss_label.visible = true
+	_boss_bar.value = frac
+	_boss_bar.visible = true
+
+func hide_boss_bar() -> void:
+	if _boss_bar:
+		_boss_bar.visible = false
+	if _boss_label:
+		_boss_label.visible = false
 
 func _mk_label(pos: Vector2, size: int, color: Color) -> Label:
 	var l := Label.new()

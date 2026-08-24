@@ -55,6 +55,8 @@ Autoloads: `Util` (seeded RNG) · `Sectors` (SectorDB) · `Abilities` (AbilityDB
 | `scripts/Player.gd` | ability-gated first-person 3D platformer controller |
 | `scripts/Enemy.gd` / `Hazard.gd` / `Projectile.gd` | enemy AI / hazard behaviors / boss bolts |
 | `scripts/Boss.gd` | NEXUS: shield → Reality-Bender strip → strike-the-core loop, 3 patterns |
+| `scripts/Guardian.gd` | Core Guardian: cube that splits into smaller cubes on each hit |
+| `scripts/SynthAudio.gd` | procedural SFX + per-sector ambient drones, synthesized to PCM at boot |
 | `scripts/Game.gd` | run manager: reset clock, death→echo→rebuild, sector advance, boss, endings |
 | `scripts/ui/HUD.gd` | integrity, loop timer, gate roster, notices, end screens |
 | `scripts/Boot.gd` | menu + headless test harness |
@@ -71,8 +73,10 @@ code changes. Every asset's exact filename and generation prompt is in
 is described in [`assets/README.md`](assets/README.md).
 
 ## Status
-Vertical slice, validated headless — now including the **NEXUS boss fight**
-(shield → Reality-Bender strip → strike), the **three endings** (Path C is true
-permadeath), and the **2D↔3D wireframe glitch shader** on the Event Horizon.
-Next: the Core Guardian's split behavior, audio, and the art pass. Full status in
+Vertical slice, validated headless — the **NEXUS boss fight** (shield →
+Reality-Bender strip → strike), the **three endings** (Path C is true
+permadeath), the **2D↔3D wireframe glitch shader** on the Event Horizon, the
+**Core Guardian** split-on-hit mini-boss, a **boss health bar**, and **fully
+procedural audio** (SFX + per-sector ambient, synthesized in-engine — no audio
+files). Remaining: the art pass via the ComfyUI pipeline. Full status in
 `docs/DESIGN.md`.

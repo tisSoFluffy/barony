@@ -92,6 +92,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y = 0.0
 		if Input.is_action_just_pressed("jump"):
 			velocity.y = JUMP
+			Audio.play("jump", Util.lf(0.95, 1.08))
 	else:
 		velocity.y -= GRAVITY * delta
 
@@ -104,6 +105,7 @@ func _physics_process(delta: float) -> void:
 		d = d.normalized()
 		velocity.x += d.x * DASH
 		velocity.z += d.z * DASH
+		Audio.play("dash")
 
 	if Input.is_action_just_pressed("gate_ability"):
 		_try_gate()
@@ -178,6 +180,7 @@ func _attack() -> void:
 		var c = hit["collider"]
 		if c.has_method("take_damage"):
 			c.take_damage(24.0)
+			Audio.play("strike", Util.lf(0.95, 1.1))
 			emit_signal("notice", "Hit")
 			return
 	# grounded kinetic charge shatters laser barricades in range
@@ -214,6 +217,7 @@ func _interact() -> void:
 			var gate := String(PROP_TO_GATE.get(best["name"], ""))
 			if gate != "" and Meta.unlock_gate(gate):
 				var g := Abilities.get_gate(gate)
+				Audio.play("unlock", 1.0, -3.0)
 				emit_signal("notice", "UNLOCKED: %s — %s" % [g["name"], g["desc"]])
 			else:
 				emit_signal("notice", "Already attuned")
@@ -247,6 +251,7 @@ func _collect_walkover() -> void:
 			hp = minf(max_hp, hp + 20.0)
 			emit_signal("health_changed", hp, max_hp)
 			emit_signal("notice", "+20 integrity")
+			Audio.play("pickup")
 			p.queue_free()
 
 ## ---- Damage / death -------------------------------------------------------
@@ -258,6 +263,7 @@ func take_damage(amount: float, source: String = "") -> void:
 	if source != "":
 		_last_hurt_by = source
 	_invuln = 0.25
+	Audio.play("hit")
 	emit_signal("health_changed", hp, max_hp)
 	_check_death()
 
@@ -267,6 +273,7 @@ func set_external_slow(v: float) -> void:
 func _check_death() -> void:
 	if hp <= 0.0:
 		hp = 0.0
+		Audio.play("death", 1.0, -3.0)
 		var note := _death_note()
 		emit_signal("died", global_position, note)
 		set_physics_process(false)

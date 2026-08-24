@@ -20,6 +20,7 @@ var star: DirectionalLight3D
 var _loop_left := LOOP_SECONDS
 var _ended := false
 var _headless := false
+var _boss_hp_total := 0.0
 
 func start(seed: String, start_sector: int = 0) -> void:
 	run_seed = seed
@@ -78,12 +79,16 @@ func _build_sector() -> void:
 	player.health_changed.connect(func(hp, mx): hud.set_health(hp, mx))
 	player.notice.connect(func(t): hud.show_notice(t))
 
+	_boss_hp_total = 0.0
+	for b in get_tree().get_nodes_in_group("boss"):
+		_boss_hp_total += float(b.max_hp)
 	if sector.boss != null and is_instance_valid(sector.boss):
 		if sector.boss.has_signal("boss_notice"):
 			sector.boss.boss_notice.connect(func(t): hud.show_notice(t))
 		if sector.boss.has_signal("defeated"):
 			sector.boss.defeated.connect(_on_nexus_defeated)
 
+	Audio.ambient(current_sector)
 	Meta.mark_reached(current_sector)
 	hud.set_sector(Sectors.name_of(current_sector), Meta.runs)
 	hud.set_health(player.hp, player.max_hp)
@@ -100,12 +105,25 @@ func _process(delta: float) -> void:
 	if _loop_left <= 0.0:
 		_reset_run("NEXUS purged the run. Reset.")
 		return
-	# a live boss seals the sector — clear the arena before you can leave
-	if sector and sector.boss != null and is_instance_valid(sector.boss):
+	_update_boss_bar()
+	# a live boss (or any of its fragments) seals the sector — clear the arena first
+	if get_tree().get_nodes_in_group("boss").size() > 0:
 		return
 	# reached the lifted exit → advance a sector
 	if sector and player.global_position.distance_to(sector.gen.exit_pos) < 2.5:
 		_advance()
+
+func _update_boss_bar() -> void:
+	var group := get_tree().get_nodes_in_group("boss")
+	if group.is_empty() or _boss_hp_total <= 0.0:
+		hud.hide_boss_bar()
+		return
+	var cur := 0.0
+	for b in group:
+		if is_instance_valid(b):
+			cur += maxf(0.0, float(b.hp))
+	var label := "CORE GUARDIAN" if sector.gen.boss_type == "core_guardian" else "THE ORIGINAL NEXUS"
+	hud.set_boss_bar(clampf(cur / _boss_hp_total, 0.0, 1.0), label)
 
 func _on_player_died(pos: Vector3, note: String) -> void:
 	_ended = true

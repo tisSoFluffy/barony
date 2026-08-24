@@ -18,6 +18,7 @@ Sectors="*res://scripts/data/SectorDB.gd"
 Abilities="*res://scripts/data/AbilityDB.gd"
 Meta="*res://scripts/MetaSave.gd"
 Forge="*res://scripts/MeshFactory.gd"
+Audio="*res://scripts/SynthAudio.gd"
 
 [display]
 

@@ -134,8 +134,13 @@ func _spawn_boss() -> void:
 		b.position = gen.boss_pos
 		add_child(b)
 		boss = b
+	elif gen.boss_type == "core_guardian":
+		var g := Guardian.new()
+		g.setup(pal)
+		g.position = gen.boss_pos
+		add_child(g)
+		boss = g
 	else:
-		# Core Guardian and any other bosses use the standard enemy loop.
 		var e := Enemy.new()
 		e.setup(gen.boss_type, pal)
 		e.position = gen.boss_pos

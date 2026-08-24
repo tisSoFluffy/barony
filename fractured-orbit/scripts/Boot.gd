@@ -94,7 +94,7 @@ func _build_menu() -> void:
 	box.add_child(wipe)
 
 	var hint := Label.new()
-	hint.text = "WASD move · Space jump · Shift dash · LMB strike · F gate power · E interact · Esc cursor"
+	hint.text = "WASD move · Space jump · Shift dash · LMB strike · F gate power · E interact · Esc cursor · audio on"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_color_override("font_color", Color("5f6b82"))
 	hint.add_theme_font_size_override("font_size", 12)

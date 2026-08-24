@@ -93,6 +93,7 @@ func strip_pattern() -> bool:
 	_shielded = false
 	_vuln_t = 4.0
 	_stripped += 1
+	Audio.play("strip", 1.0, -3.0)
 	emit_signal("boss_notice", "Pattern %d deleted. The core is exposed — STRIKE." % _stripped)
 	return true
 
@@ -112,6 +113,7 @@ func take_damage(amount: float, _source: String = "") -> void:
 
 func _die() -> void:
 	_dead = true
+	Audio.play("explosion", 0.7, -2.0)
 	emit_signal("boss_notice", "NEXUS dissolves into data.")
 	emit_signal("defeated")
 	queue_free()

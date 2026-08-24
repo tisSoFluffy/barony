@@ -104,6 +104,7 @@ func take_damage(amount: float, _source: String = "") -> void:
 		die()
 
 func die() -> void:
+	Audio.play("explosion", Util.lf(0.9, 1.2), -10.0)
 	# small chance to drop a health cell
 	if Util.chance(0.35):
 		var cell := Forge.model("health_cell")

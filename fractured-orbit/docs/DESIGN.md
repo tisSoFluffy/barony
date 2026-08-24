@@ -93,6 +93,12 @@ the **NEXUS boss** (shield → strip → strike) is beatable and gates the exit;
 **three-ending choice** resolves (Path C wipes the save); the **glitch shader**
 skins Event Horizon walls.
 
-Not yet built (next milestones): the Core Guardian's split-on-hit behavior, co-op,
-audio, richer enemy variety, and the art pass (replacing placeholders via the
-ComfyUI pipeline — see [`COMFYUI_ASSET_PROMPTS.md`](COMFYUI_ASSET_PROMPTS.md)).
+Also implemented: the **Core Guardian** split-on-hit mini-boss (Engineering), a
+**boss health bar** driven by the aggregate HP of the boss group (so it tracks
+splitting fragments), and **fully procedural audio** — every SFX and the
+per-sector ambient drones are synthesized to PCM at boot (`SynthAudio`), no audio
+files shipped.
+
+Not yet built (next milestones): co-op, richer enemy variety, and the art pass
+(replacing placeholders via the ComfyUI pipeline — see
+[`COMFYUI_ASSET_PROMPTS.md`](COMFYUI_ASSET_PROMPTS.md)).
