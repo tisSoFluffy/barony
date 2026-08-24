@@ -143,3 +143,55 @@ func clear_end() -> void:
 	if _overlay:
 		_overlay.queue_free()
 		_overlay = null
+
+## A modal choice overlay (used for the three endings). `options` is an array of
+## {label, desc, color}; `on_pick` is called with the chosen index.
+func show_choice(title: String, subtitle: String, options: Array, on_pick: Callable) -> void:
+	if _overlay:
+		_overlay.queue_free()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_overlay = Control.new()
+	_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var bg := ColorRect.new()
+	bg.color = Color(0, 0, 0, 0.8)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_overlay.add_child(bg)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_overlay.add_child(center)
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(560, 0)
+	box.add_theme_constant_override("separation", 10)
+	center.add_child(box)
+	var t := Label.new()
+	t.text = title
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.add_theme_font_size_override("font_size", 38)
+	t.add_theme_color_override("font_color", Color("ffe08a"))
+	box.add_child(t)
+	var s := Label.new()
+	s.text = subtitle
+	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	s.add_theme_color_override("font_color", Color("cfd8e6"))
+	box.add_child(s)
+	for i in options.size():
+		var opt: Dictionary = options[i]
+		var b := Button.new()
+		b.text = String(opt.get("label", "Path"))
+		b.tooltip_text = String(opt.get("desc", ""))
+		b.custom_minimum_size = Vector2(0, 44)
+		b.add_theme_color_override("font_color", opt.get("color", Color.WHITE))
+		b.pressed.connect(func(): _pick(i, on_pick))
+		box.add_child(b)
+		var d := Label.new()
+		d.text = String(opt.get("desc", ""))
+		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		d.custom_minimum_size = Vector2(560, 0)
+		d.add_theme_font_size_override("font_size", 12)
+		d.add_theme_color_override("font_color", Color("8fa4c4"))
+		box.add_child(d)
+	add_child(_overlay)
+
+func _pick(index: int, on_pick: Callable) -> void:
+	if on_pick.is_valid():
+		on_pick.call(index)

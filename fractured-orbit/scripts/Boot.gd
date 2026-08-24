@@ -133,6 +133,7 @@ func _run_tests() -> bool:
 	pass_all = _t_determinism() and pass_all
 	pass_all = _t_generation() and pass_all
 	pass_all = _t_meta() and pass_all
+	pass_all = _t_boss() and pass_all
 	print("=== %s ===" % ("ALL TESTS PASSED" if pass_all else "TESTS FAILED"))
 	return pass_all
 
@@ -196,6 +197,40 @@ func _t_meta() -> bool:
 	Meta.tech.erase("spore_purifier")
 	Meta.gates = before
 	Meta.save_state()
+	return ok
+
+func _t_boss() -> bool:
+	var ok := true
+	# generation places the right boss in the arena
+	var g := SectorGen.new(); g.generate(4, "b", 0)
+	ok = _ok("sector 4 boss is nexus", g.boss_type == "nexus") and ok
+	ok = _ok("sector 4 boss positioned", g.boss_pos != Vector3.ZERO) and ok
+	var g2 := SectorGen.new(); g2.generate(2, "b", 0)
+	ok = _ok("sector 2 boss is core_guardian", g2.boss_type == "core_guardian") and ok
+	var g0 := SectorGen.new(); g0.generate(0, "b", 0)
+	ok = _ok("sector 0 has no boss", g0.boss_type == "") and ok
+
+	# the core loop: shielded until a Reality-Bender rewrite strips a pattern
+	var arena := Node3D.new()
+	add_child(arena)
+	var boss := Boss.new()
+	boss.setup(Sectors.palette(4))
+	arena.add_child(boss)
+	var defeated := [false]
+	boss.defeated.connect(func(): defeated[0] = true)
+	var hp0: float = boss.hp
+	boss.take_damage(50.0)
+	ok = _ok("NEXUS ignores damage while shielded", boss.hp == hp0) and ok
+	ok = _ok("Reality Bender strips a pattern", boss.strip_pattern()) and ok
+	boss.take_damage(50.0)
+	ok = _ok("NEXUS takes damage while exposed", boss.hp < hp0) and ok
+	for _i in range(20):
+		boss.strip_pattern()
+		boss.take_damage(100.0)
+		if defeated[0]:
+			break
+	ok = _ok("NEXUS can be defeated", defeated[0]) and ok
+	arena.queue_free()
 	return ok
 
 func _fingerprint(g: SectorGen) -> String:

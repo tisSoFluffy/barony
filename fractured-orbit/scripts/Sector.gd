@@ -14,14 +14,18 @@ var pal: Dictionary
 var enemies: Array = []          # live Enemy nodes
 var hazards: Array = []          # live Hazard nodes
 var interactables: Array = []    # {pos, kind, id/name} for the player's E-prompt
+var boss: Node = null            # the NEXUS / Core Guardian, if this sector has one
+var _glitch := false             # sector 4: walls wear the reality-break shader
 
 func build(g: SectorGen) -> void:
 	gen = g
 	pal = Sectors.palette(g.sector)
+	_glitch = g.sector == 4
 	for room in gen.rooms:
 		_build_room(room)
 	_build_corridors()
 	_spawn_echoes()
+	_spawn_boss()
 
 func _build_room(room: Dictionary) -> void:
 	var c: Vector3 = room["center"]
@@ -74,19 +78,19 @@ func _wall_run(center: Vector3, size: Vector3, door_gap: float, along_x: bool) -
 	if along_x:
 		var seg := (size.x - door_gap) * 0.5
 		if seg <= 0.1:
-			add_child(_solid(size, center, pal["wall"]))
+			add_child(_solid(size, center, pal["wall"], 0.0, true))
 			return
 		var off := (door_gap + seg) * 0.5
-		add_child(_solid(Vector3(seg, size.y, size.z), center + Vector3(-off, 0, 0), pal["wall"]))
-		add_child(_solid(Vector3(seg, size.y, size.z), center + Vector3(off, 0, 0), pal["wall"]))
+		add_child(_solid(Vector3(seg, size.y, size.z), center + Vector3(-off, 0, 0), pal["wall"], 0.0, true))
+		add_child(_solid(Vector3(seg, size.y, size.z), center + Vector3(off, 0, 0), pal["wall"], 0.0, true))
 	else:
 		var seg2 := (size.z - door_gap) * 0.5
 		if seg2 <= 0.1:
-			add_child(_solid(size, center, pal["wall"]))
+			add_child(_solid(size, center, pal["wall"], 0.0, true))
 			return
 		var off2 := (door_gap + seg2) * 0.5
-		add_child(_solid(Vector3(size.x, size.y, seg2), center + Vector3(0, 0, -off2), pal["wall"]))
-		add_child(_solid(Vector3(size.x, size.y, seg2), center + Vector3(0, 0, off2), pal["wall"]))
+		add_child(_solid(Vector3(size.x, size.y, seg2), center + Vector3(0, 0, -off2), pal["wall"], 0.0, true))
+		add_child(_solid(Vector3(size.x, size.y, seg2), center + Vector3(0, 0, off2), pal["wall"], 0.0, true))
 
 func _build_corridors() -> void:
 	# connect each room to the next in the generated path with a floor strip
@@ -121,6 +125,24 @@ func _place_enemy(type: String, pos: Vector3) -> void:
 	add_child(e)
 	enemies.append(e)
 
+func _spawn_boss() -> void:
+	if gen.boss_type == "":
+		return
+	if gen.boss_type == "nexus":
+		var b := Boss.new()
+		b.setup(pal)
+		b.position = gen.boss_pos
+		add_child(b)
+		boss = b
+	else:
+		# Core Guardian and any other bosses use the standard enemy loop.
+		var e := Enemy.new()
+		e.setup(gen.boss_type, pal)
+		e.position = gen.boss_pos
+		add_child(e)
+		enemies.append(e)
+		boss = e
+
 func _spawn_echoes() -> void:
 	for e in Meta.echoes_for(gen.sector):
 		var p: Array = e.get("pos", [0, 0, 0])
@@ -134,6 +156,12 @@ func _spawn_echoes() -> void:
 ## path) and briefly flips a stretch of geometry to the negative-space "glitch"
 ## material as feedback. Returns true if anything changed.
 func rewrite(from: Vector3) -> bool:
+	# Near NEXUS, a rewrite strips its active attack pattern (opens the core).
+	if boss != null and is_instance_valid(boss) and boss.has_method("strip_pattern"):
+		if boss.global_position.distance_to(from) < 12.0:
+			if boss.strip_pattern():
+				return true
+	# Otherwise, delete the nearest hazard to open a path.
 	var nearest: Hazard = null
 	var best := 8.0
 	for h in hazards:
@@ -148,11 +176,14 @@ func rewrite(from: Vector3) -> bool:
 		return true
 	return false
 
-## A visual box + matching static collision.
-func _solid(size: Vector3, pos: Vector3, color: Color, emit: float = 0.0) -> StaticBody3D:
+## A visual box + matching static collision. `glitchable` walls in sector 4 wear
+## the animated reality-break shader instead of a flat material.
+func _solid(size: Vector3, pos: Vector3, color: Color, emit: float = 0.0, glitchable: bool = false) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.position = pos
 	var mi := Forge.slab(size, color, emit)
+	if glitchable and _glitch and Util.chance(0.45):
+		mi.material_override = Forge.glitch_shader_mat()
 	body.add_child(mi)
 	var col := CollisionShape3D.new()
 	var shape := BoxShape3D.new()

@@ -71,13 +71,28 @@ enter sector (safe zone) ─▶ fight/traverse rooms ─▶ reach the GATE room
 | Menu + headless self-tests | `scripts/Boot.gd` |
 | Deterministic seeded RNG | `scripts/Util.gd` (`Util`) |
 
+## The NEXUS fight & endings (Event Horizon)
+NEXUS cannot be brute-forced. It is **shielded** while an attack pattern runs;
+the **Reality Bender** gate (F, near the boss) deletes the active pattern and
+opens a short window in which your **kinetic strike** (LMB) reaches the core.
+The loop chains the kit: dodge → rewrite → strike, three times, each pattern
+faster than the last (aimed volley → radial ring → fast triple).
+
+On the break, the **three endings** (`Game._show_endings`):
+- **Path A — Save the Ship:** restore NEXUS; fragile peace.
+- **Path B — Transcendence:** merge with NEXUS; escape as a digital god.
+- **Path C — The Loop:** jump into the singularity — **true permadeath**, the
+  save is wiped and a fresh loop begins.
+
 ## Status (vertical slice)
 Implemented and **validated headless** (`--gametest`, `--play 0..4`): all five
 sectors generate deterministically, build walkable 3D space, spawn the
 Loop-Walker, and step physics; gates lock/unlock and persist; deaths record
-echoes that reappear as debris; the 10-minute reset and sector advancement run.
+echoes that reappear as debris; the 10-minute reset and sector advancement run;
+the **NEXUS boss** (shield → strip → strike) is beatable and gates the exit; the
+**three-ending choice** resolves (Path C wipes the save); the **glitch shader**
+skins Event Horizon walls.
 
-Not yet built (next milestones): full boss fight scripting, the three-ending
-choice, 2D↔3D wireframe glitch shader, co-op, audio, and the art pass
-(replacing placeholders via the ComfyUI pipeline — see
-[`COMFYUI_ASSET_PROMPTS.md`](COMFYUI_ASSET_PROMPTS.md)).
+Not yet built (next milestones): the Core Guardian's split-on-hit behavior, co-op,
+audio, richer enemy variety, and the art pass (replacing placeholders via the
+ComfyUI pipeline — see [`COMFYUI_ASSET_PROMPTS.md`](COMFYUI_ASSET_PROMPTS.md)).

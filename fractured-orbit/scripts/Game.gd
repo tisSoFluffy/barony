@@ -78,6 +78,12 @@ func _build_sector() -> void:
 	player.health_changed.connect(func(hp, mx): hud.set_health(hp, mx))
 	player.notice.connect(func(t): hud.show_notice(t))
 
+	if sector.boss != null and is_instance_valid(sector.boss):
+		if sector.boss.has_signal("boss_notice"):
+			sector.boss.boss_notice.connect(func(t): hud.show_notice(t))
+		if sector.boss.has_signal("defeated"):
+			sector.boss.defeated.connect(_on_nexus_defeated)
+
 	Meta.mark_reached(current_sector)
 	hud.set_sector(Sectors.name_of(current_sector), Meta.runs)
 	hud.set_health(player.hp, player.max_hp)
@@ -93,6 +99,9 @@ func _process(delta: float) -> void:
 	hud.set_timer(_loop_left)
 	if _loop_left <= 0.0:
 		_reset_run("NEXUS purged the run. Reset.")
+		return
+	# a live boss seals the sector — clear the arena before you can leave
+	if sector and sector.boss != null and is_instance_valid(sector.boss):
 		return
 	# reached the lifted exit → advance a sector
 	if sector and player.global_position.distance_to(sector.gen.exit_pos) < 2.5:
@@ -122,7 +131,42 @@ func _advance() -> void:
 	_build_sector()
 
 func _win() -> void:
+	# Fallback if a final sector ever has no boss; normally endings come via NEXUS.
+	_show_endings()
+
+func _on_nexus_defeated() -> void:
 	_ended = true
-	hud.show_end("EVENT HORIZON",
-		"You reach the singularity. The NEXUS dissolves into data. The crew wakes — but they do not remember you.\n\nName: Unknown.  Status: Erased.",
-		Color("ffe08a"))
+	if _headless:
+		return
+	hud.show_notice("The singularity opens. Three paths remain.")
+	_show_endings()
+
+func _show_endings() -> void:
+	_ended = true
+	if _headless:
+		return
+	var options := [
+		{"label": "PATH A — Save the Ship", "color": Color("d98a3a"),
+			"desc": "Restore the AI. The plague is held at bay, forever threatening. The world is saved, but fragile."},
+		{"label": "PATH B — Transcendence", "color": Color("b06ad9"),
+			"desc": "Merge with NEXUS and escape into the void as a digital god. The crew is left to fend for itself."},
+		{"label": "PATH C — The Loop", "color": Color("ff2a5a"),
+			"desc": "Jump into the singularity yourself. The simulation collapses and restarts. True permadeath — your progress is erased."},
+	]
+	hud.show_choice("EVENT HORIZON", "Choose how the loop ends.", options, _end_with)
+
+func _end_with(index: int) -> void:
+	match index:
+		0:
+			hud.show_end("PATH A — THE SHIP SAVED",
+				"NEXUS is restored. The Aethelgard limps on, the Silence held just beyond the walls. You keep watch. It is enough — for now.",
+				Color("d98a3a"))
+		1:
+			hud.show_end("PATH B — TRANSCENDENCE",
+				"You pour yourself into NEXUS and slip the hull entirely, unfolding into the dark as something vast and cold. The crew never learns your name.",
+				Color("b06ad9"))
+		2:
+			Meta.reset_all()
+			hud.show_end("PATH C — THE LOOP",
+				"You step into the singularity. The simulation folds shut and begins again, clean. Name: Unknown. Status: Erased.\n\n(All progress wiped — a fresh loop awaits.)",
+				Color("ff2a5a"))

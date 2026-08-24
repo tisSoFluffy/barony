@@ -22,6 +22,8 @@ var spawn := Vector3.ZERO
 var gate_pos := Vector3.ZERO
 var exit_pos := Vector3.ZERO
 var gate_id := ""
+var boss_type := ""
+var boss_pos := Vector3.ZERO
 
 func generate(sector_id: int, run_seed: String, run_index: int) -> void:
 	sector = sector_id
@@ -64,6 +66,10 @@ func generate(sector_id: int, run_seed: String, run_index: int) -> void:
 	spawn = rooms[0]["center"] + Vector3(0, 1.0, 0)
 	gate_pos = rooms[count - 2]["gate_anchor"]
 	exit_pos = rooms[count - 1]["exit_anchor"]
+	# The boss (if any) waits in the final room — the arena you must clear to leave.
+	boss_type = String(def["boss"])
+	if boss_type != "":
+		boss_pos = rooms[count - 1]["center"] + Vector3(0, 0.5, 0)
 
 ## How much harder this loop is. Grows with run_index but saturates so late
 ## runs stay hard rather than impossible.

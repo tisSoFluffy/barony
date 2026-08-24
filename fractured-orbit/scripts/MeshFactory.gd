@@ -56,6 +56,32 @@ func mat(color: Color, emit: float = 0.0) -> StandardMaterial3D:
 		m.emission_energy_multiplier = emit
 	return m
 
+const GLITCH_SHADER := "res://assets/shaders/glitch.gdshader"
+var _glitch_shader_mat: ShaderMaterial
+
+## The animated 2D<->3D wireframe glitch material (Event Horizon). Cached; falls
+## back to a static negative-space material if the shader can't be loaded.
+func glitch_shader_mat() -> Material:
+	if _glitch_shader_mat != null:
+		return _glitch_shader_mat
+	if ResourceLoader.exists(GLITCH_SHADER):
+		var sh := load(GLITCH_SHADER)
+		if sh is Shader:
+			var m := ShaderMaterial.new()
+			m.shader = sh
+			_glitch_shader_mat = m
+			return m
+	return glitch_mat(true)
+
+## A slab wearing the animated glitch material.
+func glitch_slab(size: Vector3) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = size
+	mi.mesh = box
+	mi.material_override = glitch_shader_mat()
+	return mi
+
 ## A negative-space "glitch" material for the Event Horizon / reality breaks.
 func glitch_mat(invert: bool) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
