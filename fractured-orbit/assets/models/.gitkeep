@@ -1,0 +1,4 @@
+# Generated models drop here.
+# Name each file to match the logical asset name the engine requests,
+# e.g. cargo_crate.glb, scrap_crawler.glb. See ../../docs/COMFYUI_ASSET_PROMPTS.md.
+# Until a file exists, MeshFactory builds a primitive placeholder automatically.
