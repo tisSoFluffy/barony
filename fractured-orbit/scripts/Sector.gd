@@ -181,14 +181,17 @@ func rewrite(from: Vector3) -> bool:
 		return true
 	return false
 
-## A visual box + matching static collision. `glitchable` walls in sector 4 wear
-## the animated reality-break shader instead of a flat material.
+## A visual box + matching static collision. Walls wear the generated wall
+## surface; in sector 4 some of them wear the animated reality-break shader
+## instead. Floors and platforms keep the flat palette material.
 func _solid(size: Vector3, pos: Vector3, color: Color, emit: float = 0.0, glitchable: bool = false) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.position = pos
 	var mi := Forge.slab(size, color, emit)
 	if glitchable and _glitch and Util.chance(0.45):
 		mi.material_override = Forge.glitch_shader_mat()
+	elif glitchable:
+		mi.material_override = Forge.wall_shader_mat(pal)
 	body.add_child(mi)
 	var col := CollisionShape3D.new()
 	var shape := BoxShape3D.new()

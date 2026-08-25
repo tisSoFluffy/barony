@@ -56,6 +56,32 @@ func mat(color: Color, emit: float = 0.0) -> StandardMaterial3D:
 		m.emission_energy_multiplier = emit
 	return m
 
+const WALL_SHADER := "res://assets/shaders/wall.gdshader"
+var _wall_mats := {}
+
+## The generated wall surface, tinted to a sector palette. Cached per palette so
+## every wall slab in a sector shares ONE material, unlike `mat()`, which hands
+## out a fresh StandardMaterial3D per slab. Falls back to a flat material if the
+## shader is missing, so walls never render untextured-magenta.
+func wall_shader_mat(pal: Dictionary) -> Material:
+	var wall: Color = pal.get("wall", Color("4a4a55"))
+	var key := wall.to_html()
+	if _wall_mats.has(key):
+		return _wall_mats[key]
+	var fallback := mat(wall)
+	if not ResourceLoader.exists(WALL_SHADER):
+		return fallback
+	var sh := load(WALL_SHADER)
+	if not (sh is Shader):
+		return fallback
+	var m := ShaderMaterial.new()
+	m.shader = sh
+	m.set_shader_parameter("wall_color", wall)
+	m.set_shader_parameter("trim_color", pal.get("trim", Color("2a2a30")))
+	m.set_shader_parameter("accent_color", pal.get("accent", Color("2a9df4")))
+	_wall_mats[key] = m
+	return m
+
 const GLITCH_SHADER := "res://assets/shaders/glitch.gdshader"
 var _glitch_shader_mat: ShaderMaterial
 
