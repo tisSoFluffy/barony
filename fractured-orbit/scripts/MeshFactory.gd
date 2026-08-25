@@ -126,6 +126,10 @@ func prism(size: Vector3, color: Color) -> MeshInstance3D:
 
 ## Returns a Node3D for the named asset: a generated model if present, else a
 ## primitive placeholder. Callers parent + position the result.
+##
+## A generated file is normalised on the way out (see `_fit`) so it lands on the
+## floor at the same footprint as the placeholder it replaces — image-to-3D nodes
+## export centred in a unit cube, which would otherwise bury half the model.
 func model(name: String) -> Node3D:
 	var glb := MODEL_DIR + name + ".glb"
 	var scn := MODEL_DIR + name + ".tscn"
@@ -134,14 +138,76 @@ func model(name: String) -> Node3D:
 		if packed is PackedScene:
 			var inst := (packed as PackedScene).instantiate()
 			if inst is Node3D:
-				return inst as Node3D
+				return _fit(inst as Node3D, name)
 	if ResourceLoader.exists(scn):
 		var packed2 := load(scn)
 		if packed2 is PackedScene:
 			var inst2 := (packed2 as PackedScene).instantiate()
 			if inst2 is Node3D:
-				return inst2 as Node3D
+				return _fit(inst2 as Node3D, name)
 	return _placeholder(name)
+
+## ---- Generated-model normalisation ----------------------------------------
+
+# How big the asset should read in metres, measured on its longest axis. Falls
+# back to the category default, so a newly dropped model is sane before it gets
+# a row here.
+var _model_size := {
+	"cargo_crate": 1.0, "pipe_cluster": 1.5, "sliding_door": 2.5,
+	"magnet_ring": 2.0, "magnetic_pillar": 4.0,
+	"vine_ribbon": 4.0, "thorn_cluster": 1.5, "spore_vent": 1.0,
+	"laser_emitter": 1.5, "pressure_plate": 1.0, "reactor_vent": 1.5,
+	"anchor_beacon": 1.2, "black_hole_core": 1.2, "reality_switch": 1.5,
+	"core_guardian": 3.0, "nexus": 3.0,
+	"echo_debris": 1.0,
+}
+
+const _CATEGORY_SIZE := {
+	"prop": 1.0, "decor": 1.2, "hazard": 1.2,
+	"pickup": 0.5, "gate": 2.0, "enemy": 1.8,
+}
+
+## Wraps a generated model so it sits base-on-floor, centred in XZ, and scaled
+## to its documented footprint. The returned outer node has an identity
+## transform — callers own its position/rotation, exactly as with placeholders.
+func _fit(inst: Node3D, name: String) -> Node3D:
+	var root := Node3D.new()
+	root.name = "gen_" + name
+	var fitter := Node3D.new()
+	fitter.name = "fit"
+	root.add_child(fitter)
+	fitter.add_child(inst)
+
+	var box := _content_aabb(inst, inst.transform)
+	var longest := maxf(box.size.x, maxf(box.size.y, box.size.z))
+	if longest <= 0.0001:
+		return root   # nothing renderable — leave the model untouched
+	var cat := String(_asset_category.get(name, "prop"))
+	var target: float = _model_size.get(name, _CATEGORY_SIZE.get(cat, 1.0))
+	var s := target / longest
+	fitter.scale = Vector3(s, s, s)
+	var c := box.get_center()
+	fitter.position = Vector3(-c.x, -box.position.y, -c.z) * s
+	return root
+
+## Union of every MeshInstance3D AABB under `node`, expressed in the space of
+## `node`'s parent (pass `node.transform` as the starting transform).
+func _content_aabb(node: Node, xf: Transform3D) -> AABB:
+	var acc := AABB()
+	var found := false
+	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+		acc = xf * (node as MeshInstance3D).mesh.get_aabb()
+		found = true
+	for child in node.get_children():
+		var child_xf := xf
+		if child is Node3D:
+			child_xf = xf * (child as Node3D).transform
+		var sub := _content_aabb(child, child_xf)
+		if sub.size == Vector3.ZERO:
+			continue
+		acc = sub if not found else acc.merge(sub)
+		found = true
+	return acc if found else AABB()
 
 ## True when a real generated model backs this asset name (for tooling/HUD).
 func has_model(name: String) -> bool:

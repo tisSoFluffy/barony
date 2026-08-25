@@ -29,6 +29,58 @@ generation prompts in [`../docs/COMFYUI_ASSET_PROMPTS.md`](../docs/COMFYUI_ASSET
 Examples: `cargo_crate.glb`, `scrap_crawler.glb`, `magnet_ring.glb`,
 `echo_debris.glb`.
 
+## Clean the export before you drop it in
+
+The concept references we feed the texture workflow show the subject standing on
+a floor, so the shape stage reconstructs that floor as a wide flat disc welded to
+the subject. It is not a cosmetic problem: on our exports it has been **85–91% of
+the 40k triangle budget** and it is the widest thing in the mesh, so the auto-fit
+below scales the model to fit its *floor* rather than itself. It also soaks up
+most of the UV atlas, leaving the subject a fraction of the texture resolution.
+
+Run every fresh export through the cleaner, which strips the plane, drops unused
+vertices and adds the vertex normals the workflow omits:
+
+```
+python tools/clean_gen_mesh.py <comfy>/output/textured/character_00009_.glb \
+    assets/models/silence_guard.glb --yaw 180
+```
+
+`--yaw` turns the model to face `-Z` (the facing everything in
+`docs/COMFYUI_ASSET_PROMPTS.md` is authored to); check which way yours came out
+with `tools/shot_model.gd` below. The real fix upstream is to generate the
+concept reference on a plain cut-out background — no floor, no cast shadow —
+which gives the subject the whole triangle budget and the whole atlas.
+
+## Auto-fit on load (you do not need to pre-scale)
+
+Image-to-3D nodes (Hunyuan3D, TripoSR, InstantMesh …) export their mesh
+**normalised into a unit cube centred on the origin** — dropped in raw, a model
+would float at half its height and be the wrong size. `Forge.model()` therefore
+normalises every generated file on the way out:
+
+* uniform scale so the **longest axis** matches the asset's documented size,
+* base rebased to `y = 0`, centred in XZ.
+
+The result is an outer `Node3D` with an identity transform, so callers keep
+setting `position`/`rotation` exactly as they did for the placeholder.
+
+Per-asset target sizes live in `_model_size` in `scripts/MeshFactory.gd`; an
+asset with no row falls back to its category default (`prop` 1.0 m, `gate` 2.0 m,
+`enemy` 1.8 m, `pickup` 0.5 m, …). If a model reads too big or small in-engine,
+edit that one number — do not re-export the file.
+
+Sanity check what is wired and how it lands, then look at it:
+
+```
+godot --headless --path fractured-orbit -s tools/check_models.gd
+godot --path fractured-orbit --resolution 520x520 -s tools/shot_model.gd -- silence_guard
+```
+
+`shot_model.gd` writes `shot_0..3.png` (front, 3/4, side, back) to the project's
+`user://` directory — worth a look before trusting a model in a sector, since a
+mesh can land at the right size and still be facing backwards.
+
 ## Import settings (low-poly)
 
 When Godot imports a `.glb`, open its **Import** dock and set:
