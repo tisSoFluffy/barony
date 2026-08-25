@@ -52,7 +52,7 @@ Autoloads: `Util` (seeded RNG) · `Sectors` (SectorDB) · `Abilities` (AbilityDB
 | `scripts/Sector.gd` | builds walkable 3D geometry, lighting, spawns props/hazards/enemies + death echoes |
 | `scripts/MeshFactory.gd` | low-poly primitives **and** the placeholder→generated-model swap |
 | `scripts/MetaSave.gd` | persists gates, tech, deepest sector, loop count, echoes |
-| `scripts/Player.gd` | ability-gated first-person 3D platformer controller |
+| `scripts/Player.gd` | ability-gated third-person 3D platformer controller |
 | `scripts/Enemy.gd` / `Hazard.gd` / `Projectile.gd` | enemy AI / hazard behaviors / boss bolts |
 | `scripts/Boss.gd` | NEXUS: shield → Reality-Bender strip → strike-the-core loop, 3 patterns |
 | `scripts/Guardian.gd` | Core Guardian: cube that splits into smaller cubes on each hit |

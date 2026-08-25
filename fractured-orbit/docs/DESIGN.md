@@ -63,7 +63,7 @@ enter sector (safe zone) ─▶ fight/traverse rooms ─▶ reach the GATE room
 | Walkable 3D geometry, lighting, prop/hazard/enemy spawn, echoes | `scripts/Sector.gd` |
 | Low-poly primitives + generated-model placeholder swap | `scripts/MeshFactory.gd` (`Forge`) |
 | Cross-run persistence: gates, tech, reached, loops, echoes | `scripts/MetaSave.gd` (`Meta`) |
-| Ability-gated FPS platformer controller | `scripts/Player.gd` |
+| Ability-gated third-person platformer controller | `scripts/Player.gd` |
 | Enemy chase/attack AI | `scripts/Enemy.gd` |
 | Hazard behaviors (laser pulse, spore DoT, etc.) | `scripts/Hazard.gd` |
 | Run manager: 10-min reset, death→echo→rebuild, sector advance, endings | `scripts/Game.gd` |

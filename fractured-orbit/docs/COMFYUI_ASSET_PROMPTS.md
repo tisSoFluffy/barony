@@ -23,6 +23,18 @@ CFG 5–7. Render at **1024×1024** on a **flat neutral-grey background** so the
 image-to-3D step gets a clean silhouette. One object, centered, three-quarter
 front view.
 
+> **Give the subject no floor.** This is the single most expensive mistake in
+> this pipeline. If the Stage-2 image shows the subject standing on a surface —
+> a floor, a plinth, even a soft contact shadow — Stage 3 reconstructs that
+> surface as *geometry*: a wide flat disc welded to the subject's feet. On every
+> asset generated so far it ate **75–91% of the 40k triangle budget**, and being
+> the widest thing in the mesh it is what `MeshFactory._fit()` then scales to
+> the target size, so the asset itself arrives far too small. It also soaks up
+> most of the UV atlas: `silence_guard` got 14.9% of its 2048² sheet, the floor
+> took the rest. Ask for the subject **floating on a plain background, no ground
+> plane, no cast shadow**, and run anything suspect through
+> `tools/clean_gen_mesh.py`, which strips the plane and reports what it removed.
+
 **Stage 3 — image → 3D.** Any single-image mesh node works — **TripoSR**,
 **Stable Fast 3D**, **InstantMesh**, **CRM**, or **Hunyuan3D-2** (Hunyuan and
 InstantMesh give the cleanest game-ready topology). If your node accepts
@@ -227,7 +239,47 @@ thin **emissive** `#ff2a5a` fault line.
 
 ---
 
-## 6. Enemies
+## 6. Player character
+
+**`file: player.glb`**  · player · ~1.8 m · 2500–4000 tris
+
+You play **Kael, a Loop-Walker** aboard the dying research vessel *Aethelgard*.
+Kael is a survivor and a technician, not a soldier: the kit is salvaged and
+worn, built for climbing and holding on rather than for fighting. NEXUS resets
+the ship every ten minutes and Kael keeps walking the loop.
+
+```
+a lone deep-space salvage technician standing at rest, lean humanoid figure in a
+worn light-grey pressure suit with a segmented chest rig and utility harness,
+heavy magnetic boots with thick faceted soles, a compact tether-anchor spool on
+one hip, forearm bracers with a small readout panel, hooded collar pushed back,
+a smooth visored helmet with a single glowing cyan eye-slit, calm upright
+posture, arms held slightly away from the body
+```
+
+Append the §2 style suffix and use the §2 negative.
+
+Texture: pale grey-white suit `#cfd8e3`, darker harness and boots `#5a5560`,
+scuffed warm-metal buckles `#6b5540`, **emissive** `#6ad9ff` visor slit and
+bracer readout. Keep the palette neutral on purpose — Kael is the one asset seen
+in all five sectors, so it must not clash with any of them. Cyan is the one
+accent no sector palette uses as its own accent except Engineering, and the
+visor is small enough that it still reads there.
+
+**Pose matters permanently.** Generated models arrive unrigged, so whatever pose
+comes out of Stage 3 is the pose forever — `Player._animate()` moves the whole
+body, not limbs. Ask for a **calm upright stance with the arms slightly away
+from the torso**. Arms pinned to the sides fuse into the body during voxel
+reconstruction and you lose the silhouette. Do not ask for a T-pose either; with
+no skeleton it will simply stand there in a T-pose.
+
+Because the third-person camera sits behind Kael, the **back** is what the player
+looks at for the entire game. If your image-to-3D node accepts multiple views,
+this is the asset most worth doing as a §4 turnaround.
+
+---
+
+## 7. Enemies
 
 Model at ~1.8 m tall unless noted; origin at the feet, facing `-Z`.
 
@@ -294,7 +346,7 @@ Texture: white/black negative-space, **emissive** `#ff2a5a` core + fault lines.
 
 ---
 
-## 7. Pickups & narrative props
+## 8. Pickups & narrative props
 
 **`file: tech_node.glb`**  · pickup (lore log) · ~0.5 m · 150–500 tris
 ```
@@ -328,7 +380,7 @@ pale `#8fa4c4` note hologram. (Spawned wherever a past run died.)
 
 ---
 
-## 8. Environment kit (optional — replaces the box-built rooms)
+## 9. Environment kit (optional — replaces the box-built rooms)
 
 The level geometry is grey-boxed from slabs in code. To art-pass a sector, make
 a **modular kit** at a **4 m grid** and swap it in via a `Sector` variant (not
@@ -353,7 +405,7 @@ objects`).
 
 ---
 
-## 9. Batch checklist
+## 10. Batch checklist
 
 - [ ] Fix one seed per sector; reuse the style suffix so a set matches.
 - [ ] Render Stage-2 at 1024², one object, flat grey bg.
