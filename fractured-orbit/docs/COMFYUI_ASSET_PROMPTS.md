@@ -105,7 +105,7 @@ spaced, flat neutral grey background, <ASSET PROMPT>, <STYLE SUFFIX>
 
 ### Sector 0 — The Docking Bays  (industrial, rusty, cargo)
 
-**`file: cargo_crate.glb`**  · prop · ~1 m · 300–800 tris
+**`file: cargo_crate.glb`**  · prop · ~1.35 m · 300–800 tris
 ```
 a rusted industrial cargo shipping crate, riveted metal panels, chipped copper
 and amber paint, worn corner brackets, a faded hazard stripe, sturdy blocky cube

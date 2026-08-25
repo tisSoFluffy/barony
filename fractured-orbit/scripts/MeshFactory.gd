@@ -201,7 +201,7 @@ func model(name: String) -> Node3D:
 # back to the category default, so a newly dropped model is sane before it gets
 # a row here.
 var _model_size := {
-	"cargo_crate": 1.0, "pipe_cluster": 1.5, "sliding_door": 2.5,
+	"cargo_crate": 1.35, "pipe_cluster": 1.5, "sliding_door": 2.5,
 	"magnet_ring": 2.0, "magnetic_pillar": 4.0,
 	"vine_ribbon": 4.0, "thorn_cluster": 1.5, "spore_vent": 1.0,
 	"laser_emitter": 1.5, "pressure_plate": 1.0, "reactor_vent": 1.5,
