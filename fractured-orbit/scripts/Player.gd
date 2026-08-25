@@ -23,6 +23,18 @@ const DASH := 15.0
 const MOUSE_SENS := 0.0022
 const REACH := 3.0
 
+# Third-person rig, tuned toward Prince of Persia rather than God of War: pulled
+# back and slightly high, because this game is platforming-led (jump, dash,
+# wall-run, overhead platforms) under 5 m ceilings, where a tight over-shoulder
+# camera buries the geometry you need to read.
+const CAM_DIST := 4.0
+const CAM_HEIGHT := 1.5
+const CAM_SHOULDER := 0.35
+const CAM_FOV := 70.0
+const PITCH_MIN := -0.55           # look down
+const PITCH_MAX := 0.85            # look up, to see platforms overhead
+const TURN_RATE := 10.0            # how fast the body swings to face its heading
+
 var max_hp := 100.0
 var hp := 100.0
 var current_sector := 0
@@ -31,6 +43,11 @@ var sector: Sector                 # the live Sector, set by Game
 var _yaw := 0.0
 var _pitch := 0.0
 var _cam: Camera3D
+var _pivot: Node3D
+var _arm: SpringArm3D
+var _visual: Node3D
+var _face := 0.0
+var _anim_t := 0.0
 var _dash_cd := 0.0
 var _invuln := 0.0
 var _no_grav_t := 0.0              # wall-run / magnet suspends gravity briefly
@@ -52,18 +69,41 @@ func _ready() -> void:
 	col.shape = caps
 	col.position = Vector3(0, 0.9, 0)
 	add_child(col)
+	# The body you can now see. Swaps to assets/models/player.glb automatically.
+	_visual = Forge.model("player")
+	add_child(_visual)
+
+	# Orbit rig: the pivot carries the look direction, the arm hangs the camera
+	# behind it and shortens when geometry intrudes. No extra rotation is needed
+	# on either — SpringArm3D places its children on its +Z, which is already
+	# behind the pivot's -Z look direction, and the camera inherits that look
+	# direction unchanged. The shoulder offset lives on the arm, not the camera,
+	# so the collision cast is offset too and the view pulls in on the same line
+	# it is actually drawn from.
+	_pivot = Node3D.new()
+	_pivot.position = Vector3(0, CAM_HEIGHT, 0)
+	add_child(_pivot)
+	_arm = SpringArm3D.new()
+	_arm.position.x = CAM_SHOULDER
+	_arm.spring_length = CAM_DIST
+	_arm.margin = 0.2
+	_arm.add_excluded_object(get_rid())
+	_pivot.add_child(_arm)
 	_cam = Camera3D.new()
-	_cam.position = Vector3(0, 1.6, 0)
+	_cam.fov = CAM_FOV
 	_cam.current = true
-	add_child(_cam)
+	_arm.add_child(_cam)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_yaw -= event.relative.x * MOUSE_SENS
-		_pitch = clampf(_pitch - event.relative.y * MOUSE_SENS, -1.4, 1.4)
-		rotation.y = _yaw
-		_cam.rotation.x = _pitch
+		_pitch = clampf(_pitch - event.relative.y * MOUSE_SENS, PITCH_MIN, PITCH_MAX)
+		# The body no longer yaws with the mouse — it turns to face where it moves
+		# (see _animate). Spinning the character in place with the mouse is the
+		# tell-tale of a first-person rig wearing a third-person camera.
+		_pivot.rotation.y = _yaw
+		_pivot.rotation.x = _pitch
 	elif event.is_action_pressed("ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED else Input.MOUSE_MODE_CAPTURED
 
@@ -79,7 +119,9 @@ func _physics_process(delta: float) -> void:
 	var wish := Vector3(ix, 0, iz)
 	if wish.length() > 1.0:
 		wish = wish.normalized()
-	var move := global_transform.basis * wish
+	# Camera-relative, since the body's own yaw is now a follow value rather than
+	# the look direction.
+	var move := Basis(Vector3.UP, _yaw) * wish
 	move.y = 0.0
 	var spd := SPEED * (1.0 - clampf(_external_slow, 0.0, 0.8))
 	velocity.x = move.x * spd
@@ -101,7 +143,7 @@ func _physics_process(delta: float) -> void:
 		_dash_cd = 0.9
 		var d := move
 		if d.length() < 0.1:
-			d = -global_transform.basis.z
+			d = Basis(Vector3.UP, _face) * Vector3.FORWARD
 		d = d.normalized()
 		velocity.x += d.x * DASH
 		velocity.z += d.z * DASH
@@ -115,6 +157,7 @@ func _physics_process(delta: float) -> void:
 		_interact()
 
 	move_and_slide()
+	_animate(delta)
 	_collect_walkover()
 
 	if global_position.y < -40.0:      # fell into the void
@@ -123,6 +166,32 @@ func _physics_process(delta: float) -> void:
 		_check_death()
 
 ## ---- Gates ----------------------------------------------------------------
+
+## Body facing and gait. Any player model is a rigid mesh like the enemies', so
+## motion comes from the whole-body transform rather than a skeleton: turn toward
+## the heading, bob with the stride, lean into the run, tuck while airborne.
+func _animate(delta: float) -> void:
+	if _visual == null:
+		return
+	var planar := Vector2(velocity.x, velocity.z)
+	var moving := planar.length()
+	_anim_t += delta * (1.0 + moving * 1.4)
+	# Only steer while actually moving, so the body holds its last facing when
+	# you stop instead of snapping back to the camera.
+	if moving > 0.6:
+		_face = lerp_angle(_face, atan2(-planar.x, -planar.y),
+				clampf(delta * TURN_RATE, 0.0, 1.0))
+	_visual.rotation.y = _face
+	if is_on_floor():
+		var stride := _anim_t * 3.0
+		_visual.position.y = absf(sin(stride)) * (0.03 + moving * 0.012)
+		_visual.rotation.z = sin(stride) * 0.045
+		_visual.rotation.x = -clampf(moving * 0.03, 0.0, 0.22)
+	else:
+		# airborne: rise with a tuck, fall with the chest coming up
+		_visual.position.y = 0.0
+		_visual.rotation.z = 0.0
+		_visual.rotation.x = clampf(-velocity.y * 0.02, -0.30, 0.25)
 
 func _try_gate() -> void:
 	var gate := String(Sectors.get_def(current_sector)["gate"])
@@ -170,8 +239,14 @@ func _near_gate_anchor(r: float) -> bool:
 ## ---- Combat ---------------------------------------------------------------
 
 func _attack() -> void:
-	var from := _cam.global_position
-	var to := from + (-_cam.global_transform.basis.z) * REACH
+	# Aim where the camera looks, and snap the body to match so the swing reads as
+	# facing the target. The ray starts at the player's chest, NOT the camera: in
+	# third person the camera sits metres behind, so a camera-origin ray would
+	# strike things the character is not facing — or the character itself.
+	_face = _yaw
+	var dir := Basis(Vector3.UP, _yaw) * Vector3.FORWARD
+	var from := global_position + Vector3(0, 1.2, 0)
+	var to := from + dir * REACH
 	var space := get_world_3d().direct_space_state
 	var q := PhysicsRayQueryParameters3D.create(from, to)
 	q.exclude = [self]

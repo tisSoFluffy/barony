@@ -25,6 +25,7 @@ var _placeholder_tint := {
 	"pickup": Color("ffce42"),
 	"gate": Color("2a9df4"),
 	"decor": Color("4a4a55"),
+	"player": Color("cfd8e3"),
 }
 
 # Which category each known asset belongs to (drives placeholder shape + tint).
@@ -38,6 +39,7 @@ var _asset_category := {
 	"turret_spider": "enemy", "void_leaper": "enemy", "memory_construct": "enemy",
 	"core_guardian": "enemy", "nexus": "enemy",
 	"health_cell": "pickup", "blueprint": "pickup", "echo_debris": "decor",
+	"player": "player",
 }
 
 ## ---- Materials ------------------------------------------------------------
@@ -207,13 +209,13 @@ var _model_size := {
 	"laser_emitter": 1.5, "pressure_plate": 1.0, "reactor_vent": 1.5,
 	"anchor_beacon": 1.2, "black_hole_core": 1.2, "reality_switch": 1.5,
 	"scrap_crawler": 1.2, "drone_swarm": 1.2, "turret_spider": 1.6,
-	"core_guardian": 3.0, "nexus": 3.0,
+	"core_guardian": 3.0, "nexus": 3.0, "player": 1.8,
 	"echo_debris": 1.0,
 }
 
 const _CATEGORY_SIZE := {
 	"prop": 1.0, "decor": 1.2, "hazard": 1.2,
-	"pickup": 0.5, "gate": 2.0, "enemy": 1.8,
+	"pickup": 0.5, "gate": 2.0, "enemy": 1.8, "player": 1.8,
 }
 
 ## Wraps a generated model so it sits base-on-floor, centred in XZ, and scaled
@@ -277,6 +279,21 @@ func _placeholder(name: String) -> Node3D:
 			var head := slab(Vector3(0.45, 0.45, 0.45), tint.lightened(0.2), 0.3)
 			head.position = Vector3(0, 1.35, 0)
 			root.add_child(head)
+		"player":
+			# slimmer than the enemy stack, with a visor block so the facing reads
+			var torso := slab(Vector3(0.55, 0.95, 0.35), tint)
+			torso.position = Vector3(0, 1.05, 0)
+			root.add_child(torso)
+			var head := slab(Vector3(0.34, 0.34, 0.32), tint.lightened(0.15))
+			head.position = Vector3(0, 1.72, 0)
+			root.add_child(head)
+			var visor := slab(Vector3(0.26, 0.09, 0.06), Color("6ad9ff"), 2.0)
+			visor.position = Vector3(0, 1.74, -0.17)
+			root.add_child(visor)
+			for sx in [-0.20, 0.20]:
+				var leg := slab(Vector3(0.20, 0.58, 0.22), tint.darkened(0.25))
+				leg.position = Vector3(sx, 0.29, 0)
+				root.add_child(leg)
 		"pickup":
 			var gem := prism(Vector3(0.4, 0.5, 0.4), tint)
 			gem.position = Vector3(0, 0.4, 0)
