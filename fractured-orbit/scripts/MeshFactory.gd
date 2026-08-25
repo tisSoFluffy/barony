@@ -158,6 +158,7 @@ var _model_size := {
 	"vine_ribbon": 4.0, "thorn_cluster": 1.5, "spore_vent": 1.0,
 	"laser_emitter": 1.5, "pressure_plate": 1.0, "reactor_vent": 1.5,
 	"anchor_beacon": 1.2, "black_hole_core": 1.2, "reality_switch": 1.5,
+	"scrap_crawler": 1.2, "drone_swarm": 1.2, "turret_spider": 1.6,
 	"core_guardian": 3.0, "nexus": 3.0,
 	"echo_debris": 1.0,
 }

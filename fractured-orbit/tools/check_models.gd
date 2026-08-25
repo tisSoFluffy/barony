@@ -7,7 +7,9 @@ func _init() -> void:
 	var forge = load("res://scripts/MeshFactory.gd").new()
 	var names := [
 		"cargo_crate", "magnet_ring", "vine_ribbon", "thorn_cluster",
-		"spore_vent", "nexus", "silence_guard", "scrap_crawler", "health_cell",
+		"spore_vent", "nexus", "silence_guard", "scrap_crawler", "drone_swarm",
+		"turret_spider", "void_leaper", "memory_construct", "core_guardian",
+		"health_cell",
 	]
 	for n in names:
 		var real: bool = forge.has_model(n)
