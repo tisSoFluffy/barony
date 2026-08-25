@@ -9,7 +9,7 @@ func _init() -> void:
 		"cargo_crate", "magnet_ring", "vine_ribbon", "thorn_cluster",
 		"spore_vent", "nexus", "silence_guard", "scrap_crawler", "drone_swarm",
 		"turret_spider", "void_leaper", "memory_construct", "core_guardian",
-		"health_cell",
+		"player", "health_cell",
 	]
 	for n in names:
 		var real: bool = forge.has_model(n)
