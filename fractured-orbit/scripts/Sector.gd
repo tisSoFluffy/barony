@@ -33,7 +33,8 @@ func _build_room(room: Dictionary) -> void:
 	var is_safe: bool = room["kind"] == "safe"
 
 	# floor
-	add_child(_solid(Vector3(s.x, WALL_T, s.y), c + Vector3(0, -WALL_T * 0.5, 0), pal["floor"]))
+	add_child(_solid(Vector3(s.x, WALL_T, s.y), c + Vector3(0, -WALL_T * 0.5, 0), pal["floor"],
+			0.0, false, s))
 	# four walls with a doorway gap on each side (corridors punch through)
 	var hx := s.x * 0.5
 	var hz := s.y * 0.5
@@ -52,6 +53,8 @@ func _build_room(room: Dictionary) -> void:
 	light.shadow_enabled = true
 	add_child(light)
 
+	_decorate_room(c, s)
+
 	# a glowing ceiling trim strip (door-strip aesthetic)
 	var strip := Forge.slab(Vector3(s.x * 0.8, 0.15, 0.3), pal["accent"], 2.5)
 	strip.position = c + Vector3(0, WALL_H - 0.2, hz - 0.6)
@@ -59,7 +62,7 @@ func _build_room(room: Dictionary) -> void:
 
 	# platforms
 	for p in room["platforms"]:
-		add_child(_solid(p["size"], p["pos"], pal["trim"], 0.0))
+		add_child(_solid(p["size"], p["pos"], pal["trim"], 0.0, false, Vector2.ZERO))
 
 	# props
 	for pr in room["props"]:
@@ -72,6 +75,61 @@ func _build_room(room: Dictionary) -> void:
 	# enemies
 	for en in room["enemies"]:
 		_place_enemy(en["type"], en["pos"])
+
+## Wall dressing: vent panels, light strips and a conduit run. Everything sits
+## just proud of the wall surface so it reads as mounted rather than sunk, and
+## stays clear of the central doorway gap each wall leaves for its corridor.
+func _decorate_room(c: Vector3, s: Vector2) -> void:
+	var hx := s.x * 0.5
+	var hz := s.y * 0.5
+	for side in 4:
+		var along_x: bool = side < 2                 # this wall runs along X
+		var sgn: float = 1.0 if side % 2 == 0 else -1.0
+		var run: float = hx if along_x else hz       # half-length of the wall
+		var out: float = (hz if along_x else hx) - WALL_T * 0.5
+		for i in 2:
+			# 2.4 m clear of centre keeps fixtures off the 3 m doorway
+			var t: float = Util.rf(2.4, maxf(2.6, run - 1.0))
+			if Util.chance(0.5):
+				t = -t
+			_wall_fixture(c, t, out * sgn, along_x)
+
+	# one conduit running the length of a random wall, up near the ceiling
+	var cx: bool = Util.chance(0.5)
+	var cs: float = 1.0 if Util.chance(0.5) else -1.0
+	var length: float = (s.x if cx else s.y) - 1.2
+	var pipe := Forge.pillar(0.09, length, pal.get("trim", Color("5a5560")))
+	pipe.rotation = Vector3(0, 0, PI * 0.5) if cx else Vector3(PI * 0.5, 0, 0)
+	var cout: float = ((hz if cx else hx) - WALL_T * 0.5 - 0.18) * cs
+	pipe.position = c + (Vector3(0, WALL_H - 0.85, cout) if cx else Vector3(cout, WALL_H - 0.85, 0))
+	add_child(pipe)
+
+## One mounted fixture on a wall: either a dark vent panel or a small emissive
+## strip light. `out` is the signed distance to the wall surface; `along_x` says
+## which axis the wall runs along, so the panel is flattened against it.
+func _wall_fixture(c: Vector3, t: float, out: float, along_x: bool) -> void:
+	var lit := Util.chance(0.45)
+	var w: float = Util.rf(0.5, 0.7) if lit else Util.rf(0.8, 1.3)
+	var h: float = 0.14 if lit else Util.rf(0.6, 0.9)
+	var y: float = Util.rf(2.6, 3.6) if lit else Util.rf(1.1, 2.2)
+	var thick := 0.09
+	var size := Vector3(w, h, thick) if along_x else Vector3(thick, h, w)
+	var col: Color = pal.get("accent", Color("2a9df4")) if lit else pal.get("trim", Color("5a5560")).darkened(0.62)
+	var mi := Forge.slab(size, col, 2.2 if lit else 0.0)
+	# nudged inwards by half its own thickness so it touches, not intersects
+	var push: float = out - signf(out) * thick * 0.5
+	mi.position = c + (Vector3(t, y, push) if along_x else Vector3(push, y, t))
+	add_child(mi)
+	if lit:
+		return
+	# a flat dark rectangle reads as nothing; a lit slit makes it a panel
+	var slit_w := w * 0.55
+	var slit := Forge.slab(
+			Vector3(slit_w, 0.05, thick) if along_x else Vector3(thick, 0.05, slit_w),
+			pal.get("accent", Color("2a9df4")), 1.4)
+	var sp: float = push - signf(out) * 0.01
+	slit.position = c + (Vector3(t, y - h * 0.28, sp) if along_x else Vector3(sp, y - h * 0.28, t))
+	add_child(slit)
 
 func _wall_run(center: Vector3, size: Vector3, door_gap: float, along_x: bool) -> void:
 	# Split a wall into two segments leaving a central doorway gap.
@@ -100,7 +158,7 @@ func _build_corridors() -> void:
 		var mid := (a + b) * 0.5
 		var span := b - a
 		var size := Vector3(maxf(absf(span.x), 3.0), WALL_T, maxf(absf(span.z), 3.0))
-		add_child(_solid(size, mid + Vector3(0, -WALL_T * 0.5, 0), pal["trim"]))
+		add_child(_solid(size, mid + Vector3(0, -WALL_T * 0.5, 0), pal["trim"], 0.0, false, Vector2.ZERO))
 
 func _place_prop(name: String, pos: Vector3) -> void:
 	var node := Forge.model(name)
@@ -184,7 +242,8 @@ func rewrite(from: Vector3) -> bool:
 ## A visual box + matching static collision. Walls wear the generated wall
 ## surface; in sector 4 some of them wear the animated reality-break shader
 ## instead. Floors and platforms keep the flat palette material.
-func _solid(size: Vector3, pos: Vector3, color: Color, emit: float = 0.0, glitchable: bool = false) -> StaticBody3D:
+func _solid(size: Vector3, pos: Vector3, color: Color, emit: float = 0.0, glitchable: bool = false,
+		deck: Vector2 = Vector2(-1, -1)) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.position = pos
 	var mi := Forge.slab(size, color, emit)
@@ -192,6 +251,8 @@ func _solid(size: Vector3, pos: Vector3, color: Color, emit: float = 0.0, glitch
 		mi.material_override = Forge.glitch_shader_mat()
 	elif glitchable:
 		mi.material_override = Forge.wall_shader_mat(pal)
+	elif deck.x >= 0.0:
+		mi.material_override = Forge.floor_shader_mat(pal, deck)
 	body.add_child(mi)
 	var col := CollisionShape3D.new()
 	var shape := BoxShape3D.new()

@@ -82,6 +82,28 @@ func wall_shader_mat(pal: Dictionary) -> Material:
 	_wall_mats[key] = m
 	return m
 
+const FLOOR_SHADER := "res://assets/shaders/floor.gdshader"
+
+## Deck plating for a room floor. Unlike wall_shader_mat() this is NOT cached:
+## each room passes its own footprint so the painted border and door chevrons
+## land room-relative, and there are only a handful of floors per sector against
+## dozens of wall segments. Pass extent = Vector2.ZERO for corridors and
+## platforms, which get the plating but no markings.
+func floor_shader_mat(pal: Dictionary, extent: Vector2 = Vector2.ZERO) -> Material:
+	var base: Color = pal.get("floor", Color("2e3238"))
+	if not ResourceLoader.exists(FLOOR_SHADER):
+		return mat(base)
+	var sh := load(FLOOR_SHADER)
+	if not (sh is Shader):
+		return mat(base)
+	var m := ShaderMaterial.new()
+	m.shader = sh
+	m.set_shader_parameter("floor_color", base)
+	m.set_shader_parameter("trim_color", pal.get("trim", Color("2a2a30")))
+	m.set_shader_parameter("accent_color", pal.get("accent", Color("2a9df4")))
+	m.set_shader_parameter("room_extent", extent)
+	return m
+
 const GLITCH_SHADER := "res://assets/shaders/glitch.gdshader"
 var _glitch_shader_mat: ShaderMaterial
 
