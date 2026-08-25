@@ -17,6 +17,8 @@ var touch_dmg := 20.0
 var _player
 var _atk_cd := 0.0
 var _mesh: MeshInstance3D
+var _spin := 0.0
+var _glow := 0.0        # decaying hit brightness, layered over the idle pulse
 
 func setup(p: Dictionary, p_tier: int = TIERS) -> void:
 	pal = p
@@ -45,6 +47,7 @@ func _size() -> float:
 	return 2.6 * pow(0.62, float(TIERS - tier))
 
 func _physics_process(delta: float) -> void:
+	_animate(delta)
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
 	else:
@@ -66,10 +69,23 @@ func _physics_process(delta: float) -> void:
 						_player.take_damage(touch_dmg, "core_guardian")
 	move_and_slide()
 
+## A cube cannot walk, so it tumbles: a slow grind about Y with a shallow wobble,
+## and seams that breathe. `_glow` rides on top so a hit still reads as a flare —
+## previously the flare latched on and never decayed.
+func _animate(delta: float) -> void:
+	if _mesh == null:
+		return
+	_spin += delta
+	_glow = maxf(0.0, _glow - delta * 4.0)
+	_mesh.rotation.y = _spin * 0.8
+	_mesh.rotation.x = sin(_spin * 0.7) * 0.10
+	if _mesh.material_override is StandardMaterial3D:
+		var mat := _mesh.material_override as StandardMaterial3D
+		mat.emission_energy_multiplier = 0.25 + absf(sin(_spin * 1.3)) * 0.20 + _glow
+
 func take_damage(amount: float, _source: String = "") -> void:
 	hp -= amount
-	if _mesh and _mesh.material_override is StandardMaterial3D:
-		(_mesh.material_override as StandardMaterial3D).emission_energy_multiplier = 1.2
+	_glow = 1.0
 	if hp <= 0.0:
 		_split_and_die()
 

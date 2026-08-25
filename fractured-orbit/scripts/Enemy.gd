@@ -21,6 +21,8 @@ var _player                        # untyped: resolved from the "player" group
 var _atk_cd := 0.0
 var _flash := 0.0
 var _visual: Node3D
+var _anim_t := 0.0
+var _yaw := 0.0
 
 func setup(t: String, p: Dictionary) -> void:
 	type = t
@@ -90,6 +92,68 @@ func _physics_process(delta: float) -> void:
 			velocity.x = move_toward(velocity.x, 0.0, speed * delta * 4.0)
 			velocity.z = move_toward(velocity.z, 0.0, speed * delta * 4.0)
 	move_and_slide()
+	_animate(delta)
+
+## ---- Procedural animation ---------------------------------------------------
+
+## Generated models are one rigid mesh with no skeleton, so all motion has to
+## come from the visual node's own transform: a step bob for things that walk, a
+## hover for the drone, a turret track for the spider. The body's physics
+## transform is untouched. `_visual` starts at identity (see Forge.model), so
+## these are absolute values rather than accumulations, and stay stable however
+## long the enemy lives.
+func _animate(delta: float) -> void:
+	if _visual == null:
+		return
+	var planar := Vector2(velocity.x, velocity.z)
+	var moving := planar.length()
+	# Gait advances with distance covered, so a fast enemy takes faster steps and
+	# a stationary one idles instead of moonwalking on the spot.
+	_anim_t += delta * (1.0 + moving * 1.6)
+	_face(delta, planar)
+
+	var stride := _anim_t * 3.2
+	match type:
+		"drone_swarm":
+			# never lands: holds a hover and noses down into its suicide run
+			_visual.position.y = 0.30 + sin(_anim_t * 5.0) * 0.07
+			_visual.rotation.x = -clampf(moving * 0.05, 0.0, 0.35)
+			_visual.rotation.z = sin(_anim_t * 11.0) * 0.06
+		"turret_spider":
+			# stays planted; _face() does the aiming, the body only breathes
+			_visual.position.y = sin(_anim_t * 1.6) * 0.025
+			_visual.rotation.z = sin(stride * 0.5) * 0.03
+		"scrap_crawler":
+			# skitters: quicker, shallower and busier than the bipeds
+			_visual.position.y = absf(sin(stride * 1.8)) * 0.06
+			_visual.rotation.z = sin(stride * 0.9) * 0.10
+			_visual.rotation.x = -clampf(moving * 0.03, 0.0, 0.20)
+		_:
+			# bipeds: two bobs per stride, a roll onto each foot, a forward lean
+			_visual.position.y = absf(sin(stride)) * (0.04 + moving * 0.012)
+			_visual.rotation.z = sin(stride) * 0.05
+			_visual.rotation.x = -clampf(moving * 0.035, 0.0, 0.25)
+
+	# Hit flinch: a recoil that reads even on a near-black silhouette, where the
+	# emissive flash does not.
+	if _flash > 0.0:
+		var punch := _flash / 0.15
+		_visual.position.y += punch * 0.10
+		_visual.rotation.x += punch * 0.25
+
+## Turns the model toward its heading, or for ranged types keeps it tracking the
+## player while planted. Models are authored facing -Z, so pointing that face
+## down a direction means a yaw of atan2(-x, -z).
+func _face(delta: float, planar: Vector2) -> void:
+	var aim := planar
+	if ranged and _player and is_instance_valid(_player):
+		var to: Vector3 = _player.global_position - global_position
+		aim = Vector2(to.x, to.z)
+	if aim.length() < 0.05:
+		return
+	_yaw = lerp_angle(_yaw, atan2(-aim.x, -aim.y),
+			clampf(delta * (8.0 if ranged else 5.0), 0.0, 1.0))
+	_visual.rotation.y = _yaw
 
 func take_damage(amount: float, _source: String = "") -> void:
 	hp -= amount

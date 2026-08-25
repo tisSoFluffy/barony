@@ -25,6 +25,7 @@ var _pattern := 0
 var _stripped := 0
 var _atk_cd := 1.6
 var _spin := 0.0
+var _vis: Node3D
 var _dead := false
 
 func setup(p: Dictionary) -> void:
@@ -33,8 +34,8 @@ func setup(p: Dictionary) -> void:
 func _ready() -> void:
 	add_to_group("enemies")
 	add_to_group("boss")
-	var vis := Forge.model("nexus")
-	add_child(vis)
+	_vis = Forge.model("nexus")
+	add_child(_vis)
 	var col := CollisionShape3D.new()
 	var sph := SphereShape3D.new()
 	sph.radius = 1.4
@@ -48,6 +49,8 @@ func _physics_process(delta: float) -> void:
 		return
 	_spin += delta
 	rotation.y = _spin * 0.6
+	if _vis:
+		_vis.position.y = sin(_spin * 1.4) * 0.18
 	_vuln_t = maxf(0.0, _vuln_t - delta)
 	if _vuln_t <= 0.0 and not _shielded:
 		# vulnerability window closed without a kill: re-shield, harder pattern

@@ -1,0 +1,7 @@
+# Local Python tool environments (recreate with the commands in docs/).
+tools/*/.venv/
+__pycache__/
+*.pyc
+
+# Kimodo scratch output: generated motions, not source.
+tools/kimodo/out/
