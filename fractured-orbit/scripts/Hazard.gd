@@ -3,8 +3,19 @@ extends Area3D
 ## Environmental hazards. Each is an Area3D that damages (and sometimes slows)
 ## whatever CharacterBody3D overlaps it. A few types animate: lasers pulse on a
 ## cycle, spore clouds are neutralized if the player owns the Spore Purifier
-## tech. Visuals are low-poly primitives tinted from the sector palette; swap in
-## generated models by name via Forge if desired.
+## tech. Hazards with a physical emitter (see DEVICE_MODEL) show the generated
+## device for it; area effects stay low-poly primitives tinted from the sector
+## palette.
+
+# Hazard type -> the generated device that represents it. Only hazards with a
+# physical emitter are listed: molten floors, rifts and crumbling walkways are
+# area effects whose look belongs in a floor shader, not a mesh.
+const DEVICE_MODEL := {
+	"laser_grid": "laser_emitter",
+	"thorn_wall": "thorn_cluster",
+	"spore_cloud": "spore_vent",
+	"black_hole_pit": "black_hole_core",
+}
 
 var type := ""
 var pal := {}
@@ -41,18 +52,33 @@ func _build() -> void:
 				slow = 0.45
 			box.size = Vector3(3, 3, 3)
 			_add_visual(Vector3(3, 3, 3), danger, 0.5, 0.35)
+			_add_device(Vector3.ZERO)          # the vent the cloud pours out of
 		"laser_grid":
 			dps = 26.0
 			box.size = Vector3(3, 3, 0.4)
+			# Emitters bracket the beam and stay lit; only the beam blinks, so they
+			# are added separately from the "visual" meta the pulse toggles.
+			_add_device(Vector3(-1.5, 0.0, 0.0))
+			_add_device(Vector3(1.5, 0.0, 0.0), PI)
 			_add_visual(Vector3(3, 3, 0.4), danger, 3.0, 0.7)
-		"molten_floor", "thorn_wall", "reality_rift":
+		"thorn_wall":
+			dps = 20.0
+			box.size = Vector3(3, 0.6, 3)
+			var thorns := false
+			for off in [Vector3(-0.95, 0, -0.7), Vector3(0.9, 0, 0.55), Vector3(0.05, 0, 0.95)]:
+				thorns = _add_device(off, Util.rf(0.0, TAU), Util.rf(0.6, 0.8)) or thorns
+			# With real thorns the slab is just a footprint; without them it IS the hazard.
+			_add_visual(Vector3(3, 0.5, 3), danger,
+					0.35 if thorns else 1.5, 0.5 if thorns else 1.0)
+		"molten_floor", "reality_rift":
 			dps = 20.0
 			box.size = Vector3(3, 0.6, 3)
 			_add_visual(Vector3(3, 0.5, 3), danger, 1.5, 1.0)
 		"black_hole_pit":
 			dps = 18.0
 			box.size = Vector3(3, 4, 3)
-			_add_visual(Vector3(1.2, 1.2, 1.2), pal.get("accent", danger), 3.0, 1.0)
+			if not _add_device(Vector3(0.0, 1.0, 0.0)):
+				_add_visual(Vector3(1.2, 1.2, 1.2), pal.get("accent", danger), 3.0, 1.0)
 		"zero_g_pocket":
 			_active = false        # not damaging; movement handled by Player
 			box.size = Vector3(4, 4, 4)
@@ -63,6 +89,23 @@ func _build() -> void:
 			_add_visual(Vector3(2.5, 0.4, 2.5), danger, 1.0, 0.9)
 	shape.shape = box
 	add_child(shape)
+
+## Instances this hazard's generated device at a local offset. The damage volume
+## is untouched — this only changes what the player sees. Returns false, adding
+## nothing, when the model has not been generated yet, so callers can keep their
+## primitive stand-in until the .glb lands and then swap automatically.
+func _add_device(offset: Vector3, yaw: float = 0.0, scale_mul: float = 1.0) -> bool:
+	var asset: String = DEVICE_MODEL.get(type, "")
+	if asset == "" or not Forge.has_model(asset):
+		return false
+	var node := Forge.model(asset)
+	node.position = offset
+	node.rotation.y = yaw
+	# Scaling the instance, not _model_size: several thorns share one 3x3 pad, so
+	# they need to be smaller here than the same asset would be standing alone.
+	node.scale = Vector3(scale_mul, scale_mul, scale_mul)
+	add_child(node)
+	return true
 
 func _add_visual(size: Vector3, color: Color, emit: float, alpha: float) -> void:
 	var mi := Forge.slab(size, color, emit)
