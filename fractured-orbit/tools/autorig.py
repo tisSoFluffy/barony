@@ -219,6 +219,124 @@ def skin(obj, rig):
         bpy.ops.object.parent_set(type="ARMATURE_ENVELOPE")
 
 
+ARM_FAMILY = {"Shoulder.L", "Shoulder.R", "UpperArm.L", "UpperArm.R",
+              "LowerArm.L", "LowerArm.R", "Hand.L", "Hand.R"}
+LEG_FAMILY = {"Hips", "UpperLeg.L", "UpperLeg.R", "LowerLeg.L", "LowerLeg.R", "Foot.L", "Foot.R"}
+
+
+def reassign_touching_weights(obj, rig, margin=0.7):
+    """Fixes vertices whose *dominant* weight is an arm bone that's touching a
+    resting hand/coat against the hip, when the vertex actually sits much
+    closer to a leg/hip bone.
+
+    declash_weights only cleans up bad *secondary* weight; bone heat sometimes
+    hands a patch of coat-near-hand geometry its majority weight on the arm
+    outright, because the mesh surface is genuinely connected there (the hand
+    rests against the body). That drags a chunk of hip-level cloth along with
+    every arm swing, which - because this is a low-poly faceted mesh where a
+    handful of vertices anchor a large flat face - reads as a stretched fin
+    even though only a dozen or so vertices are actually wrong. Distance is
+    measured to each bone's rest *segment* (head-to-tail), not just its head,
+    since a coat vertex can sit well past a short bone's head.
+    """
+    from mathutils.geometry import intersect_point_line
+
+    def seg_dist(p, bone):
+        head, tail = rig.matrix_world @ bone.head_local, rig.matrix_world @ bone.tail_local
+        _, factor = intersect_point_line(p, head, tail)
+        factor = max(0.0, min(1.0, factor))
+        closest = head + (tail - head) * factor
+        return (p - closest).length
+
+    bones = {b.name: b for b in rig.data.bones}
+    leg_bones = [(name, bones[name]) for name in LEG_FAMILY if name in bones]
+    group_names = {g.index: g.name for g in obj.vertex_groups}
+    fixed = 0
+    for v in obj.data.vertices:
+        if not v.groups:
+            continue
+        dom = max(v.groups, key=lambda g: g.weight)
+        dom_name = group_names.get(dom.group)
+        if dom_name not in ARM_FAMILY or dom.weight < 0.5:
+            continue
+        world_p = obj.matrix_world @ v.co
+        d_arm = seg_dist(world_p, bones[dom_name])
+        leg_name, d_leg = min(((n, seg_dist(world_p, b)) for n, b in leg_bones), key=lambda t: t[1])
+        if d_leg >= d_arm * margin:
+            continue
+        leg_group = obj.vertex_groups.get(leg_name)
+        if leg_group is None:
+            leg_group = obj.vertex_groups.new(name=leg_name)
+        leg_group.add([v.index], dom.weight, "REPLACE")
+        dom.weight = 0.0
+        fixed += 1
+    log("reassigned %d vertices from a touching arm bone to a closer leg/hip bone" % fixed)
+
+
+def declash_weights(obj, rig, hop_limit=3, min_weight=0.1):
+    """Strips weight a vertex has on a bone far away in the skeleton tree.
+
+    Bone heat diffuses across the mesh surface, not through the skeleton, so a
+    hand resting against a thigh (or a holstered prop touching the hip) reads
+    as "close" and gets split between e.g. UpperArm and UpperLeg. That split is
+    invisible at rest but stretches the geometry into a fin the moment the arm
+    and leg move independently. A legitimate soft blend - shoulder vertices
+    shared between Chest and UpperArm, hip vertices shared between Hips and
+    LowerLeg - stays within a few hops of the skeleton tree; a cross-limb clash
+    does not, so hop distance is what separates the two.
+    """
+    parent = {b.name: (b.parent.name if b.parent else None) for b in rig.data.bones}
+    children = {}
+    for name, p in parent.items():
+        children.setdefault(p, []).append(name)
+
+    def hop_distance(a, b):
+        from collections import deque
+        seen, q = {a}, deque([(a, 0)])
+        while q:
+            node, dist = q.popleft()
+            if node == b:
+                return dist
+            neighbours = [parent[node]] if parent.get(node) else []
+            neighbours += children.get(node, [])
+            for nb in neighbours:
+                if nb and nb not in seen:
+                    seen.add(nb)
+                    q.append((nb, dist + 1))
+        return 999
+
+    dist_cache = {}
+
+    def related(a, b):
+        key = (a, b) if a < b else (b, a)
+        if key not in dist_cache:
+            dist_cache[key] = hop_distance(a, b)
+        return dist_cache[key] <= hop_limit
+
+    group_names = {g.index: g.name for g in obj.vertex_groups}
+    fixed = 0
+    for v in obj.data.vertices:
+        groups = sorted(v.groups, key=lambda g: -g.weight)
+        named = [(g, group_names.get(g.group)) for g in groups if group_names.get(g.group) in parent]
+        if len(named) < 2:
+            continue
+        dom_elem, dom_name = named[0]
+        stripped = False
+        for elem, bname in named[1:]:
+            if elem.weight >= min_weight and not related(dom_name, bname):
+                elem.weight = 0.0
+                stripped = True
+        if stripped:
+            total = sum(e.weight for e, _ in named)
+            if total > 1e-6:
+                for e, _ in named:
+                    e.weight /= total
+            else:
+                dom_elem.weight = 1.0
+            fixed += 1
+    log("declashed %d vertices (hop_limit=%d)" % (fixed, hop_limit))
+
+
 def report(obj, rig):
     groups = [g.name for g in obj.vertex_groups]
     bones = [b.name for b in rig.data.bones]
@@ -250,6 +368,8 @@ def main():
     weld(obj)
     rig = build_armature(obj, m)
     skin(obj, rig)
+    reassign_touching_weights(obj, rig)
+    declash_weights(obj, rig)
     report(obj, rig)
 
     bpy.ops.object.select_all(action="SELECT")

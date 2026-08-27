@@ -26,16 +26,16 @@ uv pip install --python tools/kimodo/.venv/Scripts/python.exe \
     "git+https://github.com/nv-tlabs/kimodo.git"
 ```
 
-## One blocker left: the gated text encoder
+## Text encoder access
 
-Kimodo encodes prompts with **`meta-llama/Meta-Llama-3-8B-Instruct`**, a gated
-Hugging Face repo. Generation currently fails with a 401 until someone with a
-Hugging Face account:
-
-1. accepts the licence at <https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct>, then
-2. runs `hf auth login` (or writes the token to `~/.cache/huggingface/token`).
-
-This needs a human with the account — it cannot be scripted here.
+Kimodo encodes prompts with **`meta-llama/Meta-Llama-3-8B-Instruct`** (3.0,
+*not* 3.1 — the McGill-NLP LLM2Vec adapter kimodo loads is trained on that
+specific base and hardcodes its repo id). This is a gated Hugging Face repo;
+access needs a human with an HF account to accept the licence at
+<https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct> and run
+`hf auth login`. Access is currently granted (account `professorlama`) — if
+generation starts 403ing again, check `hf auth whoami` first, then whether
+the grant lapsed.
 
 ## Running it
 
@@ -75,3 +75,46 @@ humanoid, so a humanoid skeleton has nothing to map onto:
 For the humanoids the missing steps are **rigging** (skeleton + skin weights —
 Kimodo does not do this) and **retargeting** its skeleton onto that rig, then
 glTF export with the skin and animation for Godot to import.
+
+## Rigging + retargeting onto Kael
+
+Kael (`fractured-orbit/assets/models/player.glb`) is rigged — see the "rigged,
+skinned Kael" commit and `fractured-orbit/tools/autorig.py`, which builds a
+19-bone armature (`Hips/Spine/Chest/Neck/Head`, `Shoulder/UpperArm/LowerArm/
+Hand` per side, `UpperLeg/LowerLeg/Foot` per side). `tools/retarget_kimodo.py`
+maps Kimodo's SOMA skeleton onto it by name (`Spine1+Spine2 → Spine`,
+`Neck1+Neck2 → Neck`, everything else 1:1) and copies each bone's
+rest-relative rotation across in Blender.
+
+End-to-end recipe:
+
+```bash
+TEXT_ENCODER_DEVICE=cpu tools/kimodo/.venv/Scripts/kimodo_gen.exe \
+    "a person walks forward at a steady pace" --duration 4 --output out/walk.npz
+
+# Do NOT retarget kimodo_gen's own --bvh output directly — it isn't in the
+# standard T-pose reference frame Kael's rig assumes, and the result is a
+# character rotated ~90-120° off (lying on its side). Always regenerate the
+# BVH through kimodo_convert with --bvh_standard_tpose first:
+tools/kimodo/.venv/Scripts/kimodo_convert.exe out/walk.npz out/walk.bvh \
+    --to soma-bvh --bvh_standard_tpose
+
+"/c/Program Files/Blender Foundation/Blender 5.2/blender.exe" --background \
+    --python tools/retarget_kimodo.py -- \
+    --bvh out/walk.bvh --target fractured-orbit/assets/models/player.glb \
+    --out out/kael_walk.glb --anim-name walk
+```
+
+The bundled demo motions under `kimodo/assets/demo/examples/*/motion.npz`
+only ship `global_rot_mats` (no `local_rot_mats`, which `kimodo_convert`
+requires) — `tools/kimodo/repair_demo_npz.py` derives it via kimodo's own
+`global_rots_to_local_rots` if you want to test the pipeline without running
+generation.
+
+`tools/dump_bones.py` and `tools/dump_anim.py` print an armature's bone
+hierarchy / animation fcurves for sanity checks; `tools/shot_anim.py` renders
+a handful of frames with a camera that follows the root motion (useful since
+Kimodo motions can travel meters from the origin).
+
+Not yet done: importing the retargeted `.glb` into the Godot project and
+wiring it into `Player.gd`/an `AnimationPlayer`.
