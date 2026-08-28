@@ -46,6 +46,12 @@ if before > target:
 for p in obj.data.polygons:
     p.use_smooth = True
 
+# TRELLIS rasterises a 2048 atlas; 1024 is plenty for a toybox prop and keeps
+# the committed GLB near its old ~1 MB rather than ~9 MB.
+for img in bpy.data.images:
+    if img.size[0] > 1024 or img.size[1] > 1024:
+        img.scale(1024, 1024)
+
 bpy.ops.export_scene.gltf(
     filepath=out,
     export_format="GLB",

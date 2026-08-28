@@ -40,7 +40,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = {
     "trellis2_20260827_180522.glb": ("bouncy_blue", 26000),
     "trellis2_20260827_181638.glb": ("spotty_doggy", 26000),
-    "trellis2_20260827_181054.glb": ("rainbow_arch", 20000),
+    "trellis2_20260827_185121.glb": ("rainbow_arch", 20000),
     "trellis2_20260827_092102.glb": ("castle_gate", 22000),
     "trellis2_20260827_092423.glb": ("ball", 6000),
     "trellis2_20260827_091823.glb": ("sparkle_cubes", 6000),

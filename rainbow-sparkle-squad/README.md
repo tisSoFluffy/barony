@@ -71,31 +71,33 @@ export into a game asset with:
 "$GODOT_CONSOLE" --headless --path rainbow-sparkle-squad --import
 ```
 
-`tools/import_assets.py` does four things, and each one is load-bearing:
+`tools/import_assets.py` does three things, and each one is load-bearing:
 
-1. **Strip specks.** Every export carries 30–50k triangles of disconnected
-   noise. Removing it first also lets the decimator collapse much further,
-   since each speck otherwise pins boundary edges in place. The same pass
-   drops welded floor discs, though these particular concepts were generated
-   on plain backgrounds and have none.
-2. **Decimate** to roughly 15k triangles.
-3. **Re-atlas and bake.** This is the subtle one. TRELLIS packs its texture as
-   dozens of small charts; decimation collapses vertices across chart borders,
-   so a single low-poly triangle ends up with corners in unrelated parts of the
-   sheet and smears a bright streak across itself. Measured on the rainbow
-   arch, the worst triangle stretched **1900×**, and still **2.4×** at only
-   half the original density — there is no reduction level at which reusing the
-   original UVs is safe. So the decimated mesh gets a fresh xatlas unwrap and
-   the original's appearance is baked into it texel by texel, with 6 texels of
-   edge dilation so bilinear filtering never picks up the background.
-4. **Force the material matte.** TRELLIS writes `metallicFactor = 1.0` and
+1. **Decimate in Blender, keeping the source UVs** (`tools/blender_decimate.py`,
+   shelled out to `blender.exe`). A TRELLIS surface-net mesh is ~11k
+   *disconnected* shell fragments. The old path — `fast_simplification` then a
+   fresh `xatlas` unwrap and a texel-by-texel re-bake — turned that into ~1500
+   confetti UV charts, and the seams between them rendered in-engine as a white
+   crackle over every surface. Blender welds the fragments (`remove_doubles`),
+   drops degenerate slivers, then runs a **collapse** decimate that carries the
+   per-vertex UVs straight through, so the mesh keeps sampling TRELLIS's own
+   coherent atlas and nothing is re-baked. Target is ~20–26k triangles.
+2. **Load back with `process=False`.** trimesh's default load merges spatially
+   close vertices, which fuses the two halves of every UV seam onto one UV
+   coordinate and reintroduces exactly the crackle Blender avoided.
+3. **Force the material matte.** TRELLIS writes `metallicFactor = 1.0` and
    relies on a metallic-roughness *texture* to pull it back down; that texture
    does not survive the round trip, so every asset arrives as a perfect mirror
    and reflects the sky as a milky haze over the whole scene.
 
-`tools/preview.py` renders a contact sheet of the processed GLBs with a plain
-numpy rasteriser, which is faster than opening the editor when you just want to
-know whether an asset came out the right shape.
+The concepts are generated on plain backgrounds, so there is no welded floor
+disc to strip; `strip_floor()` is kept in the module but not run on this path
+(it would re-split the mesh on its UV seams and can over-trim).
+
+`tools/preview.py` renders a grey contact sheet of the processed GLBs with a
+plain numpy rasteriser; `tools/turntable.gd` is the authoritative check —
+it loads one GLB in a real Godot viewport, lights it, and saves a four-angle
+textured strip (`--unshaded` to isolate a texture problem from a shading one).
 
 ## Checking it still works
 
@@ -133,18 +135,14 @@ out of sync with the scripts.
 
 ## Known rough edges
 
-- The rainbow arch's texture is banded and blotchy. That is faithful to the
-  generation — the source atlas genuinely looks like that — not a pipeline bug.
-  It needs regenerating rather than reprocessing.
-- Decimation bottoms out around 15k triangles per asset rather than the 4–6k
-  requested; `fast_simplification` stops collapsing before the target. Fine at
-  this scale (~85k triangles for the whole level) but worth revisiting.
+- The rainbow arch's outer red band is much thicker than the rest and the
+  underside is mostly red — TRELLIS reconstructs it that way from the concept.
+  It reads clearly as a rainbow; the band proportions are a stylisation quirk,
+  not a pipeline bug. Reroll the TRELLIS seed if it needs to be more even.
 - `sparkle_cubes` is a scatter cloud, so one pickup is a cluster of small cubes
   rather than a single readable coin. It works, but a dedicated gem model would
   read better.
-- **Spotty Doggy has the ball fused to her front paws.** The concept image had
-  the ball resting against the dog, and the generator reconstructed the two as
-  one solid object. It is a single connected component, so the speck/floor pass
-  cannot separate it — it needs either a regenerated concept with the ball
-  removed, or a manual cut in Blender.
+- Character bodies carry faint speckle from the TRELLIS texture (freckles on
+  the dog, a soft mottle on the unicorn). Small enough to read as toy-plastic
+  texture rather than noise.
 - No audio yet.
