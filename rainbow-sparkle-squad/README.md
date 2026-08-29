@@ -101,6 +101,44 @@ Its geometry checks are the load-bearing ones — a triangle with the wrong numb
 of sides, or a figure sunk into the sand, is a wrong lesson rather than a
 cosmetic bug.
 
+## Letter Lagoon
+
+A third door, green, leads to a lagoon where ten letters stand in a ring —
+real extruded 3D glyphs with faces, built with Godot's `TextMesh` so the child
+is looking at the *actual* letterform and not an approximation of one.
+
+**The ten are not A to J.** They are Letters and Sounds Phase 2 Set 1 —
+`s a t p i n` — plus just enough more (`m d g o`) to spell real words. Teaching
+the alphabet in alphabetical order is the one thing phonics deliberately does
+not do, because you cannot build a word out of a, b, c. You can build six out
+of these: **pig, dog, sat, map, tin, pot**.
+
+**The game is blending**, which is the actual reading skill. A word is named
+and you walk to its letters in order, hearing each sound as you collect it;
+when the last one lands there is a deliberate beat before the whole word is
+spoken, because the moment the sounds *become* a word is the entire point.
+That makes it a cousin of Blockland's touch-in-order rather than of Shape
+Cove's find-the-one — three islands, three different things being learned.
+
+Letters never shuffle, for the same reason the shapes don't, only more so:
+knowing where `s` lives is a foothold, and a child who has to re-find every
+letter every round never gets as far as the blending.
+
+> **On the voices.** SAPI has no reliable way to say a bare phoneme — asked for
+> `t` it says the letter *name*, and the usual workaround ("tuh") adds a schwa
+> that phonics specifically discourages, since blending c-a-t then gives
+> "cuh-a-tuh". The clips in `tools/make_letter_voices.ps1` are the closest this
+> voice gets, and the continuants (`s`, `n`, `m`) come out much better than the
+> stops. The `key_` clips carry the real teaching — sound plus keyword, which
+> is how phonics is actually taught and stays unambiguous regardless. **The file
+> names are the contract**, so a real recorded voice drops straight in over
+> them with no code change. That is the recommended upgrade.
+
+`tools/letterlagoontest.gd` plays every word through. Its data checks are the
+ones that would otherwise rot silently: every word must be spellable from the
+letters actually standing in the lagoon, and no word may reuse a letter, since
+a repeat would need one figure touched twice in a round.
+
 ## The meadow
 
 The meadow is **dressed as a unicorn's fantasy world**: a sparkle fountain at

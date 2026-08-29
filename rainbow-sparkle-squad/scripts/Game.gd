@@ -96,19 +96,23 @@ const DECOR := [
 # re-wire on the way back.
 const BLOCKLAND_ORIGIN := Vector3(0, 0, 200)
 const COVE_ORIGIN := Vector3(200, 0, 0)
+const LAGOON_ORIGIN := Vector3(-200, 0, 0)
 
 const MEADOW_DOOR := Vector3(6.5, 0, 8.5)
 const MEADOW_DOOR_YAW := -0.5
 const COVE_DOOR := Vector3(-6.5, 0, 8.5)
 const COVE_DOOR_YAW := 0.5
+const LAGOON_DOOR := Vector3(0, 0, 10.5)
+const LAGOON_DOOR_YAW := 0.0
 
 # Where the player lands in each place - a step clear of the doorway, facing in.
 # Adding an island means adding a row here and a door that names it; nothing in
 # the travel code below knows how many there are.
 const ARRIVALS := {
-	"meadow": Vector3(5.1, 1.2, 10.1),
+	"meadow": Vector3(3.0, 1.2, 13.0),
 	"blockland": Vector3(0, 1.2, 210.5),
 	"cove": Vector3(200, 1.2, 12.5),
+	"lagoon": Vector3(-200, 1.2, 14.5),
 }
 
 var _player: Player
@@ -122,6 +126,7 @@ var _won := false
 var _voice: AudioStreamPlayer
 var _blockland: Blockland
 var _cove: ShapeCove
+var _lagoon: LetterLagoon
 var _doors: Array[Portal] = []
 var _where := "meadow"
 
@@ -384,6 +389,20 @@ func _build_islands() -> void:
 	_door("DoorFromCove", "Meadow", "meadow",
 		COVE_ORIGIN + Vector3(0, 0, 14.5), 0.0, Color("#3fa0d8"))
 
+	_lagoon = LetterLagoon.new()
+	_lagoon.name = "LetterLagoon"
+	_lagoon.position = LAGOON_ORIGIN
+	_lagoon.word_started.connect(_on_lagoon_word)
+	_lagoon.letter_found.connect(_on_lagoon_letter)
+	_lagoon.wrong_letter.connect(_on_lagoon_wrong)
+	_lagoon.completed.connect(_on_lagoon_completed)
+	add_child(_lagoon)
+
+	_door("DoorToLagoon", "Letter Lagoon", "lagoon",
+		LAGOON_DOOR, LAGOON_DOOR_YAW, Color("#3fae8a"))
+	_door("DoorFromLagoon", "Meadow", "meadow",
+		LAGOON_ORIGIN + Vector3(0, 0, 16.5), 0.0, Color("#3fae8a"))
+
 
 func _door(node_name: String, label: String, dest: String,
 		at: Vector3, yaw: float, tint: Color) -> void:
@@ -454,6 +473,8 @@ func _travel(dest: String) -> void:
 		"cove":
 			# Restarting also speaks the first round, which is the instruction.
 			_cove.restart()
+		"lagoon":
+			_lagoon.restart()
 		_:
 			_hud.set_prompt("")
 
@@ -506,6 +527,37 @@ func _on_cove_completed() -> void:
 		return
 	_hud.set_prompt("Touch any shape to hear its name")
 	_hud.show_banner("You found all six shapes!")
+	_clear_banner_after(2.6)
+
+
+# -- Letter Lagoon -------------------------------------------------------
+
+func _lagoon_prompt() -> String:
+	return "Spell  %s      %s   (%d of %d)" % [
+		_lagoon.word().to_upper(), _lagoon.progress_text(),
+		_lagoon.solved() + 1, LetterLagoon.WORDS.size()]
+
+
+func _on_lagoon_word(_word: String) -> void:
+	if _where == "lagoon":
+		_hud.set_prompt(_lagoon_prompt())
+
+
+func _on_lagoon_letter(_word: String, _index: int) -> void:
+	if _where == "lagoon":
+		_hud.set_prompt(_lagoon_prompt())
+
+
+func _on_lagoon_wrong(expected: String, _got: String) -> void:
+	if _where == "lagoon":
+		_hud.set_prompt("Not that one - look for  %s" % expected.to_upper())
+
+
+func _on_lagoon_completed() -> void:
+	if _where != "lagoon":
+		return
+	_hud.set_prompt("Touch any letter to hear its sound")
+	_hud.show_banner("You spelled every word!")
 	_clear_banner_after(2.6)
 
 

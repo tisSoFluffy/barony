@@ -152,6 +152,23 @@ func _reset() -> void:
 		b.set_lit(false)
 	_next = 1
 	progress.emit(_next, TOTAL)
+	_claim_overlaps()
+
+
+## Count a block the player is ALREADY standing inside when the count restarts.
+##
+## body_entered only fires on a crossing, so if a mistake resets the count while
+## the player is stood on 1, the game waits for an entry event that can never
+## come. Same reasoning as LetterLagoon._claim_overlaps.
+func _claim_overlaps() -> void:
+	await get_tree().physics_frame
+	if _done:
+		return
+	for b in _blocks:
+		for body in b.get_overlapping_bodies():
+			if body is Player:
+				_on_block_touched(b)
+				return
 
 
 func _finish() -> void:
