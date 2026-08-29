@@ -14,7 +14,7 @@ extends CharacterBody3D
 ## nose-down lean through the arc. See `_animate()`.
 
 const HEIGHT := 1.05
-const ALBEDO_TINT := Color(0.72, 0.74, 0.78)   # see _tone_down()
+const ALBEDO_TINT := Color(0.72, 0.74, 0.78)   # see Models.tint_albedo
 
 # Hop shape. A hop is one launch: vertical impulse plus a horizontal shove,
 # then gravity owns the arc until she lands.
@@ -59,7 +59,8 @@ var _squash_vel := 0.0
 
 func _ready() -> void:
 	_visual = Models.spawn("res://assets/models/bunny.glb", HEIGHT)
-	_tone_down()
+	# Pale grey fur and mint cloth, otherwise blown to flat white by the sun.
+	Models.tint_albedo(_visual, ALBEDO_TINT)
 	add_child(_visual)
 
 	var shape := CollisionShape3D.new()
@@ -72,26 +73,6 @@ func _ready() -> void:
 
 	_target = _wander_target()
 	_rest = randf_range(REST_MIN, REST_MAX)
-
-
-## Her albedo is pale grey fur and mint cloth with the generator's own lighting
-## already baked in, so under the meadow's sun she blows out to flat white and
-## loses every feature. Multiplying the albedo down pulls her back into the
-## scene's exposure without touching the texture itself.
-func _tone_down() -> void:
-	for node in _visual.find_children("*", "MeshInstance3D", true, false):
-		var mi := node as MeshInstance3D
-		var mesh := mi.mesh
-		if mesh == null:
-			continue
-		for s in mesh.get_surface_count():
-			var base := mesh.surface_get_material(s) as StandardMaterial3D
-			if base == null:
-				continue
-			var tinted: StandardMaterial3D = base.duplicate()
-			tinted.albedo_color = ALBEDO_TINT
-			tinted.roughness = 1.0
-			mi.set_surface_override_material(s, tinted)
 
 
 func _physics_process(delta: float) -> void:

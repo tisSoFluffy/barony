@@ -56,6 +56,13 @@ ASSETS = {
     "trellis2_20260828_224423.glb": ("bunny", 12000),
 }
 
+# The butterfly is deliberately NOT in ASSETS. It is the one rigged asset here,
+# and its pipeline has an extra stage: decimate to a scratch file, then run
+# tools/rig_butterfly.py to skin it before it lands in assets/models. Listing it
+# above would let a plain `import_assets.py` run overwrite the rigged GLB with
+# an unrigged one and silently stop the wings. Its source export is
+# trellis2_20260828_231641.glb; see the rig_butterfly.py docstring.
+
 # A component is floor if it is wide, wafer-thin, and sits at the bottom.
 FLOOR_MAX_THICKNESS = 0.06   # relative to its own footprint
 FLOOR_MIN_FOOTPRINT = 0.30   # relative to the whole mesh

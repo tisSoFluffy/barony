@@ -21,6 +21,25 @@ squash on landing, the stretch on takeoff and the nose-down lean through the
 arc are all computed in `Bunny._animate()`. `tools/bunnytest.gd` is her test —
 it watches her wander, then crowds her and checks she bolts.
 
+A **butterfly** does laps of the flowers — and she is the one rigged character
+in the project. Everything else is a single unrigged shell moved as a whole
+body, which is fine for a hop or a squash but cannot beat a wing: the two wings
+have to swing in opposite directions about the body, and no whole-object
+transform does that. `tools/rig_butterfly.py` gives her a three-bone skeleton
+(`Body`, `Wing_L`, `Wing_R`) in Blender and exports a skinned glTF that Godot
+imports as a `Skeleton3D`; `Butterfly._flap()` then rolls each wing bone about
+its own length. Her flight is still procedural — a steered heading with a weave
+on it, a slow altitude bob, and a bank into her turns. Her waypoints are pulled
+straight out of `DECOR`, so she visits whatever flowers are actually planted.
+
+Weights are assigned by hand rather than by bone heat: a butterfly's wings meet
+the body over a broad seam and nearly touch each other, and the automatic
+solver bleeds one wing's influence across the midline, so beating the left wing
+drags the right. Weighting purely on distance from the body's centre plane is
+exact and symmetric by construction. `tools/butterflytest.gd` guards the whole
+chain — if the rig ever exports unskinned, the wings go stiff and nothing else
+would notice.
+
 The meadow is **dressed as a unicorn's fantasy world**: a sparkle fountain at
 its heart, a treeline of candy-scoop trees, toadstools and crystal clusters
 through the mid-field, a flower patch, and puffy clouds bobbing overhead. It is

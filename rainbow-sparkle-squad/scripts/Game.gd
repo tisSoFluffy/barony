@@ -128,6 +128,7 @@ func _ready() -> void:
 	_build_ball()
 	_build_player()
 	_build_bunny()
+	_build_butterfly()
 	_build_hud()
 
 	# One shared voice player, non-positional so the number is always clear no
@@ -323,6 +324,22 @@ func _build_bunny() -> void:
 	bunny.position = Vector3(-4.5, 0.4, 2.5)
 	bunny.player = _player
 	add_child(bunny)
+
+
+## A butterfly doing laps of the flowers. Her waypoints are pulled straight out
+## of DECOR, so she always visits whatever is actually planted in the meadow -
+## move a flower and she follows it.
+func _build_butterfly() -> void:
+	var perches := PackedVector3Array()
+	for d in DECOR:
+		if d["m"] == "giant_flower" or d["m"] == "toadstool":
+			perches.append(d["p"])
+
+	var fly := Butterfly.new()
+	fly.name = "Butterfly"
+	fly.perches = perches
+	fly.position = Vector3(-12.5, 2.6, 3.5)
+	add_child(fly)
 
 
 func _build_hud() -> void:

@@ -55,6 +55,28 @@ static func spawn_wide(path: String, target_width: float, face_forward := true) 
 	return holder
 
 
+## Multiply down the albedo of everything under `node`.
+##
+## The generator bakes its own studio lighting into the albedo, so a pale asset
+## arrives already near-white and then blows out completely under the meadow's
+## sun, losing every feature. Tinting the material pulls it back into the
+## scene's exposure without touching the texture. Set-dressing is far enough
+## away not to care; the characters you look at up close do.
+static func tint_albedo(node: Node3D, tint: Color) -> void:
+	for child in node.find_children("*", "MeshInstance3D", true, false):
+		var mesh_node := child as MeshInstance3D
+		if mesh_node.mesh == null:
+			continue
+		for s in mesh_node.mesh.get_surface_count():
+			var base := mesh_node.mesh.surface_get_material(s) as StandardMaterial3D
+			if base == null:
+				continue
+			var tinted: StandardMaterial3D = base.duplicate()
+			tinted.albedo_color = tint
+			tinted.roughness = 1.0
+			mesh_node.set_surface_override_material(s, tinted)
+
+
 ## Union of every MeshInstance3D AABB under `node`, in `node`'s own space.
 ## Uses local transforms throughout, because this runs on a freshly
 ## instantiated subtree that is not in the scene tree yet.
