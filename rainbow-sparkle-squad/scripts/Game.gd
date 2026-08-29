@@ -95,12 +95,21 @@ const DECOR := [
 # and audio are never torn down, so there is no reload hitch and nothing to
 # re-wire on the way back.
 const BLOCKLAND_ORIGIN := Vector3(0, 0, 200)
+const COVE_ORIGIN := Vector3(200, 0, 0)
+
 const MEADOW_DOOR := Vector3(6.5, 0, 8.5)
 const MEADOW_DOOR_YAW := -0.5
+const COVE_DOOR := Vector3(-6.5, 0, 8.5)
+const COVE_DOOR_YAW := 0.5
 
-# Where the player lands on each side - a step clear of the doorway, facing in.
-const BLOCKLAND_ARRIVAL := BLOCKLAND_ORIGIN + Vector3(0, 1.2, 10.5)
-const MEADOW_ARRIVAL := MEADOW_DOOR + Vector3(-1.4, 1.2, 1.6)
+# Where the player lands in each place - a step clear of the doorway, facing in.
+# Adding an island means adding a row here and a door that names it; nothing in
+# the travel code below knows how many there are.
+const ARRIVALS := {
+	"meadow": Vector3(5.1, 1.2, 10.1),
+	"blockland": Vector3(0, 1.2, 210.5),
+	"cove": Vector3(200, 1.2, 12.5),
+}
 
 var _player: Player
 var _camera: FollowCamera
@@ -112,9 +121,9 @@ var _all_stars := false
 var _won := false
 var _voice: AudioStreamPlayer
 var _blockland: Blockland
-var _door_out: Portal            # meadow -> Blockland
-var _door_back: Portal           # Blockland -> meadow
-var _in_blockland := false
+var _cove: ShapeCove
+var _doors: Array[Portal] = []
+var _where := "meadow"
 
 
 func _ready() -> void:
@@ -130,7 +139,7 @@ func _ready() -> void:
 	_build_player()
 	_build_bunny()
 	_build_butterfly()
-	_build_blockland()
+	_build_islands()
 	_build_hud()
 
 	# One shared voice player, non-positional so the number is always clear no
@@ -344,8 +353,11 @@ func _build_butterfly() -> void:
 	add_child(fly)
 
 
-## Blockland and the pair of doors that reach it.
-func _build_blockland() -> void:
+## The two islands and the doors that reach them. Each island is built far off
+## to one side of the meadow rather than in a scene of its own; the doors
+## teleport. One scene means the player, camera, HUD and audio are never torn
+## down, so there is no reload hitch and nothing to re-wire on the way back.
+func _build_islands() -> void:
 	_blockland = Blockland.new()
 	_blockland.name = "Blockland"
 	_blockland.position = BLOCKLAND_ORIGIN
@@ -354,20 +366,37 @@ func _build_blockland() -> void:
 	_blockland.completed.connect(_on_block_completed)
 	add_child(_blockland)
 
-	_door_out = Portal.new()
-	_door_out.name = "DoorToBlockland"
-	_door_out.label_text = "Blockland"
-	_door_out.position = MEADOW_DOOR
-	_door_out.rotation.y = MEADOW_DOOR_YAW
-	_door_out.entered.connect(_on_portal_entered)
-	add_child(_door_out)
+	_cove = ShapeCove.new()
+	_cove.name = "ShapeCove"
+	_cove.position = COVE_ORIGIN
+	_cove.round_started.connect(_on_cove_round)
+	_cove.answered.connect(_on_cove_answered)
+	_cove.completed.connect(_on_cove_completed)
+	add_child(_cove)
 
-	_door_back = Portal.new()
-	_door_back.name = "DoorToMeadow"
-	_door_back.label_text = "Meadow"
-	_door_back.position = BLOCKLAND_ORIGIN + Vector3(0, 0, 12.5)
-	_door_back.entered.connect(_on_portal_entered)
-	add_child(_door_back)
+	_door("DoorToBlockland", "Blockland", "blockland",
+		MEADOW_DOOR, MEADOW_DOOR_YAW, Color(0, 0, 0, 0))
+	_door("DoorFromBlockland", "Meadow", "meadow",
+		BLOCKLAND_ORIGIN + Vector3(0, 0, 12.5), 0.0, Color(0, 0, 0, 0))
+
+	_door("DoorToCove", "Shape Cove", "cove",
+		COVE_DOOR, COVE_DOOR_YAW, Color("#3fa0d8"))
+	_door("DoorFromCove", "Meadow", "meadow",
+		COVE_ORIGIN + Vector3(0, 0, 14.5), 0.0, Color("#3fa0d8"))
+
+
+func _door(node_name: String, label: String, dest: String,
+		at: Vector3, yaw: float, tint: Color) -> void:
+	var portal := Portal.new()
+	portal.name = node_name
+	portal.label_text = label
+	portal.destination = dest
+	portal.frame_tint = tint
+	portal.position = at
+	portal.rotation.y = yaw
+	portal.entered.connect(_on_portal_entered)
+	add_child(portal)
+	_doors.append(portal)
 
 
 func _build_hud() -> void:
@@ -404,26 +433,29 @@ func _on_star_collected(star: Star) -> void:
 # -- doors and Blockland -------------------------------------------------
 
 func _on_portal_entered(portal: Portal) -> void:
-	var to_blockland := portal == _door_out
-	# Disarm both while the wipe runs, so a door cannot fire twice and the one
-	# being arrived at does not immediately send the player back.
-	_door_out.set_armed(false)
-	_door_back.set_armed(false)
-	_hud.wipe(_travel.bind(to_blockland))
+	# Disarm every door while the wipe runs, so one cannot fire twice and the
+	# door being arrived at does not immediately send the player back.
+	for d in _doors:
+		d.set_armed(false)
+	_hud.wipe(_travel.bind(portal.destination))
 
 
-func _travel(to_blockland: bool) -> void:
-	_in_blockland = to_blockland
+func _travel(dest: String) -> void:
+	_where = dest
 	_player.velocity = Vector3.ZERO
-	_player.global_position = BLOCKLAND_ARRIVAL if to_blockland else MEADOW_ARRIVAL
+	_player.global_position = ARRIVALS.get(dest, SPAWN)
 	_camera.snap_to_target()
-	_hud.set_meadow_visible(not to_blockland)
+	_hud.set_meadow_visible(dest == "meadow")
 
-	if to_blockland:
-		_blockland.restart()
-		_hud.set_prompt("Touch the Numberblocks in order   -   next is  1")
-	else:
-		_hud.set_prompt("")
+	match dest:
+		"blockland":
+			_blockland.restart()
+			_hud.set_prompt("Touch the Numberblocks in order   -   next is  1")
+		"cove":
+			# Restarting also speaks the first round, which is the instruction.
+			_cove.restart()
+		_:
+			_hud.set_prompt("")
 
 	_rearm_doors()
 
@@ -431,28 +463,49 @@ func _travel(to_blockland: bool) -> void:
 ## Only re-arm once the player has stepped clear of the doorway they landed in.
 func _rearm_doors() -> void:
 	await get_tree().create_timer(1.1).timeout
-	if _door_out != null:
-		_door_out.set_armed(true)
-	if _door_back != null:
-		_door_back.set_armed(true)
+	for d in _doors:
+		if is_instance_valid(d):
+			d.set_armed(true)
 
 
 func _on_block_progress(next_number: int, total: int) -> void:
-	if _in_blockland:
+	if _where == "blockland":
 		_hud.set_prompt("Touch the Numberblocks in order   -   next is  %d  of %d"
 			% [next_number, total])
 
 
 func _on_block_mistake(expected: int, _got: int) -> void:
-	if _in_blockland:
+	if _where == "blockland":
 		_hud.set_prompt("Oops! Start again from  1   -   we were looking for  %d" % expected)
 
 
 func _on_block_completed() -> void:
-	if not _in_blockland:
+	if _where != "blockland":
 		return
 	_hud.set_prompt("")
 	_hud.show_banner("You counted to ten!")
+	_clear_banner_after(2.6)
+
+
+# -- Shape Cove ----------------------------------------------------------
+
+func _on_cove_round(shape_name: String) -> void:
+	if _where == "cove":
+		_hud.set_prompt("Find the  %s !   (%d of %d)"
+			% [shape_name.to_upper(), _cove.score() + 1, ShapeCove.ROUNDS])
+
+
+func _on_cove_answered(correct: bool, shape_name: String) -> void:
+	if _where != "cove" or correct:
+		return
+	_hud.set_prompt("That is the %s - try again!" % shape_name)
+
+
+func _on_cove_completed() -> void:
+	if _where != "cove":
+		return
+	_hud.set_prompt("Touch any shape to hear its name")
+	_hud.show_banner("You found all six shapes!")
 	_clear_banner_after(2.6)
 
 
@@ -471,7 +524,7 @@ func _on_gate_entered() -> void:
 ## Put the player back on whichever ground they fell off, not always the meadow.
 func _respawn() -> void:
 	_player.velocity = Vector3.ZERO
-	_player.global_position = BLOCKLAND_ARRIVAL if _in_blockland else SPAWN
+	_player.global_position = ARRIVALS.get(_where, SPAWN)
 	_camera.snap_to_target()
 
 

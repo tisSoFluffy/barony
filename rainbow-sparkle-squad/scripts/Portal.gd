@@ -15,6 +15,15 @@ const CUBE := 0.42
 
 @export var label_text := ""
 
+## Where walking through this door leads. Game.gd owns the meaning of the name
+## and the arrival point; the door only reports which one it is, so adding an
+## island never means touching this script.
+@export var destination := ""
+
+## Overrides the frame's default rainbow, so a door can be coloured after the
+## place it leads to.
+@export var frame_tint := Color(0, 0, 0, 0)
+
 var _sheet: MeshInstance3D
 var _sheet_mat: StandardMaterial3D
 var _phase := 0.0
@@ -52,6 +61,11 @@ func _build_frame() -> void:
 
 
 func _colour(n: int) -> Color:
+	if frame_tint.a > 0.0:
+		# Shade the tint up the frame so a single-colour door still reads as
+		# stacked blocks rather than one flat slab.
+		var t: float = 0.72 + 0.28 * (float(n % 5) / 4.0)
+		return Color(frame_tint.r * t, frame_tint.g * t, frame_tint.b * t)
 	var k: int = ((n - 1) % 10) + 1
 	if k == 7:
 		return Numberblock.SEVEN[2]

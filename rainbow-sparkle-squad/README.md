@@ -67,6 +67,42 @@ hitch and nothing to re-wire on the way back. `tools/blocklandtest.gd` walks
 the door, counts correctly, deliberately gets one wrong, and checks the row
 resets.
 
+## Shape Cove
+
+A second door, blue this time, leads to a sand island ringed by water where the
+six shapes live — **circle, square, triangle, rectangle, star and heart** — each
+a chunky standing slab with a face.
+
+Like the Numberblocks these are built in code, and for the same reason: a
+circle has to be a real circle and a triangle three real sides, or the thing
+being taught is wrong. Generated geometry cannot promise that. Every figure
+comes out of **one** extrusion routine applied to a 2D outline, so the whole set
+shares a thickness and a look, and adding a shape means adding a list of points
+and nothing else. Normals are set explicitly rather than generated — a
+generated normal at a sharp star point averages the two faces either side of it
+and rounds off exactly the corner that makes it a star.
+
+**The game.** Blockland teaches *order*; this teaches *recognition*, so the loop
+is deliberately different. A round names one shape and you go and touch it.
+There is no sequence to remember and no way to fall behind — a wrong answer
+costs nothing but another go, and after two wrong guesses the right shape hops
+on the spot so nobody can get stuck. Every shape is asked exactly once. Finish
+all six and it becomes free play: touch anything to hear its name.
+
+It is built for a player who **cannot read**. The round is spoken —
+`tools/make_shape_voices.ps1` renders "Find the triangle!" and the shape names
+alongside praise and encouragement — and the text on screen is the backup,
+not the other way round. The shapes stay in fixed places between rounds on
+purpose: at three, knowing where the star lives is a win worth keeping, and the
+puzzle is the name, not the memory.
+
+`tools/shapecovetest.gd` covers the door and plays the game through to the end.
+Its geometry checks are the load-bearing ones — a triangle with the wrong number
+of sides, or a figure sunk into the sand, is a wrong lesson rather than a
+cosmetic bug.
+
+## The meadow
+
 The meadow is **dressed as a unicorn's fantasy world**: a sparkle fountain at
 its heart, a treeline of candy-scoop trees, toadstools and crystal clusters
 through the mid-field, a flower patch, and puffy clouds bobbing overhead. It is

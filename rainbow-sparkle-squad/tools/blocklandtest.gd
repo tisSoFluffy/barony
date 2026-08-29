@@ -73,7 +73,7 @@ func _setup() -> bool:
 
 	_check(_root.get_node_or_null("DoorToBlockland") != null,
 		"there is a door in the meadow")
-	_check(_root.get_node_or_null("DoorToMeadow") != null,
+	_check(_root.get_node_or_null("DoorFromBlockland") != null,
 		"and a door back from Blockland")
 	_check(_blocks().size() == 10, "Blockland has ten Numberblocks")
 
@@ -91,7 +91,8 @@ func _setup() -> bool:
 			"act": func() -> void:
 				_player.global_position = _root.MEADOW_DOOR + Vector3(0, 1.0, 0),
 			"ready": func() -> bool:
-				return _player.global_position.distance_to(_root.BLOCKLAND_ARRIVAL) < 3.0,
+				return _player.global_position.distance_to(
+					_root.ARRIVALS["blockland"]) < 3.0,
 		},
 		{
 			"what": "and does not bounce them straight back",
