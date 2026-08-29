@@ -11,6 +11,16 @@ a gentle counting game layered on top of the sparkle hunt. See `scripts/Star.gd`
 and `STAR_SPOTS` in `scripts/Game.gd`; the `star.glb` model came through the
 same Flux → TRELLIS2 → `tools/import_assets.py` pipeline as everything else.
 
+**Ms. Bumbleflower** the bunny lives here too. She is not a collectible and not
+an obstacle — she is company. A small wander brain in `scripts/Bunny.gd` picks
+somewhere to go and she hops there in real ballistic arcs (gravity draws the
+curve, not a tween), pausing between hops so the rhythm reads as an animal.
+Get within about three metres and she spooks and bounds away, which is what
+makes her worth chasing. Like every other character she is unrigged, so the
+squash on landing, the stretch on takeoff and the nose-down lean through the
+arc are all computed in `Bunny._animate()`. `tools/bunnytest.gd` is her test —
+it watches her wander, then crowds her and checks she bolts.
+
 The meadow is **dressed as a unicorn's fantasy world**: a sparkle fountain at
 its heart, a treeline of candy-scoop trees, toadstools and crystal clusters
 through the mid-field, a flower patch, and puffy clouds bobbing overhead. It is

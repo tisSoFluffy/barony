@@ -52,6 +52,8 @@ ASSETS = {
     "trellis2_20260828_181514.glb": ("giant_flower", 6500),
     "trellis2_20260828_181843.glb": ("sparkle_fountain", 9000),
     "trellis2_20260828_182759.glb": ("cloud_puff", 6500),
+    # Ms. Bumbleflower, the wandering bunny (see Bunny.gd).
+    "trellis2_20260828_224423.glb": ("bunny", 12000),
 }
 
 # A component is floor if it is wide, wafer-thin, and sits at the bottom.

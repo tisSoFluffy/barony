@@ -127,6 +127,7 @@ func _ready() -> void:
 	_build_stars()
 	_build_ball()
 	_build_player()
+	_build_bunny()
 	_build_hud()
 
 	# One shared voice player, non-positional so the number is always clear no
@@ -312,6 +313,16 @@ func _build_player() -> void:
 	_camera = FollowCamera.new()
 	_camera.target = _player
 	add_child(_camera)
+
+
+## Ms. Bumbleflower, who hops around the meadow by herself. She needs to know
+## about the player so she can spook and bound away when you get close.
+func _build_bunny() -> void:
+	var bunny := Bunny.new()
+	bunny.name = "Bunny"
+	bunny.position = Vector3(-4.5, 0.4, 2.5)
+	bunny.player = _player
+	add_child(bunny)
 
 
 func _build_hud() -> void:
