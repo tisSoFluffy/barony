@@ -26,6 +26,13 @@ func _ready() -> void:
 	current = true
 
 
+## Drop the follow lag for one frame. After a teleport the focus point would
+## otherwise sail across the world from the old position, dragging the view
+## through everything in between.
+func snap_to_target() -> void:
+	_ready_done = false
+
+
 func _physics_process(delta: float) -> void:
 	if target == null or not is_instance_valid(target):
 		return

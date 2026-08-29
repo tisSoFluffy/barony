@@ -90,20 +90,17 @@ const DECOR := [
 	{"m": "cloud_puff", "p": Vector3(15, 13, 21), "h": 3.6, "w": true, "bob": 0.4, "bob_hz": 0.08, "repaint": Color(0.97, 0.98, 1.0)},
 ]
 
-# Spoken "One!" .. "Ten!" - one clip per star, played on pickup. Rendered from
-# the Windows voice; see tools/make_count_voices.ps1.
-const STAR_VOICES: Array[AudioStream] = [
-	preload("res://assets/audio/count_01.wav"),
-	preload("res://assets/audio/count_02.wav"),
-	preload("res://assets/audio/count_03.wav"),
-	preload("res://assets/audio/count_04.wav"),
-	preload("res://assets/audio/count_05.wav"),
-	preload("res://assets/audio/count_06.wav"),
-	preload("res://assets/audio/count_07.wav"),
-	preload("res://assets/audio/count_08.wav"),
-	preload("res://assets/audio/count_09.wav"),
-	preload("res://assets/audio/count_10.wav"),
-]
+# Blockland is built far off to one side rather than in a scene of its own, and
+# the doors teleport between the two. One scene means the player, camera, HUD
+# and audio are never torn down, so there is no reload hitch and nothing to
+# re-wire on the way back.
+const BLOCKLAND_ORIGIN := Vector3(0, 0, 200)
+const MEADOW_DOOR := Vector3(6.5, 0, 8.5)
+const MEADOW_DOOR_YAW := -0.5
+
+# Where the player lands on each side - a step clear of the doorway, facing in.
+const BLOCKLAND_ARRIVAL := BLOCKLAND_ORIGIN + Vector3(0, 1.2, 10.5)
+const MEADOW_ARRIVAL := MEADOW_DOOR + Vector3(-1.4, 1.2, 1.6)
 
 var _player: Player
 var _camera: FollowCamera
@@ -114,6 +111,10 @@ var _stars := 0
 var _all_stars := false
 var _won := false
 var _voice: AudioStreamPlayer
+var _blockland: Blockland
+var _door_out: Portal            # meadow -> Blockland
+var _door_back: Portal           # Blockland -> meadow
+var _in_blockland := false
 
 
 func _ready() -> void:
@@ -129,6 +130,7 @@ func _ready() -> void:
 	_build_player()
 	_build_bunny()
 	_build_butterfly()
+	_build_blockland()
 	_build_hud()
 
 	# One shared voice player, non-positional so the number is always clear no
@@ -342,6 +344,32 @@ func _build_butterfly() -> void:
 	add_child(fly)
 
 
+## Blockland and the pair of doors that reach it.
+func _build_blockland() -> void:
+	_blockland = Blockland.new()
+	_blockland.name = "Blockland"
+	_blockland.position = BLOCKLAND_ORIGIN
+	_blockland.progress.connect(_on_block_progress)
+	_blockland.mistake.connect(_on_block_mistake)
+	_blockland.completed.connect(_on_block_completed)
+	add_child(_blockland)
+
+	_door_out = Portal.new()
+	_door_out.name = "DoorToBlockland"
+	_door_out.label_text = "Blockland"
+	_door_out.position = MEADOW_DOOR
+	_door_out.rotation.y = MEADOW_DOOR_YAW
+	_door_out.entered.connect(_on_portal_entered)
+	add_child(_door_out)
+
+	_door_back = Portal.new()
+	_door_back.name = "DoorToMeadow"
+	_door_back.label_text = "Meadow"
+	_door_back.position = BLOCKLAND_ORIGIN + Vector3(0, 0, 12.5)
+	_door_back.entered.connect(_on_portal_entered)
+	add_child(_door_back)
+
+
 func _build_hud() -> void:
 	_hud = HUD.new()
 	add_child(_hud)
@@ -366,13 +394,66 @@ func _on_star_collected(star: Star) -> void:
 	_hud.set_stars(_stars, STAR_TARGET)
 
 	# Say the star's own number - "One!", "Two!", ... - as it is picked up.
-	var i: int = clampi(star.number - 1, 0, STAR_VOICES.size() - 1)
-	_voice.stream = STAR_VOICES[i]
-	_voice.play()
+	Voices.say(_voice, star.number)
 	if _stars >= STAR_TARGET and not _all_stars:
 		_all_stars = true
 		_hud.show_banner("You found all ten stars!")
 		_clear_banner_after(2.2)
+
+
+# -- doors and Blockland -------------------------------------------------
+
+func _on_portal_entered(portal: Portal) -> void:
+	var to_blockland := portal == _door_out
+	# Disarm both while the wipe runs, so a door cannot fire twice and the one
+	# being arrived at does not immediately send the player back.
+	_door_out.set_armed(false)
+	_door_back.set_armed(false)
+	_hud.wipe(_travel.bind(to_blockland))
+
+
+func _travel(to_blockland: bool) -> void:
+	_in_blockland = to_blockland
+	_player.velocity = Vector3.ZERO
+	_player.global_position = BLOCKLAND_ARRIVAL if to_blockland else MEADOW_ARRIVAL
+	_camera.snap_to_target()
+	_hud.set_meadow_visible(not to_blockland)
+
+	if to_blockland:
+		_blockland.restart()
+		_hud.set_prompt("Touch the Numberblocks in order   -   next is  1")
+	else:
+		_hud.set_prompt("")
+
+	_rearm_doors()
+
+
+## Only re-arm once the player has stepped clear of the doorway they landed in.
+func _rearm_doors() -> void:
+	await get_tree().create_timer(1.1).timeout
+	if _door_out != null:
+		_door_out.set_armed(true)
+	if _door_back != null:
+		_door_back.set_armed(true)
+
+
+func _on_block_progress(next_number: int, total: int) -> void:
+	if _in_blockland:
+		_hud.set_prompt("Touch the Numberblocks in order   -   next is  %d  of %d"
+			% [next_number, total])
+
+
+func _on_block_mistake(expected: int, _got: int) -> void:
+	if _in_blockland:
+		_hud.set_prompt("Oops! Start again from  1   -   we were looking for  %d" % expected)
+
+
+func _on_block_completed() -> void:
+	if not _in_blockland:
+		return
+	_hud.set_prompt("")
+	_hud.show_banner("You counted to ten!")
+	_clear_banner_after(2.6)
 
 
 func _on_player_swapped(def: Dictionary) -> void:
@@ -387,9 +468,11 @@ func _on_gate_entered() -> void:
 	_hud.show_banner("You made it home!")
 
 
+## Put the player back on whichever ground they fell off, not always the meadow.
 func _respawn() -> void:
 	_player.velocity = Vector3.ZERO
-	_player.global_position = SPAWN
+	_player.global_position = BLOCKLAND_ARRIVAL if _in_blockland else SPAWN
+	_camera.snap_to_target()
 
 
 func _clear_banner_after(seconds: float) -> void:

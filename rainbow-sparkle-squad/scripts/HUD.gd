@@ -9,6 +9,8 @@ var _stars: Label
 var _who: Label
 var _hint: Label
 var _banner: Label
+var _prompt: Label
+var _fade: ColorRect
 
 
 func _ready() -> void:
@@ -36,6 +38,26 @@ func _ready() -> void:
 	_banner.visible = false
 	add_child(_banner)
 
+	# Blockland's "what comes next" line, along the bottom where it does not
+	# fight the meadow counters at the top.
+	# Full-width so centre-aligned text lands in the middle on its own - the
+	# text changes length constantly, and re-measuring it every time is a race
+	# against the label's own layout pass.
+	_prompt = _make_label(30, Color(0.24, 0.18, 0.36))
+	_prompt.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_prompt.offset_top = -104
+	_prompt.offset_bottom = -56
+	_prompt.visible = false
+	add_child(_prompt)
+
+	# Sits above everything for the doorway fade.
+	_fade = ColorRect.new()
+	_fade.color = Color(1, 1, 1, 0)
+	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_fade)
+
 
 func _make_label(size: int, colour: Color) -> Label:
 	var label := Label.new()
@@ -62,6 +84,30 @@ func set_stars(count: int, total: int) -> void:
 
 func set_character(name: String) -> void:
 	_who.text = "Playing as %s" % name
+
+
+## The Blockland instruction line. Empty text hides it again.
+func set_prompt(text: String) -> void:
+	_prompt.text = text
+	_prompt.visible = text != ""
+
+
+## Only the meadow counters make sense in the meadow, so they are hidden while
+## the player is in Blockland.
+func set_meadow_visible(on: bool) -> void:
+	_counter.visible = on
+	_stars.visible = on
+
+
+## Fade to white and back, with `midpoint` called while the screen is covered.
+## Wrapping the teleport in this hides the camera snap, which is otherwise a
+## jarring cut for a small player.
+func wipe(midpoint: Callable, out_time := 0.28, in_time := 0.38) -> void:
+	var tween := create_tween()
+	tween.tween_property(_fade, "color:a", 1.0, out_time)
+	tween.tween_callback(midpoint)
+	tween.tween_interval(0.05)
+	tween.tween_property(_fade, "color:a", 0.0, in_time)
 
 
 func show_banner(text: String) -> void:

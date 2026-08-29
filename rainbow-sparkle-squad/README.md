@@ -40,6 +40,33 @@ exact and symmetric by construction. `tools/butterflytest.gd` guards the whole
 chain — if the rig ever exports unskinned, the wings go stiff and nothing else
 would notice.
 
+## Blockland
+
+A glowing doorway stands in the meadow. Walk into it and the screen wipes to a
+plaza where the ten **Numberblocks** are waiting — the number N built out of N
+cubes, with a face on the front.
+
+These are the only characters in the project that are **not** generated, and
+deliberately so. A Numberblock is literally a stack of unit cubes, so building
+one from `BoxMesh` in code is more faithful than anything image-to-3D would
+give us — and it means the shape carries the maths. Four really is four cubes,
+and you can count them. The arrangement follows the toy: small numbers are
+single towers, and the ones that factor neatly become rectangles — 6 is 2×3,
+8 is 2×4, 9 is 3×3, 10 is 2×5. Seven is the rainbow one, a colour per cube.
+
+**The game.** The blocks stand in a shuffled arc and you have to touch them in
+order, one to ten. A right answer lights the block up and says its number, in
+the same voice the star trail uses. A wrong one shakes it and puts the whole
+row out again — which is the point: you have to know what comes next, not just
+barge around. Ten in a row and they do a wave.
+
+Blockland is built far off to one side of the meadow rather than in a scene of
+its own, and the doors teleport between the two. One scene means the player,
+camera, HUD and audio are never torn down and rebuilt, so there is no reload
+hitch and nothing to re-wire on the way back. `tools/blocklandtest.gd` walks
+the door, counts correctly, deliberately gets one wrong, and checks the row
+resets.
+
 The meadow is **dressed as a unicorn's fantasy world**: a sparkle fountain at
 its heart, a treeline of candy-scoop trees, toadstools and crystal clusters
 through the mid-field, a flower patch, and puffy clouds bobbing overhead. It is
