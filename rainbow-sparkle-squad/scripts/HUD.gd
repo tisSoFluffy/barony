@@ -5,6 +5,7 @@ extends CanvasLayer
 ## Built in code so there is no .tscn to keep in sync with the scripts.
 
 var _counter: Label
+var _stars: Label
 var _who: Label
 var _hint: Label
 var _banner: Label
@@ -16,12 +17,16 @@ func _ready() -> void:
 	_counter.position = Vector2(28, 20)
 	add_child(_counter)
 
+	_stars = _make_label(24, Color(0.86, 0.55, 0.12))
+	_stars.position = Vector2(28, 52)
+	add_child(_stars)
+
 	_who = _make_label(18, Color(0.36, 0.28, 0.46))
-	_who.position = Vector2(28, 58)
+	_who.position = Vector2(28, 88)
 	add_child(_who)
 
 	_hint = _make_label(15, Color(0.42, 0.36, 0.50, 0.85))
-	_hint.position = Vector2(28, 86)
+	_hint.position = Vector2(28, 116)
 	_hint.text = "Left stick move   A jump   X swap   RT dash   Right stick camera"
 	add_child(_hint)
 
@@ -46,6 +51,13 @@ func set_sparkles(count: int, needed: int) -> void:
 		_counter.text = "Sparkles  %d / %d" % [count, count + needed]
 	else:
 		_counter.text = "Sparkles  %d   -  the gate is open!" % count
+
+
+func set_stars(count: int, total: int) -> void:
+	if count >= total:
+		_stars.text = "Stars  %d / %d   -  all found!" % [count, total]
+	else:
+		_stars.text = "Stars  %d / %d" % [count, total]
 
 
 func set_character(name: String) -> void:

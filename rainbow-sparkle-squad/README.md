@@ -4,6 +4,21 @@ A pastel toybox playground for Godot 4.7. Swap between **Bouncy Blue** (the
 cube unicorn) and **Spotty Doggy**, collect sparkles across the meadow, and
 open the castle gate. Built for a controller.
 
+There is also a **star counting trail**: ten plush stars numbered 1–10 strung
+in a loop around the meadow, each on the ground and reachable on foot. Running
+the lap and picking them all up bumps the `Stars N / 10` tally in the corner —
+a gentle counting game layered on top of the sparkle hunt. See `scripts/Star.gd`
+and `STAR_SPOTS` in `scripts/Game.gd`; the `star.glb` model came through the
+same Flux → TRELLIS2 → `tools/import_assets.py` pipeline as everything else.
+
+The meadow is **dressed as a unicorn's fantasy world**: a sparkle fountain at
+its heart, a treeline of candy-scoop trees, toadstools and crystal clusters
+through the mid-field, a flower patch, and puffy clouds bobbing overhead. It is
+all pure scenery — one reusable `scripts/Decor.gd` node, laid out as the `DECOR`
+array in `scripts/Game.gd`; only the fountain and tree trunks have colliders.
+The six models were generated the same way (`toadstool`, `crystal_cluster`,
+`candy_tree`, `giant_flower`, `sparkle_fountain`, `cloud_puff`).
+
 ![the meadow](../out/rss_shot.png)
 
 ## Running it

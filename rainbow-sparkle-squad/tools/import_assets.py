@@ -44,6 +44,14 @@ ASSETS = {
     "trellis2_20260827_092102.glb": ("castle_gate", 22000),
     "trellis2_20260827_092423.glb": ("ball", 6000),
     "trellis2_20260827_091823.glb": ("sparkle_cubes", 6000),
+    "trellis2_20260828_171357.glb": ("star", 6000),
+    # Fantasy set dressing (see DECOR in Game.gd).
+    "trellis2_20260828_181030.glb": ("toadstool", 6500),
+    "trellis2_20260828_181153.glb": ("crystal_cluster", 6500),
+    "trellis2_20260828_183752.glb": ("candy_tree", 9000),
+    "trellis2_20260828_181514.glb": ("giant_flower", 6500),
+    "trellis2_20260828_181843.glb": ("sparkle_fountain", 9000),
+    "trellis2_20260828_182759.glb": ("cloud_puff", 6500),
 }
 
 # A component is floor if it is wide, wafer-thin, and sits at the bottom.
