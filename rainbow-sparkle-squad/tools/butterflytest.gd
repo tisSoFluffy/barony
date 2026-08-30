@@ -3,7 +3,7 @@ extends SceneTree
 ## Proves the butterfly's rig loaded and that she actually flies.
 ##
 ## She is the only rigged asset here, so the first two checks are really about
-## the export pipeline: if `tools/rig_butterfly.py` silently produced an
+## the export pipeline: if `tools/rig_wings.py` silently produced an
 ## unskinned mesh, or Godot dropped the armature on import, the wings go stiff
 ## and nothing else would notice. The rest checks she flies rather than sits.
 ##

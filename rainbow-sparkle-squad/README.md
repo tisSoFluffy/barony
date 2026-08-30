@@ -25,7 +25,7 @@ A **butterfly** does laps of the flowers — and she is the one rigged character
 in the project. Everything else is a single unrigged shell moved as a whole
 body, which is fine for a hop or a squash but cannot beat a wing: the two wings
 have to swing in opposite directions about the body, and no whole-object
-transform does that. `tools/rig_butterfly.py` gives her a three-bone skeleton
+transform does that. `tools/rig_wings.py` gives her a three-bone skeleton
 (`Body`, `Wing_L`, `Wing_R`) in Blender and exports a skinned glTF that Godot
 imports as a `Skeleton3D`; `Butterfly._flap()` then rolls each wing bone about
 its own length. Her flight is still procedural — a steered heading with a weave
@@ -138,6 +138,46 @@ letter every round never gets as far as the blending.
 ones that would otherwise rot silently: every word must be spellable from the
 letters actually standing in the lagoon, and no word may reuse a letter, since
 a repeat would need one figure touched twice in a round.
+
+## Dino Valley
+
+A fourth door, rust-orange, opens onto a valley under a smoking volcano where
+**three dinosaurs roam the ground and one wheels overhead** — T-rex,
+Stegosaurus, Triceratops, and a Pteranodon.
+
+This island is the odd one out on purpose. Blockland, Shape Cove and Letter
+Lagoon all stand their subject in a ring and wait to be touched: the thing
+being learned holds still. Here it **walks away from you**. A three-year-old
+chasing a Triceratops across a valley is doing something the other islands
+cannot offer, and the name lands *because* they had to work to catch it.
+Meeting a dinosaur always introduces it — name and roar — whether or not there
+is a question outstanding. The quiz is just a reason to go looking.
+
+The structured layer is **size comparison**: biggest, smallest, and which one
+can fly. Comparison is the one preschool idea the other three islands never
+touch, and dinosaurs are the perfect excuse because the size difference is the
+first thing a child notices. The questions are *claims about the models*, so
+`tools/dinovalleytest.gd` asserts them — if someone retunes a height later and
+the T-rex stops being the tallest, the game starts teaching a lie and nothing
+else would catch it.
+
+The walkers plod with a heavy two-beat gait, dipping onto the foot they roll
+towards so the mass reads as weight rather than wobble. The **Pteranodon is the
+project's second rigged asset**: it circles high, then every so often glides
+down to perch, sits a while, and climbs away again — which is also what makes
+it reachable at all. One permanently at eight metres is scenery; one that comes
+down to visit is a character, and it rewards a child for watching and waiting.
+Its wings use the same three-bone rig as the butterfly, which is why
+`tools/rig_butterfly.py` is now `tools/rig_wings.py` with the hinge as an
+argument: a butterfly is nearly all wing, while a pteranodon carries a body and
+a head between its wings and needs the hinge further out or the flap drags the
+whole torso.
+
+The roars are **synthesised**, not spoken — `tools/make_dino_roars.py` builds a
+pitch-swept growl plus filtered noise, because SAPI can say "Tyrannosaurus" but
+it cannot roar, and the roar is the whole reason a small child walks up to a
+dinosaur. Each one is pitched to its owner's size, so the sound teaches the same
+thing the models do: the big one rumbles low, the little flyer chirps high.
 
 ## The meadow
 

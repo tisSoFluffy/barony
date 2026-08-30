@@ -97,6 +97,7 @@ const DECOR := [
 const BLOCKLAND_ORIGIN := Vector3(0, 0, 200)
 const COVE_ORIGIN := Vector3(200, 0, 0)
 const LAGOON_ORIGIN := Vector3(-200, 0, 0)
+const VALLEY_ORIGIN := Vector3(0, 0, -200)
 
 const MEADOW_DOOR := Vector3(6.5, 0, 8.5)
 const MEADOW_DOOR_YAW := -0.5
@@ -104,6 +105,8 @@ const COVE_DOOR := Vector3(-6.5, 0, 8.5)
 const COVE_DOOR_YAW := 0.5
 const LAGOON_DOOR := Vector3(0, 0, 10.5)
 const LAGOON_DOOR_YAW := 0.0
+const VALLEY_DOOR := Vector3(-11.5, 0, 5.0)
+const VALLEY_DOOR_YAW := 1.1
 
 # Where the player lands in each place - a step clear of the doorway, facing in.
 # Adding an island means adding a row here and a door that names it; nothing in
@@ -113,6 +116,7 @@ const ARRIVALS := {
 	"blockland": Vector3(0, 1.2, 210.5),
 	"cove": Vector3(200, 1.2, 12.5),
 	"lagoon": Vector3(-200, 1.2, 14.5),
+	"valley": Vector3(0, 1.2, -184.0),
 }
 
 var _player: Player
@@ -127,6 +131,7 @@ var _voice: AudioStreamPlayer
 var _blockland: Blockland
 var _cove: ShapeCove
 var _lagoon: LetterLagoon
+var _valley: DinoValley
 var _doors: Array[Portal] = []
 var _where := "meadow"
 
@@ -403,6 +408,19 @@ func _build_islands() -> void:
 	_door("DoorFromLagoon", "Meadow", "meadow",
 		LAGOON_ORIGIN + Vector3(0, 0, 16.5), 0.0, Color("#3fae8a"))
 
+	_valley = DinoValley.new()
+	_valley.name = "DinoValley"
+	_valley.position = VALLEY_ORIGIN
+	_valley.round_started.connect(_on_valley_round)
+	_valley.answered.connect(_on_valley_answered)
+	_valley.completed.connect(_on_valley_completed)
+	add_child(_valley)
+
+	_door("DoorToValley", "Dino Valley", "valley",
+		VALLEY_DOOR, VALLEY_DOOR_YAW, Color("#c2663a"))
+	_door("DoorFromValley", "Meadow", "meadow",
+		VALLEY_ORIGIN + Vector3(0, 0, 18.0), 0.0, Color("#c2663a"))
+
 
 func _door(node_name: String, label: String, dest: String,
 		at: Vector3, yaw: float, tint: Color) -> void:
@@ -475,6 +493,8 @@ func _travel(dest: String) -> void:
 			_cove.restart()
 		"lagoon":
 			_lagoon.restart()
+		"valley":
+			_valley.restart()
 		_:
 			_hud.set_prompt("")
 
@@ -551,6 +571,28 @@ func _on_lagoon_letter(_word: String, _index: int) -> void:
 func _on_lagoon_wrong(expected: String, _got: String) -> void:
 	if _where == "lagoon":
 		_hud.set_prompt("Not that one - look for  %s" % expected.to_upper())
+
+
+# -- Dino Valley ---------------------------------------------------------
+
+func _on_valley_round(question: String) -> void:
+	if _where == "valley":
+		_hud.set_prompt("%s      (%d of %d)"
+			% [question, _valley.round_index() + 1, DinoValley.ROUNDS.size()])
+
+
+func _on_valley_answered(correct: bool, _species: String) -> void:
+	if _where != "valley" or correct:
+		return
+	_hud.set_prompt("Not that one - keep looking!")
+
+
+func _on_valley_completed() -> void:
+	if _where != "valley":
+		return
+	_hud.set_prompt("Chase the dinosaurs to hear their names")
+	_hud.show_banner("You know your dinosaurs!")
+	_clear_banner_after(2.6)
 
 
 func _on_lagoon_completed() -> void:

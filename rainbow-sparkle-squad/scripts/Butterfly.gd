@@ -6,7 +6,7 @@ extends Node3D
 ## She is the one rigged character in the project. Everything else is a single
 ## unrigged shell moved as a whole body, which is fine for a hop or a squash but
 ## cannot beat a wing: the two wings have to swing in opposite directions about
-## the body. `tools/rig_butterfly.py` gives her a three-bone skeleton, and
+## the body. `tools/rig_wings.py` gives her a three-bone skeleton, and
 ## `_flap()` drives the two wing bones directly.
 ##
 ## Everything else is still procedural. She has no gravity and no collider - she

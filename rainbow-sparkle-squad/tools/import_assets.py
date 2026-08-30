@@ -54,14 +54,24 @@ ASSETS = {
     "trellis2_20260828_182759.glb": ("cloud_puff", 6500),
     # Ms. Bumbleflower, the wandering bunny (see Bunny.gd).
     "trellis2_20260828_224423.glb": ("bunny", 12000),
+    # Dino Valley's three land dinosaurs (see DinoValley.gd).
+    "trellis2_20260829_161931.glb": ("trex", 14000),
+    "trellis2_20260829_162113.glb": ("triceratops", 14000),
+    "trellis2_20260829_162244.glb": ("stegosaurus", 14000),
 }
 
-# The butterfly is deliberately NOT in ASSETS. It is the one rigged asset here,
-# and its pipeline has an extra stage: decimate to a scratch file, then run
-# tools/rig_butterfly.py to skin it before it lands in assets/models. Listing it
-# above would let a plain `import_assets.py` run overwrite the rigged GLB with
-# an unrigged one and silently stop the wings. Its source export is
-# trellis2_20260828_231641.glb; see the rig_butterfly.py docstring.
+# The butterfly and the pteranodon are deliberately NOT in ASSETS. They are the
+# two rigged assets here, and their pipeline has an extra stage: decimate to a
+# scratch file, then run tools/rig_wings.py to skin it before it lands in
+# assets/models. Listing either above would let a plain `import_assets.py` run
+# overwrite the rigged GLB with an unrigged one and silently stop the wings.
+#
+#   butterfly   trellis2_20260828_231641.glb   rig_wings.py (default hinge)
+#   pteranodon  trellis2_20260829_162349.glb   rig_wings.py -- ... 0.16 0.38
+#
+# The pteranodon needs its hinge further out than the butterfly's: it carries a
+# fat body and a head between its wings, and the default hinge drags the torso
+# along with the flap. See the rig_wings.py docstring.
 
 # A component is floor if it is wide, wafer-thin, and sits at the bottom.
 FLOOR_MAX_THICKNESS = 0.06   # relative to its own footprint

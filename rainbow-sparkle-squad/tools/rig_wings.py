@@ -1,12 +1,16 @@
-"""Build a wing rig for the generated butterfly and export a skinned GLB.
+"""Build a wing rig for a winged creature and export a skinned GLB.
 
-    blender -b -P tools/rig_butterfly.py -- IN.glb OUT.glb
+    blender -b -P tools/rig_wings.py -- IN.glb OUT.glb [HINGE_IN HINGE_OUT]
+
+Used by the butterfly and the pteranodon. Any model works as long as it was
+generated with its wings SPREAD and roughly symmetric about x = 0, which the
+concept prompts ask for explicitly.
 
 Everything else in this project is unrigged and animated by moving the whole
 body (see Player._animate, Bunny._animate). That works for a hop or a squash,
 but it cannot flap a wing: the two wings have to swing in opposite directions
-about the body, and no whole-object transform does that. So the butterfly gets
-a real skeleton — the one asset here that earns one.
+about the body, and no whole-object transform does that. So winged creatures
+get a real skeleton — the only assets here that earn one.
 
 The rig is deliberately tiny: three bones.
 
@@ -14,7 +18,7 @@ The rig is deliberately tiny: three bones.
       Wing_L  points out along +X from the body
       Wing_R  points out along -X from the body
 
-Godot imports this as a Skeleton3D, and Butterfly.gd rotates the two wing bones
+Godot imports this as a Skeleton3D, and the creature's script rotates the wing bones
 about their own length axis each frame to beat them.
 
 Why weighting is done by hand rather than with bone heat: Blender's automatic
@@ -25,6 +29,12 @@ one with it. Instead each vertex is weighted purely on its distance from the
 body's centre plane: solidly body near the middle, solidly wing past the hinge,
 and a short smoothstep between the two so the join bends instead of creasing.
 That is exact, symmetric by construction, and needs no cleanup.
+
+HINGE_IN/HINGE_OUT are where that blend starts and ends, as fractions of the
+half-wingspan, and they are the one thing that genuinely differs per creature.
+A butterfly is nearly all wing, so the defaults hinge close to the middle. A
+pteranodon carries a fat body and a head between its wings, so its hinge has to
+sit further out or the flap drags the whole torso with it.
 """
 
 import sys
@@ -34,12 +44,13 @@ from mathutils import Vector
 
 # Fractions of the half-wingspan. Inside HINGE_IN a vertex belongs entirely to
 # the body; outside HINGE_OUT entirely to a wing; between them it blends.
+# Overridable per creature on the command line - see the module docstring.
 HINGE_IN = 0.10
 HINGE_OUT = 0.30
 
 
 def log(msg):
-    print("[rig_butterfly] %s" % msg, flush=True)
+    print("[rig_wings] %s" % msg, flush=True)
 
 
 def clear_scene():
@@ -50,7 +61,7 @@ def import_glb(path):
     bpy.ops.import_scene.gltf(filepath=path)
     meshes = [o for o in bpy.context.scene.objects if o.type == "MESH"]
     if not meshes:
-        raise SystemExit("rig_butterfly: no mesh in %s" % path)
+        raise SystemExit("rig_wings: no mesh in %s" % path)
     if len(meshes) > 1:
         bpy.ops.object.select_all(action="DESELECT")
         for m in meshes:
@@ -85,8 +96,8 @@ def build_armature(obj):
     mid = (lo + hi) * 0.5
     half_span = max(hi.x - mid.x, 1e-4)
 
-    arm_data = bpy.data.armatures.new("ButterflyRig")
-    arm = bpy.data.objects.new("ButterflyRig", arm_data)
+    arm_data = bpy.data.armatures.new("WingRig")
+    arm = bpy.data.objects.new("WingRig", arm_data)
     bpy.context.collection.objects.link(arm)
     bpy.context.view_layer.objects.active = arm
     bpy.ops.object.mode_set(mode="EDIT")
@@ -156,10 +167,15 @@ def export_glb(path):
 
 
 def main():
+    global HINGE_IN, HINGE_OUT
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     if len(argv) < 2:
-        raise SystemExit("usage: blender -b -P rig_butterfly.py -- IN.glb OUT.glb")
+        raise SystemExit(
+            "usage: blender -b -P rig_wings.py -- IN.glb OUT.glb [HINGE_IN HINGE_OUT]")
     src, dst = argv[0], argv[1]
+    if len(argv) >= 4:
+        HINGE_IN, HINGE_OUT = float(argv[2]), float(argv[3])
+    log("hinge %.2f..%.2f of half-span" % (HINGE_IN, HINGE_OUT))
 
     clear_scene()
     obj = import_glb(src)
