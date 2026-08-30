@@ -13,6 +13,11 @@ const DISTANCE := 4.6
 const HEIGHT := 1.6
 const FOLLOW_LAG := 9.0
 
+## Far clip. Every island fits comfortably inside this, and holding it well
+## under the gap between islands is what stops a child on the savanna seeing a
+## volcano and a pastel meadow parked on the horizon.
+const FAR := 300.0
+
 var target: Node3D
 var yaw := 0.0
 var pitch := 0.45
@@ -23,6 +28,7 @@ var _ready_done := false
 
 func _ready() -> void:
 	fov = 62.0
+	far = FAR
 	current = true
 
 

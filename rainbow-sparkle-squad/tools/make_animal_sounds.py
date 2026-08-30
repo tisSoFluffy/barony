@@ -1,18 +1,25 @@
-"""Synthesise a friendly roar for each dinosaur.
+"""Synthesise a friendly call for every animal in the game.
 
-    .venv/Scripts/python.exe rainbow-sparkle-squad/tools/make_dino_roars.py
+    .venv/Scripts/python.exe rainbow-sparkle-squad/tools/make_animal_sounds.py
 
-Output: assets/audio/roar_<name>.wav, mono 22050 Hz 16-bit PCM.
+Output: assets/audio/roar_<name>.wav, mono 22050 Hz 16-bit PCM. Covers Dino
+Valley and the Safari Plains from one table - a lion and a T-rex want the same
+synth with different numbers, not two scripts.
 
 Why synthesised rather than spoken: SAPI can say "Tyrannosaurus" but it cannot
-roar, and a roar is the whole reason a three-year-old walks up to a dinosaur.
-These are built from a pitch-swept growl plus filtered noise - not a recording,
-but a warm rumble rather than a screech, which is the point. Nothing here is
-meant to be frightening.
+roar, and the roar is the whole reason a three-year-old walks up to an animal.
+These are built from a pitch-swept growl plus filtered noise - not recordings,
+but warm rumbles rather than screeches, which is the point. Nothing here is
+meant to be frightening: this is a lion a small child is supposed to want to
+walk towards.
 
-Each dinosaur's roar is pitched to its SIZE, so the sound teaches the same thing
-the models do: the big one rumbles low, the little flyer chirps high. That
-mapping is the reason `base_hz` is per-dinosaur rather than one shared voice.
+Each call is pitched to its owner's SIZE, so the sound teaches the same thing
+the models do - the elephant rumbles low, the zebra pipes high. That mapping is
+why `base_hz` is per-animal rather than one shared voice.
+
+These are the weakest asset in the project and worth knowing about: a synth
+approximates a growl well and a whinny badly. The file names are the contract,
+so real recordings drop straight in over them with no code change.
 """
 
 import os
@@ -25,12 +32,21 @@ OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    "assets", "audio")
 
 # name -> (base pitch Hz, duration s, growl rate Hz, brightness 0..1)
-# Low and long for the heavy ones, short and bright for the flyer.
+# Low and long for the heavy ones, short and bright for the small and the
+# airborne. Brightness is how much breath-noise rides on the tone: a trumpet and
+# a whinny are mostly air, a hippo grunt is almost none.
 ROARS = {
+    # Dino Valley
     "trex":        (78.0,  1.30, 22.0, 0.55),
     "triceratops": (110.0, 1.05, 18.0, 0.40),
     "stegosaurus": (128.0, 0.95, 15.0, 0.32),
     "pteranodon":  (430.0, 0.70, 34.0, 0.75),
+    # Safari Plains
+    "lion":        (92.0,  1.20, 20.0, 0.45),
+    "elephant":    (165.0, 1.15, 11.0, 0.72),   # trumpet: bright and blaring
+    "hippo":       (62.0,  0.85, 26.0, 0.22),   # the lowest grunt in the game
+    "giraffe":     (150.0, 0.65, 12.0, 0.38),   # a soft short hum
+    "zebra":       (330.0, 0.80, 30.0, 0.70),   # a high wavering whinny
 }
 
 

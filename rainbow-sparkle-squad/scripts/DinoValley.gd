@@ -43,7 +43,7 @@ const ROUNDS := [
 const GROUND_R := 26.0
 const HINT_AFTER := 2
 
-var _dinos: Array[Dinosaur] = []
+var _dinos: Array[RoamingAnimal] = []
 var _round := 0
 var _wrong := 0
 var _done := false
@@ -200,16 +200,16 @@ func _build_ferns() -> void:
 func _build_dinos() -> void:
 	for species in DINOS:
 		var spec: Dictionary = DINOS[species]
-		var dino := Dinosaur.new()
+		var dino := RoamingAnimal.new()
 		dino.name = "Dino_%s" % species
 		dino.species = species
 		dino.height = float(spec["h"])
-		# DINOS holds local offsets, but Dinosaur steers in world space - convert
+		# DINOS holds local offsets, but RoamingAnimal steers in world space - convert
 		# here rather than making every dinosaur know where its island sits.
 		dino.home = global_position + spec["home"]
 		dino.roam_radius = float(spec["roam"])
-		dino.mode = Dinosaur.Mode.FLYER if species == "pteranodon" \
-			else Dinosaur.Mode.WALKER
+		dino.mode = RoamingAnimal.Mode.FLYER if species == "pteranodon" \
+			else RoamingAnimal.Mode.WALKER
 		dino.position = spec["home"] + Vector3(0, 0.5, 0)
 		dino.touched.connect(_on_touched)
 		add_child(dino)
@@ -262,7 +262,7 @@ func _claim_overlaps() -> void:
 						return
 
 
-func _on_touched(dino: Dinosaur) -> void:
+func _on_touched(dino: RoamingAnimal) -> void:
 	# Meeting a dinosaur ALWAYS introduces it, win or lose, game over or not.
 	# The naming is the part worth having; the quiz is just a reason to go
 	# looking.
@@ -294,7 +294,7 @@ func _hint(want: String) -> void:
 			_roar_of(d)
 
 
-func _roar_of(dino: Dinosaur) -> void:
+func _roar_of(dino: RoamingAnimal) -> void:
 	var clip: AudioStream = _roars.get(dino.species)
 	if clip != null:
 		_roar.stream = clip

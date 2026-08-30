@@ -58,6 +58,12 @@ ASSETS = {
     "trellis2_20260829_161931.glb": ("trex", 14000),
     "trellis2_20260829_162113.glb": ("triceratops", 14000),
     "trellis2_20260829_162244.glb": ("stegosaurus", 14000),
+    # The Safari Plains (see SafariPlains.gd).
+    "trellis2_20260830_123324.glb": ("giraffe", 14000),
+    "trellis2_20260830_123449.glb": ("lion", 14000),
+    "trellis2_20260830_123641.glb": ("hippo", 14000),
+    "trellis2_20260830_123759.glb": ("elephant", 14000),
+    "trellis2_20260830_123950.glb": ("zebra", 14000),
 }
 
 # The butterfly and the pteranodon are deliberately NOT in ASSETS. They are the

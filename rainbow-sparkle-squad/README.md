@@ -179,6 +179,39 @@ it cannot roar, and the roar is the whole reason a small child walks up to a
 dinosaur. Each one is pitched to its owner's size, so the sound teaches the same
 thing the models do: the big one rumbles low, the little flyer chirps high.
 
+## Safari Plains
+
+A fifth door, savanna gold, opens onto an open plain with a waterhole and a
+flat-topped acacia horizon: a **giraffe, a pride of three lions, a hippo, an
+elephant and a zebra**.
+
+The animals roam with `RoamingAnimal` — the same script Dino Valley uses, since
+a Triceratops and a zebra want identical behaviour. What separates an elephant
+from a zebra is *numbers*, not code: `walk_speed`, `gait_hz`, `body_roll` and
+the pause range live in each biome's layout table, so the elephant ambles and
+rolls its mass while the zebra darts and barely rocks. (This is why
+`Dinosaur.gd` is now `RoamingAnimal.gd`.)
+
+**The game is "I spy" by feature** — who has a long neck, a mane, stripes, a
+trunk, the biggest mouth. Dino Valley already asks about *size* and the other
+islands about *names*, so this one asks a child to **look at an animal and
+describe what they can see**, which is the one thing none of the others does.
+Every question names something unmistakable on its animal and absent from all
+the rest, so it is answerable by observation rather than by already knowing.
+Answers match by **species**, which is what lets any of the three lions answer
+"who has a mane".
+
+The concept prompts pin the feature each question asks about, because the
+questions are claims about the models: a giraffe whose neck is not obviously
+long makes its round unanswerable. `tools/safaritest.gd` holds them to it — it
+checks the giraffe really is the tallest thing out there, that every question
+has exactly one answering species, and that the animals are still on their
+island after roaming freely.
+
+Their calls come from `tools/make_animal_sounds.py`, which now covers both
+biomes from one table — a lion and a T-rex want the same synth with different
+numbers. Pitch tracks size, so the elephant rumbles and the zebra pipes.
+
 ## The meadow
 
 The meadow is **dressed as a unicorn's fantasy world**: a sparkle fountain at

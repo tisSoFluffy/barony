@@ -75,7 +75,7 @@ func _setup() -> bool:
 	var flyers := 0
 	var walkers := 0
 	for d in dinos:
-		if d.mode == Dinosaur.Mode.FLYER:
+		if d.mode == RoamingAnimal.Mode.FLYER:
 			flyers += 1
 		else:
 			walkers += 1
@@ -205,7 +205,7 @@ func _touch_wrong() -> void:
 func _dinos() -> Array:
 	var out: Array = []
 	for c in _valley.get_children():
-		if c is Dinosaur:
+		if c is RoamingAnimal:
 			out.append(c)
 	return out
 

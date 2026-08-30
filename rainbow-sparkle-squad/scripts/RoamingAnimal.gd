@@ -1,22 +1,26 @@
-class_name Dinosaur
+class_name RoamingAnimal
 extends CharacterBody3D
 
-## A dinosaur that lives in the valley - either a land walker or the flyer.
+## A wild animal that roams a biome - either a land walker or a flyer.
 ##
-## One script covers both because they share almost everything: the same
-## generated-and-unrigged body, the same touch-to-hear-my-name, the same
-## procedural life. Only the locomotion differs, and that is one branch rather
-## than a second class.
+## Shared by Dino Valley and the Safari Plains, because a Triceratops and a
+## rhinoceros want exactly the same behaviour: wander somewhere, plod there,
+## pause, and introduce yourself when a child catches up. The differences that
+## matter - how fast, how heavy the gait, how long the pauses - are per-animal
+## numbers rather than per-animal code, which is why they are exported vars
+## below and not constants.
 ##
-## Land walkers plod between wander targets with a heavy two-beat gait: they
-## rock side to side, dip on each footfall, and swing the whole body a little,
-## because a heavy animal moves its mass and a light one does not. The flyer
-## circles high overhead and every so often glides down to perch, sits a while,
-## then climbs away again - which is also what makes it reachable at all. A
-## pteranodon permanently at eight metres is scenery; one that comes down to
-## visit is a character, and it rewards a child for watching and waiting.
+## Land walkers plod between wander targets with a two-beat gait: they rock side
+## to side, dip on each footfall, and swing the whole body a little, because a
+## heavy animal moves its mass and a light one does not. `gait_hz` and
+## `body_roll` are what separate an elephant from a zebra.
+##
+## The flyer circles high overhead and every so often glides down to perch, sits
+## a while, then climbs away again - which is also what makes it reachable at
+## all. A pteranodon permanently at eight metres is scenery; one that comes down
+## to visit is a character, and it rewards a child for watching and waiting.
 
-signal touched(dino: Dinosaur)
+signal touched(dino: RoamingAnimal)
 
 enum Mode { WALKER, FLYER }
 
@@ -36,12 +40,17 @@ var home := Vector3.ZERO
 var roam_radius := 10.0
 
 # -- walking --------------------------------------------------------------
-const WALK_SPEED := 1.5
 const TURN_SPEED := 2.2
 const ARRIVE := 1.8
-const PAUSE_MIN := 1.2
-const PAUSE_MAX := 3.5
 const GRAVITY_SCALE := 1.0
+
+## Per-animal movement feel. An elephant ambles and rolls; a zebra darts and
+## barely rocks. Set by whichever biome builds the animal.
+var walk_speed := 1.5
+var pause_min := 1.2
+var pause_max := 3.5
+var gait_hz := 1.25                # footfalls per second at walking speed
+var body_roll := 0.06              # radians the body rocks side to side
 
 # -- flying ---------------------------------------------------------------
 const CRUISE_Y := 8.5
@@ -109,7 +118,7 @@ func _ready() -> void:
 
 	_phase = randf() * TAU
 	_angle = randf() * TAU
-	_pause = randf_range(PAUSE_MIN, PAUSE_MAX)
+	_pause = randf_range(pause_min, pause_max)
 	_state_timer = randf_range(CIRCLE_TIME_MIN, CIRCLE_TIME_MAX)
 	_target = _wander_target()
 	if mode == Mode.FLYER:
@@ -184,13 +193,13 @@ func _walk(delta: float) -> void:
 		_pause -= delta
 		if _pause <= 0.0:
 			_target = _wander_target()
-			_pause = randf_range(PAUSE_MIN, PAUSE_MAX)
+			_pause = randf_range(pause_min, pause_max)
 		velocity.x = move_toward(velocity.x, 0.0, 6.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, 6.0 * delta)
 	else:
 		var dir := flat.normalized()
-		velocity.x = dir.x * WALK_SPEED
-		velocity.z = dir.z * WALK_SPEED
+		velocity.x = dir.x * walk_speed
+		velocity.z = dir.z * walk_speed
 		_face(dir, delta)
 		_gait += delta
 
@@ -279,9 +288,9 @@ func _animate(delta: float) -> void:
 		# drops onto the foot it is rolling towards, which is what makes it read
 		# as weight rather than as a wobble.
 		if moving:
-			var step: float = _gait * TAU * 1.25
+			var step: float = _gait * TAU * gait_hz
 			_visual.position.y = -absf(sin(step)) * height * 0.035
-			_visual.rotation.z = sin(step) * 0.06
+			_visual.rotation.z = sin(step) * body_roll
 			_visual.rotation.x = sin(step * 2.0) * 0.025
 		else:
 			# Idle: just breathing.
