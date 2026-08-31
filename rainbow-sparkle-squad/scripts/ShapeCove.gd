@@ -173,6 +173,29 @@ func _next_round() -> void:
 	_busy = false
 	round_started.emit(_target)
 	_say(_find_clips[_target])
+	_claim_overlaps()
+
+
+## Count a shape the player is ALREADY standing on when a round begins.
+##
+## body_entered only fires on a crossing, so a round whose answer is the figure
+## you are already touching would wait for an event that can never come. Today
+## that cannot happen here - every shape is asked exactly once, so the next
+## answer is never the one just answered, and the arrival point is outside the
+## ring. But that safety is incidental rather than designed: allow a repeat, or
+## move the arrival point onto a shape, and it breaks silently. Every other
+## island carries this guard, so this one does too.
+func _claim_overlaps() -> void:
+	await get_tree().physics_frame
+	if _done or _target == "":
+		return
+	for f in _figures:
+		if f.shape_name != _target:
+			continue
+		for body in f.get_overlapping_bodies():
+			if body is Player:
+				_on_touched(f)
+				return
 
 
 func _on_touched(fig: ShapeFigure) -> void:

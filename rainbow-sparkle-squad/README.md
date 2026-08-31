@@ -1,245 +1,553 @@
 # Rainbow Sparkle Squad
 
-A pastel toybox playground for Godot 4.7. Swap between **Bouncy Blue** (the
-cube unicorn) and **Spotty Doggy**, collect sparkles across the meadow, and
-open the castle gate. Built for a controller.
+A pastel toybox playground for Godot 4.7, built for a three-year-old and a
+controller. A meadow hub with five learning islands behind doors: counting,
+number order, shapes, phonics, size comparison, and descriptive observation.
 
-There is also a **star counting trail**: ten plush stars numbered 1–10 strung
-in a loop around the meadow, each on the ground and reachable on foot. Running
-the lap and picking them all up bumps the `Stars N / 10` tally in the corner —
-a gentle counting game layered on top of the sparkle hunt. See `scripts/Star.gd`
-and `STAR_SPOTS` in `scripts/Game.gd`; the `star.glb` model came through the
-same Flux → TRELLIS2 → `tools/import_assets.py` pipeline as everything else.
+**If you are an AI agent picking this project up, read
+[Working on this project](#working-on-this-project) and especially
+[Traps](#traps-read-this-before-you-write-code) before writing any code.** The
+traps section is not general advice — every item on it is a bug this project
+has already shipped and paid for, and most of them fail *silently*.
 
-**Ms. Bumbleflower** the bunny lives here too. She is not a collectible and not
-an obstacle — she is company. A small wander brain in `scripts/Bunny.gd` picks
-somewhere to go and she hops there in real ballistic arcs (gravity draws the
-curve, not a tween), pausing between hops so the rhythm reads as an animal.
-Get within about three metres and she spooks and bounds away, which is what
-makes her worth chasing. Like every other character she is unrigged, so the
-squash on landing, the stretch on takeoff and the nose-down lean through the
-arc are all computed in `Bunny._animate()`. `tools/bunnytest.gd` is her test —
-it watches her wander, then crowds her and checks she bolts.
+**Contents**
 
-A **butterfly** does laps of the flowers — and she is the one rigged character
-in the project. Everything else is a single unrigged shell moved as a whole
-body, which is fine for a hop or a squash but cannot beat a wing: the two wings
-have to swing in opposite directions about the body, and no whole-object
-transform does that. `tools/rig_wings.py` gives her a three-bone skeleton
-(`Body`, `Wing_L`, `Wing_R`) in Blender and exports a skinned glTF that Godot
-imports as a `Skeleton3D`; `Butterfly._flap()` then rolls each wing bone about
-its own length. Her flight is still procedural — a steered heading with a weave
-on it, a slow altitude bob, and a bank into her turns. Her waypoints are pulled
-straight out of `DECOR`, so she visits whatever flowers are actually planted.
+- [Working on this project](#working-on-this-project)
+- [Traps](#traps-read-this-before-you-write-code)
+- [Recipes](#recipes)
+- [Architecture](#architecture)
+- [The worlds](#the-worlds)
+- [Controls](#controls)
+- [Known rough edges](#known-rough-edges)
 
-Weights are assigned by hand rather than by bone heat: a butterfly's wings meet
-the body over a broad seam and nearly touch each other, and the automatic
-solver bleeds one wing's influence across the midline, so beating the left wing
-drags the right. Weighting purely on distance from the body's centre plane is
-exact and symmetric by construction. `tools/butterflytest.gd` guards the whole
-chain — if the rig ever exports unskinned, the wings go stiff and nothing else
-would notice.
+---
 
-## Blockland
+# Working on this project
 
-A glowing doorway stands in the meadow. Walk into it and the screen wipes to a
-plaza where the ten **Numberblocks** are waiting — the number N built out of N
-cubes, with a face on the front.
+## Environment
 
-These are the only characters in the project that are **not** generated, and
-deliberately so. A Numberblock is literally a stack of unit cubes, so building
-one from `BoxMesh` in code is more faithful than anything image-to-3D would
-give us — and it means the shape carries the maths. Four really is four cubes,
-and you can count them. The arrangement follows the toy: small numbers are
-single towers, and the ones that factor neatly become rectangles — 6 is 2×3,
-8 is 2×4, 9 is 3×3, 10 is 2×5. Seven is the rainbow one, a colour per cube.
+Nothing here is on `PATH`. These exact paths are what the tools expect.
 
-**The game.** The blocks stand in a shuffled arc and you have to touch them in
-order, one to ten. A right answer lights the block up and says its number, in
-the same voice the star trail uses. A wrong one shakes it and puts the whole
-row out again — which is the point: you have to know what comes next, not just
-barge around. Ten in a row and they do a wave.
+```bash
+# Godot 4.7. Note the folder is NAMED like an exe - that is not a typo.
+GODOT="/c/Users/joshu/Downloads/Godot_v4.7-stable_win64.exe/Godot_v4.7-stable_win64.exe"
+GODOT_CONSOLE="/c/Users/joshu/Downloads/Godot_v4.7-stable_win64.exe/Godot_v4.7-stable_win64_console.exe"
 
-Blockland is built far off to one side of the meadow rather than in a scene of
-its own, and the doors teleport between the two. One scene means the player,
-camera, HUD and audio are never torn down and rebuilt, so there is no reload
-hitch and nothing to re-wire on the way back. `tools/blocklandtest.gd` walks
-the door, counts correctly, deliberately gets one wrong, and checks the row
-resets.
+# Python with trimesh/numpy/scipy, at the REPO ROOT (not in rainbow-sparkle-squad/)
+PY="/c/Users/joshu/Documents/barony/.venv/Scripts/python.exe"
+```
 
-## Shape Cove
+Blender lives at `C:\Program Files\Blender Foundation\Blender 5.2\blender.exe`
+and is hard-coded as `BLENDER` in `tools/import_assets.py`.
 
-A second door, blue this time, leads to a sand island ringed by water where the
-six shapes live — **circle, square, triangle, rectangle, star and heart** — each
-a chunky standing slab with a face.
+**Always use `GODOT_CONSOLE` for anything headless.** The plain exe detaches
+from the console and you will see no `print()` output at all — a test that
+"produces nothing" is usually just the wrong exe.
 
-Like the Numberblocks these are built in code, and for the same reason: a
-circle has to be a real circle and a triangle three real sides, or the thing
-being taught is wrong. Generated geometry cannot promise that. Every figure
-comes out of **one** extrusion routine applied to a 2D outline, so the whole set
-shares a thickness and a look, and adding a shape means adding a list of points
-and nothing else. Normals are set explicitly rather than generated — a
-generated normal at a sharp star point averages the two faces either side of it
-and rounds off exactly the corner that makes it a star.
+ComfyUI runs at `http://127.0.0.1:8000` (not the default 8188). Check it is up
+before generating anything:
 
-**The game.** Blockland teaches *order*; this teaches *recognition*, so the loop
-is deliberately different. A round names one shape and you go and touch it.
-There is no sequence to remember and no way to fall behind — a wrong answer
-costs nothing but another go, and after two wrong guesses the right shape hops
-on the spot so nobody can get stuck. Every shape is asked exactly once. Finish
-all six and it becomes free play: touch anything to hear its name.
+```bash
+curl -s -m 5 http://127.0.0.1:8000/system_stats
+```
 
-It is built for a player who **cannot read**. The round is spoken —
-`tools/make_shape_voices.ps1` renders "Find the triangle!" and the shape names
-alongside praise and encouragement — and the text on screen is the backup,
-not the other way round. The shapes stay in fixed places between rounds on
-purpose: at three, knowing where the star lives is a win worth keeping, and the
-puzzle is the name, not the memory.
+Its input/output folders are `C:\Users\joshu\Documents\ComfyUI\input` and
+`...\output`, and the two workflows this project drives are in
+`C:\Users\joshu\Documents\ComfyUI\user\default\workflows\`:
+`flux_schnell_concept_art.json` and `trellis2_geometry_texture_fixed.json`.
 
-`tools/shapecovetest.gd` covers the door and plays the game through to the end.
-Its geometry checks are the load-bearing ones — a triangle with the wrong number
-of sides, or a figure sunk into the sand, is a wrong lesson rather than a
-cosmetic bug.
+## The commands you need
 
-## Letter Lagoon
+```bash
+cd /c/Users/joshu/Documents/barony
 
-A third door, green, leads to a lagoon where ten letters stand in a ring —
-real extruded 3D glyphs with faces, built with Godot's `TextMesh` so the child
-is looking at the *actual* letterform and not an approximation of one.
+# Play it
+"$GODOT" --path rainbow-sparkle-squad
 
-**The ten are not A to J.** They are Letters and Sounds Phase 2 Set 1 —
-`s a t p i n` — plus just enough more (`m d g o`) to spell real words. Teaching
-the alphabet in alphabetical order is the one thing phonics deliberately does
-not do, because you cannot build a word out of a, b, c. You can build six out
-of these: **pig, dog, sat, map, tin, pot**.
+# Re-import assets after adding or changing any .glb/.wav. Do this before tests.
+"$GODOT_CONSOLE" --headless --path rainbow-sparkle-squad --import
 
-**The game is blending**, which is the actual reading skill. A word is named
-and you walk to its letters in order, hearing each sound as you collect it;
-when the last one lands there is a deliberate beat before the whole word is
-spoken, because the moment the sounds *become* a word is the entire point.
-That makes it a cousin of Blockland's touch-in-order rather than of Shape
-Cove's find-the-one — three islands, three different things being learned.
+# Run one test suite
+"$GODOT_CONSOLE" --headless --path rainbow-sparkle-squad -s tools/playtest.gd
 
-Letters never shuffle, for the same reason the shapes don't, only more so:
-knowing where `s` lives is a foothold, and a child who has to re-find every
-letter every round never gets as far as the blending.
+# Screenshot the meadow (frames, output path)
+"$GODOT_CONSOLE" --path rainbow-sparkle-squad -s tools/shoot.gd -- 200 shot.png
 
-> **On the voices.** SAPI has no reliable way to say a bare phoneme — asked for
-> `t` it says the letter *name*, and the usual workaround ("tuh") adds a schwa
-> that phonics specifically discourages, since blending c-a-t then gives
-> "cuh-a-tuh". The clips in `tools/make_letter_voices.ps1` are the closest this
-> voice gets, and the continuants (`s`, `n`, `m`) come out much better than the
-> stops. The `key_` clips carry the real teaching — sound plus keyword, which
-> is how phonics is actually taught and stays unambiguous regardless. **The file
-> names are the contract**, so a real recorded voice drops straight in over
-> them with no code change. That is the recommended upgrade.
+# Look at one model from four angles - the authoritative model check
+"$GODOT_CONSOLE" --path rainbow-sparkle-squad -s tools/turntable.gd -- trex out/tt.png
+```
 
-`tools/letterlagoontest.gd` plays every word through. Its data checks are the
-ones that would otherwise rot silently: every word must be spellable from the
-letters actually standing in the lagoon, and no word may reuse a letter, since
-a repeat would need one figure touched twice in a round.
+Screenshot and turntable tools need a real framebuffer, so run them **without**
+`--headless`.
 
-## Dino Valley
+## Before you commit: run all eight suites
 
-A fourth door, rust-orange, opens onto a valley under a smoking volcano where
-**three dinosaurs roam the ground and one wheels overhead** — T-rex,
-Stegosaurus, Triceratops, and a Pteranodon.
+```bash
+for t in playtest bunnytest butterflytest blocklandtest \
+         shapecovetest letterlagoontest dinovalleytest safaritest; do
+  "$GODOT_CONSOLE" --headless --path rainbow-sparkle-squad -s tools/$t.gd \
+    2>&1 | grep -E "$t:|FAIL"
+done
+```
 
-This island is the odd one out on purpose. Blockland, Shape Cove and Letter
-Lagoon all stand their subject in a ring and wait to be touched: the thing
-being learned holds still. Here it **walks away from you**. A three-year-old
-chasing a Triceratops across a valley is doing something the other islands
-cannot offer, and the name lands *because* they had to work to catch it.
-Meeting a dinosaur always introduces it — name and roar — whether or not there
-is a question outstanding. The quiz is just a reason to go looking.
+Expected, as of the last commit:
 
-The structured layer is **size comparison**: biggest, smallest, and which one
-can fly. Comparison is the one preschool idea the other three islands never
-touch, and dinosaurs are the perfect excuse because the size difference is the
-first thing a child notices. The questions are *claims about the models*, so
-`tools/dinovalleytest.gd` asserts them — if someone retunes a height later and
-the T-rex stops being the tallest, the game starts teaching a lie and nothing
-else would catch it.
+```
+playtest: 8/8      bunnytest: 5/5        butterflytest: 6/6    blocklandtest: 10/10
+shapecovetest: 11/11   letterlagoontest: 13/13   dinovalleytest: 14/14   safaritest: 14/14
+```
 
-The walkers plod with a heavy two-beat gait, dipping onto the foot they roll
-towards so the mass reads as weight rather than wobble. The **Pteranodon is the
-project's second rigged asset**: it circles high, then every so often glides
-down to perch, sits a while, and climbs away again — which is also what makes
-it reachable at all. One permanently at eight metres is scenery; one that comes
-down to visit is a character, and it rewards a child for watching and waiting.
-Its wings use the same three-bone rig as the butterfly, which is why
-`tools/rig_butterfly.py` is now `tools/rig_wings.py` with the hinge as an
-argument: a butterfly is nearly all wing, while a pteranodon carries a body and
-a head between its wings and needs the hinge further out or the flap drags the
-whole torso.
+Every suite exits non-zero on failure. If you add an island, add a suite.
 
-The roars are **synthesised**, not spoken — `tools/make_dino_roars.py` builds a
-pitch-swept growl plus filtered noise, because SAPI can say "Tyrannosaurus" but
-it cannot roar, and the roar is the whole reason a small child walks up to a
-dinosaur. Each one is pitched to its owner's size, so the sound teaches the same
-thing the models do: the big one rumbles low, the little flyer chirps high.
+## The working loop
 
-## Safari Plains
+1. Change code or add an asset.
+2. `--import` if any asset changed.
+3. Run the affected suite, then all eight.
+4. **Render a screenshot and actually look at it.** Most of the bugs this
+   project has hit were invisible to the tests and obvious in a render — a
+   whole biome facing the wrong way, water drawn over an island, neighbours on
+   the horizon. Tests prove logic; only a picture proves it looks right.
+5. Commit with a message that says *why*, not just what.
 
-A fifth door, savanna gold, opens onto an open plain with a waterhole and a
-flat-topped acacia horizon: a **giraffe, a pride of three lions, a hippo, an
-elephant and a zebra**.
+## Verify your commit landed
 
-The animals roam with `RoamingAnimal` — the same script Dino Valley uses, since
-a Triceratops and a zebra want identical behaviour. What separates an elephant
-from a zebra is *numbers*, not code: `walk_speed`, `gait_hz`, `body_roll` and
-the pause range live in each biome's layout table, so the elephant ambles and
-rolls its mass while the zebra darts and barely rocks. (This is why
-`Dinosaur.gd` is now `RoamingAnimal.gd`.)
+`git add` is **atomic**: one bad pathspec and *nothing* in that command is
+staged. This has already produced a commit containing a new character with no
+code path spawning it. After committing, check the thing you added is really in
+the tree:
 
-**The game is "I spy" by feature** — who has a long neck, a mane, stripes, a
-trunk, the biggest mouth. Dino Valley already asks about *size* and the other
-islands about *names*, so this one asks a child to **look at an animal and
-describe what they can see**, which is the one thing none of the others does.
-Every question names something unmistakable on its animal and absent from all
-the rest, so it is answerable by observation rather than by already knowing.
-Answers match by **species**, which is what lets any of the three lions answer
-"who has a mane".
+```bash
+git show HEAD:rainbow-sparkle-squad/scripts/Game.gd | grep -c '_build_myisland'
+git status --short          # should be clean apart from deliberate leftovers
+```
 
-The concept prompts pin the feature each question asks about, because the
-questions are claims about the models: a giraffe whose neck is not obviously
-long makes its round unanswerable. `tools/safaritest.gd` holds them to it — it
-checks the giraffe really is the tallest thing out there, that every question
-has exactly one answering species, and that the animals are still on their
-island after roaming freely.
+---
 
-Their calls come from `tools/make_animal_sounds.py`, which now covers both
-biomes from one table — a lion and a T-rex want the same synth with different
-numbers. Pitch tracks size, so the elephant rumbles and the zebra pipes.
+# Traps: read this before you write code
+
+Each of these has already cost this project a real bug. They fail quietly.
+
+### 1. `Area3D.body_entered` only fires on a *crossing*
+
+If a new round begins while the player is already standing inside the answer,
+**no event will ever arrive** and the game deadlocks with no way out but walking
+off and back on. Finish "sat" standing on the `t`, and "tin" wants `t` first.
+
+Every game with rounds calls `_claim_overlaps()` at the round boundary — see
+`Blockland`, `LetterLagoon`, `ShapeCove`, `DinoValley`, `SafariPlains`. Copy it.
+Cost: three separate bugs before it was handled by default.
+
+### 2. Never put a timed cooldown on a touch handler
+
+`body_entered` cannot double-fire, so a cooldown protects against nothing — but
+it *does* silently swallow a legitimate touch when a child walks briskly from
+one block to the next. Guard with state (`is_lit()`), never with a timer.
+
+### 3. Layout tables hold LOCAL offsets; movement code steers in WORLD space
+
+`RoamingAnimal` uses `global_position` and `move_and_slide`. A biome's layout
+table naturally holds offsets relative to the biome. Convert when you build:
+
+```gdscript
+animal.home = global_position + spec["home"]   # correct
+animal.home = spec["home"]                     # sends it to the meadow, 800m away
+```
+
+Symptom: the biome looks fine for three seconds and then quietly empties.
+
+### 4. Everything washes out under the meadow sun
+
+The lighting and filmic tonemap lift every colour well past its swatch, and
+generated models arrive with studio lighting already baked into the albedo.
+
+- **Ground planes:** pick a colour that looks *too dark* in the picker.
+- **Pale characters:** call `Models.tint_albedo(visual, tint)` — see `Bunny`,
+  `Butterfly`. Without it a pale animal renders as a flat white blob.
+
+### 5. Generated models face `+Z`; Godot's forward is `-Z`
+
+`Models.spawn()` applies `MODEL_YAW = PI` for you. When you place something so
+it faces the middle of a ring, that is:
+
+```gdscript
+node.rotation.y = atan2(pos.x, pos.z)          # correct - faces inward
+node.rotation.y = atan2(pos.x, pos.z) + PI     # faces OUT of the ring
+```
+
+The extra `PI` shipped once and gave a plaza of ten Numberblocks showing their
+backs to anyone who walked in.
+
+### 6. Blender is Z-up; the GLB is Y-up
+
+Inside `rig_wings.py`, a model that sits on `y = 0` in the GLB stands on
+`z = 0` in Blender. Bone coordinates transpose. Getting it wrong builds a rig
+that looks plausible and animates sideways.
+
+### 7. A Blender bone's local **Y** runs along the bone
+
+So a wing beat is a roll about `Vector3.UP` in bone space, *not* the wing's
+world direction. Both wings take the **same** local sign — their rest frames
+are already mirrored, and negating one folds them the same way. Verify a rig by
+rendering a few frames of the beat, never by reasoning about it.
+
+### 8. Water must sit below the island it surrounds
+
+An island top is `y = 0`. A water disc centred at `y = -0.1` with height `0.3`
+has its surface at `+0.05` and hides the entire island. Keep the surface under
+zero — see `ShapeCove._build_water`.
+
+### 9. Tests must wait on STATE, not on the clock
+
+Headless runs idle frames as fast as the machine allows while physics stays
+pinned at 60 Hz, so any fixed delay between test steps is a race. Every suite
+here uses a step table with a `ready` predicate and a generous timeout.
+
+This matters more than it sounds: a clock-timed test reported a **real**
+deadlock bug as "flaky timing", and rewriting it to poll state made the bug
+reproduce identically three runs in a row.
+
+Also: give steps a timeout longer than the game's own pacing. Shape Cove takes
+about 8 s to play through by design, so a 6 s timeout fails a working game.
+
+### 10. Rigged assets must stay OUT of `import_assets.ASSETS`
+
+`butterfly` and `pteranodon` have an extra stage: decimate to scratch, then
+`rig_wings.py`. Listing them in `ASSETS` lets a plain `import_assets.py` run
+overwrite the rigged GLB with an unrigged one and **silently stop the wings**.
+The exclusion and both source timestamps are commented in that file.
+
+### 11. Camera far plane vs island spacing
+
+Islands sit `ISLAND_SPACING = 800` apart and `FollowCamera.FAR = 300`. Keep the
+far plane comfortably under the gap, or a child on the savanna sees a volcano
+and a pastel meadow parked on the horizon. If you add an island, put it on the
+same spacing grid.
+
+### 12. Screenshot tools build their own camera
+
+A throwaway `Camera3D` does **not** inherit `FollowCamera.FAR`, so a shot can
+show neighbours a player would never see. Set `cam.far = FollowCamera.FAR`. A
+screenshot that flatters the game is worse than no screenshot.
+
+### 13. Check the wall clock before writing a `-newermt` waiter
+
+A background waiter written with a mark a few hours in the future can never
+match and will wait forever. `date` first.
+
+---
+
+# Recipes
+
+## Add a new island
+
+Islands are built in code, live far off in world space, and are reached by a
+door pair. Adding one touches four files.
+
+1. **`scripts/MyIsland.gd`** — `class_name MyIsland extends Node3D`. Build the
+   ground as a `StaticBody3D` cylinder whose top is `y = 0`, then its contents.
+   Emit `round_started(text)`, `answered(correct, key)` and `completed`, and
+   expose `restart()`, `question()`, `round_index()`, `is_complete()`.
+   Copy `ShapeCove.gd` (find-the-one) or `LetterLagoon.gd` (in-order) —
+   whichever loop shape fits — and keep `_claim_overlaps()` (trap 1).
+
+2. **`scripts/Game.gd`** — four small edits:
+   ```gdscript
+   const MYISLAND_ORIGIN := Vector3(-ISLAND_SPACING, 0, ISLAND_SPACING)
+   const MYISLAND_DOOR := Vector3(x, 0, z)          # somewhere near meadow spawn
+   # in ARRIVALS:
+   "myisland": MYISLAND_ORIGIN + Vector3(0, 1.2, 14.0),
+   ```
+   then in `_build_islands()` construct it, connect its signals, and add the
+   door pair:
+   ```gdscript
+   _door("DoorToMyIsland", "My Island", "myisland", MYISLAND_DOOR, yaw, Color("#hex"))
+   _door("DoorFromMyIsland", "Meadow", "meadow",
+         MYISLAND_ORIGIN + Vector3(0, 0, 16.0), 0.0, Color("#hex"))
+   ```
+   and a `"myisland": _myisland.restart()` arm in `_travel()`.
+
+3. **`tools/myislandtest.gd`** — copy `safaritest.gd`. Keep its shape: static
+   data checks first, then a state-driven step table. Assert the *claims your
+   questions make* (trap 9 rationale), and assert everything is still inside
+   `GROUND_R` after roaming (trap 3).
+
+4. **README** — add a section under [The worlds](#the-worlds).
+
+Travel is destination-driven, so nothing in `_travel()`/`_on_portal_entered()`
+needs to know how many islands exist.
+
+## Add a roaming animal to an existing biome
+
+Add a row to that biome's layout dictionary. No new code:
+
+```gdscript
+"rhino": {
+    "h": 1.9, "home": Vector3(4, 0, -8), "roam": 6.0, "count": 1,
+    "speed": 1.2, "gait": 1.1, "roll": 0.07, "pause": Vector2(2.0, 5.0),
+},
+```
+
+`speed`/`gait`/`roll`/`pause` are the whole difference between an elephant and
+a zebra. You also need `assets/models/rhino.glb`, `assets/audio/animal_rhino.wav`
+and `assets/audio/roar_rhino.wav`.
+
+## Add a generated model
+
+```bash
+# 1. Concept: copy flux_schnell_concept_art.json, replace node 2's text
+#    (CLIPTextEncode), node 5's seed (KSampler), node 7's filename_prefix
+#    (SaveImage). Submit via the comfy MCP run_workflow. Four images come out.
+# 2. Look at all four. Pick one with limbs SEPARATED and the key feature clear -
+#    voxel reconstruction fuses touching limbs into a lump.
+# 3. Copy it to ComfyUI/input, point trellis2_geometry_texture_fixed.json's
+#    node 1 (LoadImage) at it, run. ~2-4 min per model.
+# 4. Decimate:
+"$PY" -c "
+import sys; sys.path.insert(0, r'rainbow-sparkle-squad/tools')
+import import_assets as ia, os
+ia.process(os.path.join(ia.SRC, 'trellis2_YYYYMMDD_HHMMSS.glb'),
+           'myname', 14000, r'rainbow-sparkle-squad/assets/models', dry_run=False)
+"
+# 5. Record the source timestamp in import_assets.ASSETS so it is reproducible.
+# 6. --import, then turntable it and LOOK at it.
+```
+
+Prompt rules that matter, learned the hard way:
+
+- **Pose is permanent.** Nothing is rigged, so whatever comes out of TRELLIS is
+  the pose forever. Ask for legs *clearly separated with gaps between them*.
+- **No ground plane, no cast shadow.** A visible surface is reconstructed as
+  welded floor geometry that dominates the bounding box.
+- **Name the feature a question will ask about.** The safari questions are
+  claims about the models; a giraffe without an obviously long neck makes its
+  round unanswerable.
+- Append the house style suffix — see any `make_*` prompt or the `gen_*` blocks
+  in git history for the exact wording.
+
+## Add a rigged (winged) model
+
+Only for creatures whose **wings must beat**, which no whole-body transform can
+do. Generate with wings spread, flat and symmetric about the centre plane.
+
+```bash
+# Decimate to SCRATCH, not to assets/models
+"$PY" -c "...ia.process(src, 'myname_unrigged', 12000, r'<scratch>', dry_run=False)"
+
+# Rig: HINGE_IN and HINGE_OUT are fractions of the half-wingspan
+"$BLENDER" -b -P rainbow-sparkle-squad/tools/rig_wings.py -- \
+  "<scratch>/myname_unrigged.glb" \
+  "rainbow-sparkle-squad/assets/models/myname.glb" 0.16 0.38
+```
+
+Hinge further out for a body that carries bulk between the wings (the
+pteranodon uses `0.16 0.38`; the butterfly uses the default `0.10 0.30`). Then
+drive it as in `Butterfly._flap()` — and see traps 6, 7 and 10.
+
+## Add spoken audio
+
+SAPI, via a `tools/make_*_voices.ps1` script. Copy one; they are all the same
+shape. Mono 22050 Hz 16-bit PCM, into `assets/audio/`.
+
+```bash
+powershell -ExecutionPolicy Bypass -File rainbow-sparkle-squad/tools/make_x_voices.ps1
+```
+
+Animal calls are **synthesised**, not spoken — SAPI cannot roar. Add a row to
+`ROARS` in `tools/make_animal_sounds.py` and run it with `$PY`. Pitch tracks
+size by convention, so the sound teaches what the models do.
+
+**Filenames are the contract.** Every clip is a placeholder a real recording can
+be dropped over with no code change. See the phonics caveat in
+[Letter Lagoon](#letter-lagoon) — that is the weakest audio in the project and
+the most worth replacing.
+
+---
+
+# Architecture
+
+## One scene, five islands, no scene loading
+
+Everything is one `Node3D` (`scenes/Main.tscn` → `Game.gd`) built entirely in
+code. Islands are separate regions of the same world, 800 units apart, reached
+by teleport behind a white screen wipe. **One scene means the player, camera,
+HUD and audio are never torn down**, so there is no reload hitch and nothing to
+re-wire on the way back.
+
+The world is built in code rather than authored as a `.tscn` so the level data
+reads as plain arrays at the top of each script, and there is no scene file to
+drift out of sync.
+
+## Generated vs built in code
+
+The rule this project follows:
+
+- **Generate** anything organic or decorative — creatures, plants, scenery.
+- **Build in code** anything whose *shape is the lesson*. A Numberblock must be
+  N real cubes; a triangle must have three real sides; a letter must be the
+  actual glyph. Image-to-3D cannot promise that, and a wrong shape teaches a
+  wrong thing.
+
+## Scripts
+
+```
+Game.gd            builds the meadow, owns travel + all island signal wiring
+Player.gd          movement + procedural squash/stretch animation
+Cast.gd            the two playable characters, as plain data
+FollowCamera.gd    right-stick orbit camera, obstruction pull-in, FAR clip
+Models.gd          GLB loading, auto-fit to height/width, tint_albedo
+Voices.gd          the shared spoken numbers 1-10
+HUD.gd             counters, prompt line, banner, screen wipe
+Portal.gd          a door; carries a destination name and a frame tint
+Decor.gd           non-interactive scenery: model, collider, sway/bob, repaint
+
+Sparkle.gd Star.gd BouncePad.gd Gate.gd     meadow pickups and furniture
+Bunny.gd Butterfly.gd                       meadow characters
+RoamingAnimal.gd                            shared walker/flyer brain
+Numberblock.gd Blockland.gd                 cube-stack numbers + order game
+ShapeFigure.gd ShapeCove.gd                 extruded 2D outlines + find-the-shape
+LetterFigure.gd LetterLagoon.gd             TextMesh glyphs + word blending
+DinoValley.gd                               dinosaurs + size comparison
+SafariPlains.gd                             safari animals + I-spy by feature
+```
+
+## Tools
+
+```
+import_assets.py       TRELLIS GLB -> game-ready GLB (see Asset pipeline below)
+blender_decimate.py    the Blender half of that, shelled out to blender.exe
+rig_wings.py           three-bone wing rig for the butterfly and pteranodon
+make_animal_sounds.py  synthesised calls for both animal biomes
+make_*_voices.ps1      SAPI speech: count / shape / letter / dino / safari
+turntable.gd           four-angle render of one model - authoritative check
+shoot.gd               build the scene, report contents, screenshot
+preview.py             grey numpy contact sheet of processed GLBs
+playtest.gd + 7 island suites                see "run all eight suites" above
+```
+
+## Asset pipeline
+
+Models come from ComfyUI TRELLIS.2 as ~500k-triangle Y-up GLBs.
+`tools/import_assets.py` does three things and each is load-bearing:
+
+1. **Decimate in Blender, keeping the source UVs.** A TRELLIS surface-net mesh
+   is ~11k *disconnected* shell fragments. Decimating in Python and re-unwrapping
+   turned that into ~1500 confetti UV charts, and the seams rendered in-engine
+   as a white crackle over every surface. Blender welds the fragments, drops
+   degenerate slivers, then runs a **collapse** decimate that carries per-vertex
+   UVs straight through, so the mesh keeps sampling TRELLIS's own atlas.
+2. **Load back with `process=False`.** trimesh's default load merges spatially
+   close vertices, fusing both halves of every UV seam onto one coordinate and
+   reintroducing exactly the crackle Blender avoided.
+3. **Force the material matte.** TRELLIS writes `metallicFactor = 1.0` and
+   relies on a metallic-roughness texture to pull it back; that texture does not
+   survive the round trip, so assets arrive as perfect mirrors and haze the sky.
+
+`strip_floor()` exists but is deliberately not run — these concepts are
+generated on plain backgrounds, and it would re-split the mesh on its UV seams.
+
+---
+
+# The worlds
 
 ## The meadow
 
-The meadow is **dressed as a unicorn's fantasy world**: a sparkle fountain at
-its heart, a treeline of candy-scoop trees, toadstools and crystal clusters
-through the mid-field, a flower patch, and puffy clouds bobbing overhead. It is
-all pure scenery — one reusable `scripts/Decor.gd` node, laid out as the `DECOR`
-array in `scripts/Game.gd`; only the fountain and tree trunks have colliders.
-The six models were generated the same way (`toadstool`, `crystal_cluster`,
-`candy_tree`, `giant_flower`, `sparkle_fountain`, `cloud_puff`).
+The hub. Swap between **Bouncy Blue** (the cube unicorn) and **Spotty Doggy**,
+collect sparkles, and open the castle gate. Neither is rigged, so the difference
+between them is entirely movement feel — see `Cast.gd`, which is plain data.
+Bouncy Blue jumps higher, falls at 72% gravity and gets a second mid-air hop;
+Spotty Doggy is faster with a dash but only one jump.
+
+A **star counting trail** of ten numbered stars runs a loop around the meadow,
+each speaking its number as it is collected. The meadow is dressed as a
+unicorn's fantasy world — fountain, candy-tree treeline, toadstools, crystal
+clusters, flowers, drifting clouds — all `Decor.gd`, laid out as the `DECOR`
+array in `Game.gd`.
+
+**Ms. Bumbleflower** the bunny hops there in real ballistic arcs (gravity draws
+the curve, not a tween) and spooks if you get within three metres, which is what
+makes her worth chasing. A **butterfly** does laps of the flowers, taking her
+waypoints straight out of `DECOR` so she visits whatever is actually planted.
+
+Most animation in this project is procedural, computed per frame rather than
+authored: a spring-driven squash/stretch, a hop bob scaled by speed, a lean into
+travel. It is volume-preserving — tall means thin, flat means wide — which is
+what makes a rigid cube read as a soft toy, and it is applied to a `Visual`
+child so the collision capsule is never distorted. The butterfly and pteranodon
+are the only rigged assets, because wings are the one thing this cannot fake.
 
 ![the meadow](../out/rss_shot.png)
 
-## Running it
+## Blockland
 
-Godot is not on PATH on this machine — it lives in a folder named like an exe:
+Ten **Numberblocks** — the number N built from N cubes, with a face. Built in
+code because the shape carries the maths: four really is four cubes and you can
+count them. The arrangement follows the toy (6 is 2×3, 9 is 3×3, 10 is 2×5;
+seven is the rainbow one).
 
-```bash
-GODOT="/c/Users/joshu/Downloads/Godot_v4.7-stable_win64.exe/Godot_v4.7-stable_win64.exe"
-"$GODOT" --path rainbow-sparkle-squad          # play
-```
+**The game** is order: touch them one to ten. A right answer lights the block and
+says its number; a wrong one shakes it and puts the whole row out again, so you
+have to know what comes next rather than barge around.
 
-Use `Godot_v4.7-stable_win64_console.exe` for anything headless — the plain exe
-detaches from the console and you will not see `print()` output.
+## Shape Cove
 
-## Controls
+A sand island where **circle, square, triangle, rectangle, star and heart** live
+as chunky standing slabs with faces. All six come from **one** extrusion routine
+applied to a 2D outline, so adding a shape is a list of points. Normals are set
+explicitly — a generated normal at a star's point averages its neighbours and
+rounds off the very corner that makes it a star.
 
-Gamepad is the primary input; keyboard bindings exist so the game is testable
-without one plugged in.
+**The game** is recognition, not order: a round names one shape and you go touch
+it. No sequence to remember, no way to fall behind, and after two wrong guesses
+the answer hops on the spot. Built for a player who cannot read, so the round is
+**spoken** and the on-screen text is the backup.
+
+## Letter Lagoon
+
+Ten letters as real extruded glyphs (`TextMesh`), so a child sees the actual
+letterform. **They are not A to J** — they are Letters and Sounds Phase 2 Set 1
+(`s a t p i n`) plus `m d g o`, because you cannot build a word out of a, b, c.
+You can build six out of these: **pig, dog, sat, map, tin, pot**.
+
+**The game is blending**, the actual reading skill: a word is named and you walk
+to its letters in order, hearing each sound; when the last lands there is a beat
+before the whole word is spoken, because the moment the sounds *become* a word
+is the point.
+
+> **Weakest asset in the project.** SAPI cannot say a bare phoneme — asked for
+> `t` it says the letter *name*, and "tuh" adds a schwa that phonics
+> discourages, since blending then gives "cuh-a-tuh". Continuants (`s`,`n`,`m`)
+> come out far better than stops. The `key_` clips carry the real teaching
+> (sound plus keyword). **Replacing these with real recordings is the single
+> highest-value improvement available** — filenames are the contract, so it
+> needs no code change.
+
+## Dino Valley
+
+Three dinosaurs roam under a smoking volcano and a **Pteranodon** wheels
+overhead, gliding down to perch periodically — which is what makes it reachable
+at all. This island deliberately breaks the pattern: the others stand their
+subject in a ring and wait, here it **walks away from you**, and the name lands
+*because* a child had to chase it.
+
+**The game is size comparison** — biggest, smallest, which one flies.
+
+## Safari Plains
+
+A giraffe, a pride of three lions, a hippo in a waterhole, an elephant and a
+zebra, under a flat-topped acacia horizon.
+
+**The game is "I spy" by feature** — who has a long neck, a mane, stripes, a
+trunk, the biggest mouth. Every question names something unmistakable on its
+animal and absent from all the rest, so it is answerable by *observation*.
+Answers match by **species**, which is what lets any of the three lions answer
+"who has a mane".
+
+---
+
+# Controls
+
+Gamepad is primary; keyboard exists so the game is testable without one.
 
 | Action | Controller | Keyboard |
 |---|---|---|
@@ -250,117 +558,24 @@ without one plugged in.
 | Dash (Spotty only) | `RT` | `Shift` |
 | Restart | `Back` / `Select` | `R` |
 
-Movement is camera-relative and keeps analog magnitude, so a light stick push
-walks and a full push runs. Jump has coyote time (0.12 s) and an input buffer
-(0.15 s) so it stays responsive at ledges.
+Movement is camera-relative and keeps analog magnitude, so a light push walks
+and a full push runs. Jump has coyote time (0.12 s) and an input buffer (0.15 s).
 
-## The two characters
+---
 
-Neither model is rigged, so the difference between them is entirely movement
-feel — see `scripts/Cast.gd`, which is plain data.
+# Known rough edges
 
-- **Bouncy Blue** — slower, but jumps higher, falls at 72% gravity and gets a
-  second mid-air hop. Built for the sparkles parked on top of the arches.
-- **Spotty Doggy** — faster on the ground with a dash on `RT`, but only one
-  jump and normal gravity.
-
-## No rigs, so the animation is procedural
-
-There are no bones and no animation clips anywhere in this project. Everything
-that makes the characters feel alive is computed in `Player._animate()`:
-
-- a **spring-driven squash/stretch** that stretches tall on takeoff, flattens
-  on landing in proportion to impact speed, and pops on a character swap;
-- a **hop bob** while running, scaled by actual speed, with an extra squash at
-  the bottom of each step;
-- a **lean** into the direction of travel.
-
-The squash is volume-preserving (tall means thin, flat means wide), which is
-what makes a rigid cube read as a soft toy. It is applied to a `Visual` child
-node so the collision capsule is never distorted.
-
-## Asset pipeline
-
-The models come from ComfyUI TRELLIS.2 as ~500k-triangle Y-up GLBs. Turn a raw
-export into a game asset with:
-
-```bash
-.venv/Scripts/python.exe rainbow-sparkle-squad/tools/import_assets.py
-"$GODOT_CONSOLE" --headless --path rainbow-sparkle-squad --import
-```
-
-`tools/import_assets.py` does three things, and each one is load-bearing:
-
-1. **Decimate in Blender, keeping the source UVs** (`tools/blender_decimate.py`,
-   shelled out to `blender.exe`). A TRELLIS surface-net mesh is ~11k
-   *disconnected* shell fragments. The old path — `fast_simplification` then a
-   fresh `xatlas` unwrap and a texel-by-texel re-bake — turned that into ~1500
-   confetti UV charts, and the seams between them rendered in-engine as a white
-   crackle over every surface. Blender welds the fragments (`remove_doubles`),
-   drops degenerate slivers, then runs a **collapse** decimate that carries the
-   per-vertex UVs straight through, so the mesh keeps sampling TRELLIS's own
-   coherent atlas and nothing is re-baked. Target is ~20–26k triangles.
-2. **Load back with `process=False`.** trimesh's default load merges spatially
-   close vertices, which fuses the two halves of every UV seam onto one UV
-   coordinate and reintroduces exactly the crackle Blender avoided.
-3. **Force the material matte.** TRELLIS writes `metallicFactor = 1.0` and
-   relies on a metallic-roughness *texture* to pull it back down; that texture
-   does not survive the round trip, so every asset arrives as a perfect mirror
-   and reflects the sky as a milky haze over the whole scene.
-
-The concepts are generated on plain backgrounds, so there is no welded floor
-disc to strip; `strip_floor()` is kept in the module but not run on this path
-(it would re-split the mesh on its UV seams and can over-trim).
-
-`tools/preview.py` renders a grey contact sheet of the processed GLBs with a
-plain numpy rasteriser; `tools/turntable.gd` is the authoritative check —
-it loads one GLB in a real Godot viewport, lights it, and saves a four-angle
-textured strip (`--unshaded` to isolate a texture problem from a shading one).
-
-## Checking it still works
-
-```bash
-"$GODOT_CONSOLE" --path rainbow-sparkle-squad -s tools/playtest.gd
-"$GODOT_CONSOLE" --path rainbow-sparkle-squad -s tools/shoot.gd -- 200 shot.png
-```
-
-`playtest.gd` drives synthetic input and asserts the verbs actually work —
-movement, jump-and-land, swapping, collecting, the gate opening. It exits
-non-zero on failure. Its schedule is in **seconds, not frames**: headless runs
-idle frames as fast as the machine allows while physics stays pinned at 60 Hz,
-so a frame counter fires the checks long before the character has moved.
-
-`shoot.gd` builds the scene, reports what got created, and saves a screenshot.
-
-## Layout
-
-```
-assets/models/     processed GLBs (committed; regenerate with import_assets.py)
-scenes/Main.tscn   a bare Node3D with Game.gd attached
-scripts/
-  Game.gd          builds the world, owns the win condition
-  Cast.gd          the two characters, as data
-  Player.gd        movement + procedural animation
-  FollowCamera.gd  right-stick orbit camera with obstruction pull-in
-  Models.gd        GLB loading and auto-fit
-  Sparkle.gd  BouncePad.gd  Gate.gd  HUD.gd
-tools/             asset pipeline and headless checks
-```
-
-The world is built in code rather than authored as a scene, so the level layout
-reads as plain arrays at the top of `Game.gd` and there is no `.tscn` to drift
-out of sync with the scripts.
-
-## Known rough edges
-
-- The rainbow arch's outer red band is much thicker than the rest and the
-  underside is mostly red — TRELLIS reconstructs it that way from the concept.
-  It reads clearly as a rainbow; the band proportions are a stylisation quirk,
-  not a pipeline bug. Reroll the TRELLIS seed if it needs to be more even.
-- `sparkle_cubes` is a scatter cloud, so one pickup is a cluster of small cubes
-  rather than a single readable coin. It works, but a dedicated gem model would
-  read better.
-- Character bodies carry faint speckle from the TRELLIS texture (freckles on
-  the dog, a soft mottle on the unicorn). Small enough to read as toy-plastic
-  texture rather than noise.
-- No audio yet.
+- **Phonics audio** — see the caveat under [Letter Lagoon](#letter-lagoon).
+  The most worthwhile thing to fix.
+- **Animal calls are synthesised.** A synth approximates a growl well and a
+  whinny badly. Real recordings would drop straight in.
+- The rainbow arch's outer red band is thicker than the rest — a TRELLIS
+  stylisation quirk, not a pipeline bug. Reroll the seed if it matters.
+- `sparkle_cubes` is a scatter cloud, so a pickup reads as a cluster of small
+  cubes rather than a single readable gem.
+- The pteranodon's wings came out more swept than the concept asked for; it
+  reads slightly bird-like. Recognisable and riggable, so it shipped.
+- Repainted `candy_tree` stands in for ferns and acacias. It reads as generic
+  stylised foliage; dedicated models would look better.
+- Characters carry faint speckle from the TRELLIS texture, small enough to read
+  as toy-plastic grain.
