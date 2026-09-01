@@ -104,6 +104,7 @@ const COVE_ORIGIN := Vector3(ISLAND_SPACING, 0, 0)
 const LAGOON_ORIGIN := Vector3(-ISLAND_SPACING, 0, 0)
 const VALLEY_ORIGIN := Vector3(0, 0, -ISLAND_SPACING)
 const SAFARI_ORIGIN := Vector3(ISLAND_SPACING, 0, ISLAND_SPACING)
+const HAUNTED_ORIGIN := Vector3(-ISLAND_SPACING, 0, ISLAND_SPACING)
 
 const MEADOW_DOOR := Vector3(6.5, 0, 8.5)
 const MEADOW_DOOR_YAW := -0.5
@@ -115,6 +116,9 @@ const VALLEY_DOOR := Vector3(-11.5, 0, 5.0)
 const VALLEY_DOOR_YAW := 1.1
 const SAFARI_DOOR := Vector3(11.5, 0, 5.0)
 const SAFARI_DOOR_YAW := -1.1
+# Carries on round the same arc, one step past the valley door.
+const HAUNTED_DOOR := Vector3(-15.0, 0, -1.0)
+const HAUNTED_DOOR_YAW := 1.6
 
 # Where the player lands in each place - a step clear of the doorway, facing in.
 # Adding an island means adding a row here and a door that names it; nothing in
@@ -126,6 +130,7 @@ const ARRIVALS := {
 	"lagoon": LAGOON_ORIGIN + Vector3(0, 1.2, 14.5),
 	"valley": VALLEY_ORIGIN + Vector3(0, 1.2, 16.0),
 	"safari": SAFARI_ORIGIN + Vector3(0, 1.2, 20.0),
+	"haunted": HAUNTED_ORIGIN + Vector3(0, 1.2, 18.0),
 }
 
 var _player: Player
@@ -142,6 +147,7 @@ var _cove: ShapeCove
 var _lagoon: LetterLagoon
 var _valley: DinoValley
 var _safari: SafariPlains
+var _haunted: HauntedHouse
 var _doors: Array[Portal] = []
 var _where := "meadow"
 
@@ -444,6 +450,21 @@ func _build_islands() -> void:
 	_door("DoorFromSafari", "Meadow", "meadow",
 		SAFARI_ORIGIN + Vector3(0, 0, 22.0), 0.0, Color("#d9a441"))
 
+	_haunted = HauntedHouse.new()
+	_haunted.name = "HauntedHouse"
+	_haunted.position = HAUNTED_ORIGIN
+	# Before add_child: the ghosts read this in _ready to know who to watch.
+	_haunted.player = _player
+	_haunted.round_started.connect(_on_haunted_round)
+	_haunted.answered.connect(_on_haunted_answered)
+	_haunted.completed.connect(_on_haunted_completed)
+	add_child(_haunted)
+
+	_door("DoorToHauntedHouse", "Haunted House", "haunted",
+		HAUNTED_DOOR, HAUNTED_DOOR_YAW, Color("#7a5aa6"))
+	_door("DoorFromHauntedHouse", "Meadow", "meadow",
+		HAUNTED_ORIGIN + Vector3(0, 0, 20.0), 0.0, Color("#7a5aa6"))
+
 
 func _door(node_name: String, label: String, dest: String,
 		at: Vector3, yaw: float, tint: Color) -> void:
@@ -520,6 +541,8 @@ func _travel(dest: String) -> void:
 			_valley.restart()
 		"safari":
 			_safari.restart()
+		"haunted":
+			_haunted.restart()
 		_:
 			_hud.set_prompt("")
 
@@ -639,6 +662,28 @@ func _on_safari_completed() -> void:
 		return
 	_hud.set_prompt("Find the animals to hear their names")
 	_hud.show_banner("You spotted every animal!")
+	_clear_banner_after(2.6)
+
+
+# -- Haunted House -------------------------------------------------------
+
+func _on_haunted_round(question: String) -> void:
+	if _where == "haunted":
+		_hud.set_prompt("%s      (%d of %d)"
+			% [question, _haunted.round_index() + 1, HauntedHouse.ROUNDS.size()])
+
+
+func _on_haunted_answered(correct: bool, _emotion: String) -> void:
+	if _where != "haunted" or correct:
+		return
+	_hud.set_prompt("Not that one - look at their faces!")
+
+
+func _on_haunted_completed() -> void:
+	if _where != "haunted":
+		return
+	_hud.set_prompt("Touch a ghost to hear how it feels")
+	_hud.show_banner("You know how everyone feels!")
 	_clear_banner_after(2.6)
 
 

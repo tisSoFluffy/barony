@@ -1,8 +1,9 @@
 # Rainbow Sparkle Squad
 
 A pastel toybox playground for Godot 4.7, built for a three-year-old and a
-controller. A meadow hub with five learning islands behind doors: counting,
-number order, shapes, phonics, size comparison, and descriptive observation.
+controller. A meadow hub with six learning islands behind doors: counting,
+number order, shapes, phonics, size comparison, descriptive observation, and
+reading feelings off a face.
 
 **If you are an AI agent picking this project up, read
 [Working on this project](#working-on-this-project) and especially
@@ -73,6 +74,9 @@ cd /c/Users/joshu/Documents/barony
 # Screenshot the meadow (frames, output path)
 "$GODOT_CONSOLE" --path rainbow-sparkle-squad -s tools/shoot.gd -- 200 shot.png
 
+# Screenshot an island - same travel a door does, so it restarts and speaks
+"$GODOT_CONSOLE" --path rainbow-sparkle-squad -s tools/shoot.gd -- 200 shot.png haunted
+
 # Look at one model from four angles - the authoritative model check
 "$GODOT_CONSOLE" --path rainbow-sparkle-squad -s tools/turntable.gd -- trex out/tt.png
 ```
@@ -80,11 +84,12 @@ cd /c/Users/joshu/Documents/barony
 Screenshot and turntable tools need a real framebuffer, so run them **without**
 `--headless`.
 
-## Before you commit: run all eight suites
+## Before you commit: run all nine suites
 
 ```bash
 for t in playtest bunnytest butterflytest blocklandtest \
-         shapecovetest letterlagoontest dinovalleytest safaritest; do
+         shapecovetest letterlagoontest dinovalleytest safaritest \
+         hauntedhousetest; do
   "$GODOT_CONSOLE" --headless --path rainbow-sparkle-squad -s tools/$t.gd \
     2>&1 | grep -E "$t:|FAIL"
 done
@@ -95,6 +100,7 @@ Expected, as of the last commit:
 ```
 playtest: 8/8      bunnytest: 5/5        butterflytest: 6/6    blocklandtest: 10/10
 shapecovetest: 11/11   letterlagoontest: 13/13   dinovalleytest: 14/14   safaritest: 14/14
+hauntedhousetest: 22/22
 ```
 
 Every suite exits non-zero on failure. If you add an island, add a suite.
@@ -235,6 +241,28 @@ screenshot that flatters the game is worse than no screenshot.
 A background waiter written with a mark a few hours in the future can never
 match and will wait forever. `date` first.
 
+### 14. TRELLIS can reconstruct the BACKGROUND, not just a floor
+
+`import_assets.py` says these concepts are generated on plain backgrounds so
+there is nothing to cut. That is true of *most* of them. One sleepy-ghost
+concept came back with a slightly darker, cloudier backdrop,
+`Trellis2RemoveBackground` failed to cut it, and the mesh arrived with the
+**whole backdrop welded on as a flat slab standing behind the subject**.
+
+It fails silently and `strip_floor` will not save you — that looks for a wide
+thin component *at the bottom*, and this one is vertical. Nor do the extents
+give it away: the slab sits behind the subject, so the bounding box still looks
+like a plausible chunky object. Width x depth x height came back
+1.00 x 0.95 x 0.63 where a good ghost is 1.00 x 0.72 x 0.84 — deeper and
+shorter, which is the slab standing behind and the ghost shrinking to fit the
+unit cube beside it, but nothing a threshold would catch. What it does do is
+make the slab the widest thing in the mesh, so `Models.spawn`'s auto-fit scales
+to the SLAB and the character comes out a fraction of its intended size.
+
+The only thing that catches it is looking at the model. Prefer a concept whose
+background is uniform and *light*; if a render shows a slab, re-roll on another
+of the four candidates rather than trying to cut it out.
+
 ---
 
 # Recipes
@@ -251,9 +279,10 @@ door pair. Adding one touches four files.
    Copy `ShapeCove.gd` (find-the-one) or `LetterLagoon.gd` (in-order) —
    whichever loop shape fits — and keep `_claim_overlaps()` (trap 1).
 
-2. **`scripts/Game.gd`** — four small edits:
+2. **`scripts/Game.gd`** — four small edits. Six of the eight slots on the
+   spacing grid are taken; `(-S, 0, -S)` and `(+S, 0, -S)` are still free:
    ```gdscript
-   const MYISLAND_ORIGIN := Vector3(-ISLAND_SPACING, 0, ISLAND_SPACING)
+   const MYISLAND_ORIGIN := Vector3(-ISLAND_SPACING, 0, -ISLAND_SPACING)
    const MYISLAND_DOOR := Vector3(x, 0, z)          # somewhere near meadow spawn
    # in ARRIVALS:
    "myisland": MYISLAND_ORIGIN + Vector3(0, 1.2, 14.0),
@@ -409,6 +438,7 @@ ShapeFigure.gd ShapeCove.gd                 extruded 2D outlines + find-the-shap
 LetterFigure.gd LetterLagoon.gd             TextMesh glyphs + word blending
 DinoValley.gd                               dinosaurs + size comparison
 SafariPlains.gd                             safari animals + I-spy by feature
+GhostFigure.gd HauntedHouse.gd              floating ghosts + reading feelings
 ```
 
 ## Tools
@@ -418,11 +448,11 @@ import_assets.py       TRELLIS GLB -> game-ready GLB (see Asset pipeline below)
 blender_decimate.py    the Blender half of that, shelled out to blender.exe
 rig_wings.py           three-bone wing rig for the butterfly and pteranodon
 make_animal_sounds.py  synthesised calls for both animal biomes
-make_*_voices.ps1      SAPI speech: count / shape / letter / dino / safari
+make_*_voices.ps1      SAPI speech: count / shape / letter / dino / safari / haunted
 turntable.gd           four-angle render of one model - authoritative check
 shoot.gd               build the scene, report contents, screenshot
 preview.py             grey numpy contact sheet of processed GLBs
-playtest.gd + 7 island suites                see "run all eight suites" above
+playtest.gd + 8 island suites                see "run all nine suites" above
 ```
 
 ## Asset pipeline
@@ -543,6 +573,35 @@ animal and absent from all the rest, so it is answerable by *observation*.
 Answers match by **species**, which is what lets any of the three lions answer
 "who has a mane".
 
+## Haunted House
+
+A crooked manor on a dark hill, a lantern-lit path up from the door, bare trees
+and gravestones and jack-o'-lanterns, and five friendly ghosts floating in the
+yard.
+
+**The game is feelings** — who looks happy, sad, angry, scared, sleepy. Every
+other island asks about a property of the world; this one asks about a *face*,
+which is the first thing a three-year-old learns to read and the only subject
+here that is about people rather than things.
+
+The five ghosts **share one body and differ only in expression** — same prompt,
+same size, only the face changed. That is what makes the lesson honest: if the
+bodies differed too, a child could answer "who looks sad" by shape and never
+look at a face at all. `hauntedhousetest` holds the island to it, asserting
+every ghost is the same height and that the tints, while all different, sit too
+close together to sort by.
+
+> **Not the textbook five.** "Surprised" and "scared" are the same face — wide
+> eyes, raised brows, open mouth — and the Safari rule applies just as hard
+> here: a question has to name something unmistakable on its answer and absent
+> from all the rest. Sleepy is unmistakable (closed eyes, a yawn) where
+> surprised is a coin flip, so sleepy is in and surprised is out.
+
+The whole game is **one scene with one sun**, so "haunted" could not be done
+with lighting without turning the meadow off too. It is done entirely in the
+palette instead — a near-black violet ground, bare silhouettes, cold stone, and
+the lanterns as the only warm thing on the island.
+
 ---
 
 # Controls
@@ -578,4 +637,17 @@ and a full push runs. Jump has coyote time (0.12 s) and an input buffer (0.15 s)
 - Repainted `candy_tree` stands in for ferns and acacias. It reads as generic
   stylised foliage; dedicated models would look better.
 - Characters carry faint speckle from the TRELLIS texture, small enough to read
-  as toy-plastic grain.
+  as toy-plastic grain. **The ghosts have it worst** — the same speckle over a
+  pure white body has nothing to hide behind, and it is obvious in a turntable.
+  In the game's own lighting it settles down to grain.
+- **The sleepy ghost is the weakest of the five.** Its face sits slightly off
+  centre, and its sleep bubble is a detached blob above the head. Since
+  `Models.spawn` normalises the tallest axis, that bubble spends part of the
+  1.6 m height budget, so its body is a little smaller than its neighbours. It
+  still reads unmistakably as sleepy, which is what the round asks.
+- **The lanterns do not actually light anything.** The glow is painted into the
+  texture, so the path reads as lit without casting a single photon. Real
+  `OmniLight3D`s on the four pairs would be the cheapest big improvement this
+  island could get — the whole point of the palette is that it is dark.
+- The manor is scenery with a box collider. There is no inside, and nothing on
+  the island suggests there should be, but a child will try the door.

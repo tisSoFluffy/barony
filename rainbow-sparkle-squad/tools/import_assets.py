@@ -64,7 +64,33 @@ ASSETS = {
     "trellis2_20260830_123641.glb": ("hippo", 14000),
     "trellis2_20260830_123759.glb": ("elephant", 14000),
     "trellis2_20260830_123950.glb": ("zebra", 14000),
+    # The Haunted House (see HauntedHouse.gd). The five ghosts come from ONE
+    # body prompt with only the face sentence swapped, which is what lets the
+    # island claim the face is the only difference between them.
+    "trellis2_20260831_174646.glb": ("ghost_happy", 12000),
+    "trellis2_20260831_174928.glb": ("ghost_sad", 12000),
+    "trellis2_20260831_181154.glb": ("ghost_angry", 12000),
+    "trellis2_20260831_175429.glb": ("ghost_scared", 12000),
+    "trellis2_20260831_181611.glb": ("ghost_sleepy", 12000),
+    "trellis2_20260831_180119.glb": ("haunted_house", 16000),
+    "trellis2_20260831_180215.glb": ("spooky_tree", 10000),
+    "trellis2_20260831_180517.glb": ("pumpkin", 6500),
+    "trellis2_20260831_180707.glb": ("gravestone", 5000),
+    "trellis2_20260831_180904.glb": ("lantern", 6000),
 }
+
+# Two of the ghosts are SECOND attempts, and the first ones are not listed above
+# because they are not what shipped. Recorded here because both failures are
+# worth recognising again rather than rediscovering:
+#
+#   ghost_angry   trellis2_20260831_175215.glb  the small scowling mouth
+#                 reconstructed as a streaked smear with the red cheeks bled
+#                 into a band across the face. Re-rolled on a concept whose
+#                 mouth was larger and further from the cheeks.
+#   ghost_sleepy  trellis2_20260831_175828.glb  the concept's slightly darker
+#                 backdrop survived background removal and came back welded on
+#                 as a flat slab behind the ghost - README trap 14. Re-rolled
+#                 on a concept with a clean light background.
 
 # The butterfly and the pteranodon are deliberately NOT in ASSETS. They are the
 # two rigged assets here, and their pipeline has an extra stage: decimate to a
