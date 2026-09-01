@@ -77,6 +77,11 @@ ASSETS = {
     "trellis2_20260831_180517.glb": ("pumpkin", 6500),
     "trellis2_20260831_180707.glb": ("gravestone", 5000),
     "trellis2_20260831_180904.glb": ("lantern", 6000),
+    # Rattly Bones, the fourth playable character (see Cast.gd). Same 26k budget
+    # as the other two generated heroes - a character the camera sits behind all
+    # game gets a lot more scrutiny than a gravestone. Little Boo is not here:
+    # it reuses ghost_happy and is told apart by its tint.
+    "trellis2_20260901_122226.glb": ("skeleton", 26000),
 }
 
 # Two of the ghosts are SECOND attempts, and the first ones are not listed above

@@ -98,12 +98,20 @@ done
 Expected, as of the last commit:
 
 ```
-playtest: 8/8      bunnytest: 5/5        butterflytest: 6/6    blocklandtest: 10/10
+playtest: 11/11    bunnytest: 5/5        butterflytest: 6/6    blocklandtest: 10/10
 shapecovetest: 11/11   letterlagoontest: 13/13   dinovalleytest: 14/14   safaritest: 14/14
 hauntedhousetest: 22/22
 ```
 
 Every suite exits non-zero on failure. If you add an island, add a suite.
+
+> **`bunnytest` is flaky, and it is not your change.** Its "she wanders away
+> from where she started" check measures NET displacement from her spawn after a
+> fixed window, but she hops to random destinations — so roughly one run in five
+> she happens to end up back near where she began and it fails at under a metre
+> (measured: 7.5, 9.7, 10.5, 10.3, then 0.8). Re-run it before believing it. The
+> honest fix is to accumulate distance travelled per frame and assert on the
+> path length instead of the displacement.
 
 ## The working loop
 
@@ -422,7 +430,7 @@ The rule this project follows:
 ```
 Game.gd            builds the meadow, owns travel + all island signal wiring
 Player.gd          movement + procedural squash/stretch animation
-Cast.gd            the two playable characters, as plain data
+Cast.gd            the four playable characters, as plain data
 FollowCamera.gd    right-stick orbit camera, obstruction pull-in, FAR clip
 Models.gd          GLB loading, auto-fit to height/width, tint_albedo
 Voices.gd          the shared spoken numbers 1-10
@@ -482,11 +490,30 @@ generated on plain backgrounds, and it would re-split the mesh on its UV seams.
 
 ## The meadow
 
-The hub. Swap between **Bouncy Blue** (the cube unicorn) and **Spotty Doggy**,
-collect sparkles, and open the castle gate. Neither is rigged, so the difference
-between them is entirely movement feel — see `Cast.gd`, which is plain data.
-Bouncy Blue jumps higher, falls at 72% gravity and gets a second mid-air hop;
-Spotty Doggy is faster with a dash but only one jump.
+The hub. Swap between **four characters**, collect sparkles, and open the castle
+gate. None of them is rigged, so the difference between them is entirely
+movement feel — see `Cast.gd`, which is plain data. Each owns one way of getting
+about, so swapping is a real choice rather than a change of hat:
+
+| | |
+|---|---|
+| **Bouncy Blue** | the cube unicorn — jumps higher, falls at 72% gravity, second mid-air hop |
+| **Spotty Doggy** | faster, with a ground dash, but only one jump |
+| **Little Boo** | the floatiest — slowest across the ground, two mid-air hops, 55% gravity |
+| **Rattly Bones** | the most grounded — quickest to start and stop, no hang time, falls hardest |
+
+Little Boo and Rattly Bones are the Halloween pair. Boo **reuses the Haunted
+House's happy ghost** rather than being a sixth generated one, and is told apart
+by its `tint`: the island's five are washed pale grey, and the one you drive is
+a saturated blue, so the ghost a child is *playing* never looks like the ghost a
+round is asking them to *find*.
+
+> `tint` had been sitting in `Cast` unread since the beginning. Wiring it up is
+> what makes that reuse safe, so it is applied only to characters that ask for
+> it — `Color.WHITE` is an explicit skip, because `Models.tint_albedo` also
+> forces roughness to 1.0 and the two original heroes ship at the exporter's
+> 0.85. Rattly Bones needs it too: bone white clipped to a featureless blob over
+> the meadow's green (trap 4), so it is tinted to a warm ivory.
 
 A **star counting trail** of ten numbered stars runs a loop around the meadow,
 each speaking its number as it is collected. The meadow is dressed as a
@@ -616,6 +643,10 @@ Gamepad is primary; keyboard exists so the game is testable without one.
 | Swap character | `X` | `Q` |
 | Dash (Spotty only) | `RT` | `Shift` |
 | Restart | `Back` / `Select` | `R` |
+
+Swap cycles all four in `Cast.ALL` order, so it is four presses back to where
+you started. Dash is still Spotty's alone — it is what that character is *for*,
+and handing it to a second one would cost both of them their identity.
 
 Movement is camera-relative and keeps analog magnitude, so a light push walks
 and a full push runs. Jump has coyote time (0.12 s) and an input buffer (0.15 s).

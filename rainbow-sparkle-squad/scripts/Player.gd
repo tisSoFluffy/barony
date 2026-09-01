@@ -235,6 +235,20 @@ func _apply_character(def: Dictionary) -> void:
 	if _model != null:
 		_model.queue_free()
 	_model = Models.spawn(String(def["model"]), float(def["height"]))
+
+	# Cast carried a "tint" on every character from the start but nothing ever
+	# read it. It is wired up here because Little Boo REUSES the Haunted House's
+	# happy ghost, and an untinted copy would be pixel-identical to the answer
+	# to one of that island's five rounds.
+	#
+	# White is an explicit no-op rather than a multiply by one: tint_albedo also
+	# forces roughness to 1.0, and Bouncy Blue and Spotty Doggy ship at the
+	# exporter's 0.85. Skipping them entirely keeps the two characters that
+	# already existed looking exactly as they did.
+	var tint: Color = def.get("tint", Color.WHITE)
+	if tint != Color.WHITE:
+		Models.tint_albedo(_model, tint)
+
 	_visual.add_child(_model)
 
 	# Capsule sized from the character's own height, feet on the origin.

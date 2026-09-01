@@ -76,6 +76,7 @@ func _process(delta: float) -> bool:
 		_check(now != _first_name, "swap changes character (%s -> %s)" % [_first_name, now])
 		_check(_player.get_node("Visual").get_child_count() == 1,
 			"swap leaves exactly one model attached")
+		_check_whole_cast()
 
 	elif _at(4.5):
 		var sparkle := _find_first("Sparkle")
@@ -122,6 +123,56 @@ func _tap(action: String) -> void:
 	get_root().get_tree().create_timer(0.05).timeout.connect(
 		func() -> void: Input.action_release(action)
 	)
+
+
+## Swap all the way round the cast and prove every character actually arrives.
+##
+## Models.spawn PUSHES AN ERROR AND RETURNS AN EMPTY HOLDER when a model path is
+## wrong, so a typo in Cast does not crash - it hands you an invisible player
+## and a game that still runs. Counting meshes is what turns that into a
+## failure. Going the whole way round also proves the swap wraps, which is the
+## only thing that could break when a character is added.
+func _check_whole_cast() -> void:
+	var started_as := String(_player.get("character")["name"])
+	var seen: Array[String] = []
+	var bodiless: Array[String] = []
+	var visual := _player.get_node("Visual")
+
+	for _i in Cast.ALL.size():
+		_player.swap_character()
+		var who := String(_player.get("character")["name"])
+		if not seen.has(who):
+			seen.append(who)
+
+		# Count meshes under the NEWLY ADDED model only, not under Visual.
+		#
+		# _apply_character frees the outgoing model with queue_free, which is
+		# DEFERRED - it does not detach until the end of the frame. Swapping the
+		# whole way round inside one frame therefore leaves every previous
+		# model still parented, and a Visual-wide count happily reports meshes
+		# that belong to a character we already swapped away from. The first
+		# version of this check did exactly that and passed against a model path
+		# pointing at a file that does not exist.
+		var newest := visual.get_child(visual.get_child_count() - 1)
+		if _mesh_count(newest) == 0:
+			bodiless.append(who)
+
+	_check(seen.size() == Cast.ALL.size(),
+		"swapping cycles all %d characters (saw %s)" % [Cast.ALL.size(), ", ".join(seen)])
+	_check(bodiless.is_empty(),
+		"and every one of them has a model" if bodiless.is_empty()
+			else "but these have NO model: %s" % ", ".join(bodiless))
+	_check(String(_player.get("character")["name"]) == started_as,
+		"and the swap wraps back round to %s" % started_as)
+
+
+func _mesh_count(node: Node) -> int:
+	var n := 0
+	if node is MeshInstance3D:
+		n += 1
+	for child in node.get_children():
+		n += _mesh_count(child)
+	return n
 
 
 func _find_first(script_name: String) -> Node:

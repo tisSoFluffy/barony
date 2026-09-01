@@ -16,12 +16,18 @@ extends SceneTree
 ## shot. Every arrival point is a step inside its doorway, and the orbit camera
 ## sits BEHIND the player - which puts it inside the return portal, so a shot
 ## taken on the mark is mostly a close-up of a door frame. 10 or so clears it.
+##
+## `cast` is an index into Cast.ALL, for photographing a character other than
+## the one the game starts on. Little Boo's colour is applied at RUNTIME from
+## its Cast tint, so a turntable of its GLB shows the island's ghost rather than
+## the hero - this is the only way to actually look at that character.
 
 var _frames := 0
 var _limit := 150
 var _out := "user://shot.png"
 var _where := ""
 var _advance := 0.0
+var _cast := -1
 var _travelled := false
 var _root: Node = null
 
@@ -36,6 +42,8 @@ func _initialize() -> void:
 		_where = args[2]
 	if args.size() > 3:
 		_advance = float(args[3])
+	if args.size() > 4:
+		_cast = int(args[4])
 
 	_root = load("res://scenes/Main.tscn").instantiate()
 	get_root().add_child(_root)
@@ -45,25 +53,38 @@ func _initialize() -> void:
 func _process(_delta: float) -> bool:
 	_frames += 1
 
-	# Travel once the world is built, and early enough that the island still
-	# gets most of the frame budget to settle before the shot.
-	if _where != "" and not _travelled and _frames >= 2:
+	# Set the shot up once the world is built, and early enough that it still
+	# gets most of the frame budget to settle before the picture is taken.
+	#
+	# Frame 2 rather than _initialize: at _initialize the scene has only just
+	# been added and Game.gd has not built the Player yet, so the lookup found
+	# nothing and every shot silently came out as Bouncy Blue in the meadow.
+	if not _travelled and _frames >= 2:
 		_travelled = true
-		_root._travel(_where)
-		if _advance != 0.0:
-			# Islands are built around their own origin, so "towards the middle"
-			# is just towards the island node's position.
-			var player := _root.get_node_or_null("Player") as CharacterBody3D
-			var island: Node3D = _root.get_node_or_null(_island_node(_where))
-			if player != null and island != null:
-				var to_middle := island.global_position - player.global_position
-				to_middle.y = 0.0
-				if to_middle.length() > 0.01:
-					player.global_position += to_middle.normalized() * _advance
-					var cam := _root.get_node_or_null("FollowCamera")
-					if cam != null:
-						cam.snap_to_target()
-		print("[shoot] travelled to %s (advance %.1f)" % [_where, _advance])
+		var player := _root.get_node_or_null("Player") as CharacterBody3D
+
+		if _cast >= 0 and player != null:
+			# Swap rather than pushing a model in directly, so what gets
+			# photographed is exactly what pressing X gives a player.
+			for _i in (_cast % Cast.ALL.size()):
+				player.swap_character()
+			print("[shoot] playing as %s" % player.get("character")["name"])
+
+		if _where != "":
+			_root._travel(_where)
+			if _advance != 0.0 and player != null:
+				# Islands are built around their own origin, so "towards the
+				# middle" is just towards the island node's position.
+				var island: Node3D = _root.get_node_or_null(_island_node(_where))
+				if island != null:
+					var to_middle := island.global_position - player.global_position
+					to_middle.y = 0.0
+					if to_middle.length() > 0.01:
+						player.global_position += to_middle.normalized() * _advance
+						var cam := _root.get_node_or_null("FollowCamera")
+						if cam != null:
+							cam.snap_to_target()
+			print("[shoot] travelled to %s (advance %.1f)" % [_where, _advance])
 
 	if _frames < _limit:
 		return false
