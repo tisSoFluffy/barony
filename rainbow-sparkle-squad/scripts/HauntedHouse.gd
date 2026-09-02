@@ -61,8 +61,8 @@ const HINT_AFTER := 2
 # and a cross corridor left to right at |z| < 1.5, which leaves four corner
 # rooms per floor, each reached through one doorway.
 
-const HOUSE_MIN := Vector2(-8.0, -7.0)
-const HOUSE_MAX := Vector2(8.0, 5.0)
+const HOUSE_MIN := Vector2(-10.5, -11.5)
+const HOUSE_MAX := Vector2(10.5, 8.0)
 
 ## Wall height and corridor width are both set by the CAMERA, not by taste.
 ##
@@ -81,17 +81,39 @@ const HOUSE_MAX := Vector2(8.0, 5.0)
 ## the height of the character walking past it - the same as a 3.5 m wall to an
 ## adult. The earlier 2.6 m walls were three times player height, which is why
 ## the house read as a canyon.
-## A wall `d` metres away hides the player once it is taller than
-## 0.75 + 0.58 * d above the floor they are standing on. At the 1.5 m a player
-## can stand from a wall while still in a doorway, that ceiling is 1.62 m -
-## which is where these two numbers come from, and 1.70 was ALREADY too tall:
-## the upper front wall cut the view by about eight centimetres.
-const UPPER_Y := 1.78               # the upper floor's walking surface
-const WALL_H := 1.60                # ground floor walls, up to the slab
-const UPPER_WALL_H := 1.55          # upper floor walls, open above
-const SLAB_T := 0.18
-const WALL_T := 0.34
-const CORRIDOR := 2.0               # half-width of the corridors and the front door
+## Ceiling height is set by the GHOSTS, and corridor width is then set by the
+## ceiling. Both are arithmetic; neither is taste.
+##
+## A ghost stands 2.13 m tall at rest - 0.4 m of hover, a 1.6 m body, and 0.13 m
+## of bob - and reaches 2.80 m for a moment mid-cheer, because the squash spring
+## stretches it to 1.42x. The house was first built with a 1.60 m ceiling, so
+## every ghost on the ground floor had its head through the floor above.
+##
+## The fix is a taller house rather than smaller ghosts, and taller walls fight
+## the camera: a wall `d` metres away hides the player once it is taller than
+## 0.75 + 0.58 * d above the floor, where 0.58 is FollowCamera's sight line at
+## its default pitch. A 2.75 m ceiling therefore needs the player to be able to
+## keep 3.45 m from a wall, so the corridors are 8 m across and the whole house
+## grew to suit. That buys 0.62 m of clearance over a resting ghost and leaves
+## a cheer overshooting by 5 cm for about a third of a second, which is nothing.
+const UPPER_Y := 3.00               # the upper floor's walking surface
+const WALL_H := 2.75                # ground floor walls, up to the slab
+## The upper walls are deliberately SHORTER than the ground floor's. Nothing
+## upstairs has a ceiling to clear, so the only thing setting this is the
+## camera - and at 2.5 m the front wall filled two thirds of the screen the
+## moment you walked towards it. At 1.9 m it clears from two metres out.
+##
+## It buys something as well as costing nothing: an upstairs ghost stands 5.13 m
+## and the walls top out at 4.9 m, so their heads show over the tops. On a floor
+## whose whole point is hunting for them, being able to see where they are from
+## the landing is the difference between searching and wandering.
+const UPPER_WALL_H := 1.90          # upper floor walls, open above
+const SLAB_T := 0.25
+const WALL_T := 0.40
+const CORRIDOR := 4.0               # half-width of the corridors
+## The front doorway is NOT the corridor's width. An 8 m opening is a hole in
+## the facade, not a door; this is a door that opens into a big hall.
+const DOOR_W := 1.6                 # half-width of the front doorway
 
 ## Stairs. A RAMP, not steps: CharacterBody3D has no step-up, so a staircase
 ## built from boxes is a row of walls a three-year-old would have to jump. The
@@ -111,10 +133,10 @@ const CORRIDOR := 2.0               # half-width of the corridors and the front 
 ## back up the right. There is no sideways step onto a raised surface anywhere
 ## in that route - CharacterBody3D has no step-up, so meeting the flight side-on
 ## even 18 cm up the slope would simply stop the player dead.
-const STAIR_Z0 := -5.0              # foot, with a turning bay behind it
-const STAIR_Z1 := -2.0              # top, where it meets the upper corridor
-const STAIR_W := 1.8
-const STAIR_X := 1.1                # pushed right; the walkway is left of it
+const STAIR_Z0 := -9.5              # foot, with a turning bay behind it
+const STAIR_Z1 := -4.0              # top, where it meets the upper corridor
+const STAIR_W := 3.2
+const STAIR_X := 2.3                # pushed right; the walkway is left of it
 const STAIR_EDGE := STAIR_X - STAIR_W * 0.5   # left edge of the flight
 
 ## Walls shared by both floors, as [x1, z1, x2, z2] segments. Gaps between
@@ -122,36 +144,36 @@ const STAIR_EDGE := STAIR_X - STAIR_W * 0.5   # left edge of the flight
 ## computing holes is what makes the plan readable as data.
 const WALLS: Array[Array] = [
 	# outer shell, minus the front wall (which differs per floor)
-	[-8.0, -7.0, 8.0, -7.0],        # back
-	[-8.0, -7.0, -8.0, 5.0],        # left
-	[8.0, -7.0, 8.0, 5.0],          # right
-	# front-left room: doorway onto the corridor at z 3.0 -> 4.4
-	[-2.0, 2.0, -2.0, 3.0],
-	[-2.0, 4.4, -2.0, 5.0],
-	[-8.0, 2.0, -2.0, 2.0],
-	# front-right room: doorway at z 3.0 -> 4.4
-	[2.0, 2.0, 2.0, 3.0],
-	[2.0, 4.4, 2.0, 5.0],
-	[2.0, 2.0, 8.0, 2.0],
-	# back-left room: doorway onto the cross corridor at x -6.2 -> -4.8
-	[-2.0, -7.0, -2.0, -2.0],
-	[-8.0, -2.0, -6.2, -2.0],
-	[-4.8, -2.0, -2.0, -2.0],
-	# back-right room: doorway at x 4.8 -> 6.2
-	[2.0, -7.0, 2.0, -2.0],
-	[2.0, -2.0, 4.8, -2.0],
-	[6.2, -2.0, 8.0, -2.0],
+	[-10.5, -11.5, 10.5, -11.5],    # back
+	[-10.5, -11.5, -10.5, 8.0],     # left
+	[10.5, -11.5, 10.5, 8.0],       # right
+	# front-left room: doorway onto the corridor at z 5.0 -> 6.8
+	[-4.0, 4.0, -4.0, 5.0],
+	[-4.0, 6.8, -4.0, 8.0],
+	[-10.5, 4.0, -4.0, 4.0],
+	# front-right room: doorway at z 5.0 -> 6.8
+	[4.0, 4.0, 4.0, 5.0],
+	[4.0, 6.8, 4.0, 8.0],
+	[4.0, 4.0, 10.5, 4.0],
+	# back-left room: doorway onto the cross corridor at x -8.2 -> -6.4
+	[-4.0, -11.5, -4.0, -4.0],
+	[-10.5, -4.0, -8.2, -4.0],
+	[-6.4, -4.0, -4.0, -4.0],
+	# back-right room: doorway at x 6.4 -> 8.2
+	[4.0, -11.5, 4.0, -4.0],
+	[4.0, -4.0, 6.4, -4.0],
+	[8.2, -4.0, 10.5, -4.0],
 ]
 
 ## Where each ghost hides: room centre, and which floor. Three downstairs and
 ## two up, so the first rounds can be found without the stairs and the later
 ## ones cannot.
 const HIDING := {
-	"happy": {"pos": Vector2(-5.0, 3.5), "upper": false, "room": "the parlour"},
-	"sleepy": {"pos": Vector2(-5.0, -4.5), "upper": false, "room": "the pantry"},
-	"sad": {"pos": Vector2(5.0, -4.5), "upper": false, "room": "the kitchen"},
-	"angry": {"pos": Vector2(5.0, 3.5), "upper": true, "room": "the nursery"},
-	"scared": {"pos": Vector2(-5.0, -4.5), "upper": true, "room": "the attic"},
+	"happy": {"pos": Vector2(-7.25, 6.0), "upper": false, "room": "the parlour"},
+	"sleepy": {"pos": Vector2(-7.25, -7.75), "upper": false, "room": "the pantry"},
+	"sad": {"pos": Vector2(7.25, -7.75), "upper": false, "room": "the kitchen"},
+	"angry": {"pos": Vector2(7.25, 6.0), "upper": true, "room": "the nursery"},
+	"scared": {"pos": Vector2(-7.25, -7.75), "upper": true, "room": "the attic"},
 }
 
 ## Set by Game.gd before this enters the tree, and handed to every ghost so
@@ -357,9 +379,9 @@ func _build_walls() -> void:
 		# The front wall carries the front door downstairs and nothing upstairs
 		# - an opening up there is a two-and-a-half metre drop onto the path.
 		if level == 0:
-			_wall_segment([HOUSE_MIN.x, HOUSE_MAX.y, -CORRIDOR, HOUSE_MAX.y],
+			_wall_segment([HOUSE_MIN.x, HOUSE_MAX.y, -DOOR_W, HOUSE_MAX.y],
 				base, h, plaster, "FrontWallLeft")
-			_wall_segment([CORRIDOR, HOUSE_MAX.y, HOUSE_MAX.x, HOUSE_MAX.y],
+			_wall_segment([DOOR_W, HOUSE_MAX.y, HOUSE_MAX.x, HOUSE_MAX.y],
 				base, h, plaster, "FrontWallRight")
 		else:
 			_upper_parts.append(_wall_segment(
@@ -425,23 +447,23 @@ func _build_exterior_detail() -> void:
 
 	# [wall coordinate, along-axis positions, is the wall running along x]
 	var runs := [
-		{"at": HOUSE_MAX.y, "on": [-5.5, 5.5], "along_x": true, "dir": 1.0},
-		{"at": HOUSE_MIN.y, "on": [-5.0, 5.0], "along_x": true, "dir": -1.0},
-		{"at": HOUSE_MIN.x, "on": [-4.5, 3.5], "along_x": false, "dir": -1.0},
-		{"at": HOUSE_MAX.x, "on": [-4.5, 3.5], "along_x": false, "dir": 1.0},
+		{"at": HOUSE_MAX.y, "on": [-7.25, 7.25], "along_x": true, "dir": 1.0},
+		{"at": HOUSE_MIN.y, "on": [-7.25, 7.25], "along_x": true, "dir": -1.0},
+		{"at": HOUSE_MIN.x, "on": [-7.75, 6.0], "along_x": false, "dir": -1.0},
+		{"at": HOUSE_MAX.x, "on": [-7.75, 6.0], "along_x": false, "dir": 1.0},
 	]
 	var n := 0
 	for level in 2:
-		var y: float = (0.95 if level == 0 else UPPER_Y + 0.9)
+		var y: float = (1.45 if level == 0 else UPPER_Y + 1.35)
 		for run in runs:
 			for p in run["on"]:
 				var size: Vector3
 				var at: Vector3
 				if run["along_x"]:
-					size = Vector3(1.2, 0.85, 0.06)
+					size = Vector3(1.6, 1.15, 0.06)
 					at = Vector3(p, y, float(run["at"]) + out * float(run["dir"]))
 				else:
-					size = Vector3(0.06, 0.85, 1.2)
+					size = Vector3(0.06, 1.15, 1.6)
 					at = Vector3(float(run["at"]) + out * float(run["dir"]), y, p)
 				var win := _glass(size, at, lit, "Window%d" % n)
 				if level == 1:
@@ -450,7 +472,11 @@ func _build_exterior_detail() -> void:
 
 	# An eave capping the upper walls, so the silhouette ends in a line rather
 	# than just stopping. Four bars around the perimeter.
-	var top: float = UPPER_Y + UPPER_WALL_H
+	# Hung so its TOP lines up with the wall top rather than sitting proud of it.
+	# Perched on top it adds 13 cm above every upper wall, which is enough to put
+	# it back in the way of the camera that the wall height was just tuned to
+	# clear - a decorative trim undoing the arithmetic above it.
+	var top: float = UPPER_Y + UPPER_WALL_H - 0.13
 	var w: float = HOUSE_MAX.x - HOUSE_MIN.x + 0.7
 	var d: float = HOUSE_MAX.y - HOUSE_MIN.y + 0.7
 	var cx: float = (HOUSE_MIN.x + HOUSE_MAX.x) * 0.5
@@ -466,11 +492,11 @@ func _build_exterior_detail() -> void:
 
 	# A frame round the front door, so the way in is unmistakable.
 	var head: float = WALL_H
-	_box(Vector3(CORRIDOR * 2.0 + 0.8, 0.3, 0.5),
+	_box(Vector3(DOOR_W * 2.0 + 0.8, 0.3, 0.5),
 		Vector3(0.0, head, HOUSE_MAX.y), trim, false, "DoorHead")
 	for side in [-1.0, 1.0]:
 		_box(Vector3(0.4, head, 0.5),
-			Vector3(side * (CORRIDOR + 0.2), head * 0.5, HOUSE_MAX.y),
+			Vector3(side * (DOOR_W + 0.2), head * 0.5, HOUSE_MAX.y),
 			trim, false, "DoorPost%d" % int(side))
 
 
@@ -520,9 +546,10 @@ func _build_yard() -> void:
 		prop.position = Vector3(cos(a) * r, 0.0, sin(a) * r)
 		add_child(prop)
 
+	# Clear of the footprint, which now reaches x +-10.5 and z -11.5 to 8.
 	var graves := [
-		Vector3(-13.5, 0, 9.0), Vector3(-15.5, 0, 2.0), Vector3(-12.5, 0, -6.0),
-		Vector3(13.5, 0, 9.5), Vector3(15.5, 0, 1.5), Vector3(12.5, 0, -6.5),
+		Vector3(-14.5, 0, 11.0), Vector3(-17.0, 0, 2.0), Vector3(-15.0, 0, -8.0),
+		Vector3(14.5, 0, 11.5), Vector3(17.0, 0, 1.5), Vector3(15.0, 0, -8.5),
 	]
 	for i in graves.size():
 		var prop := Decor.new()
@@ -537,8 +564,8 @@ func _build_yard() -> void:
 
 	# Pumpkins either side of the path up to the front door.
 	var pumpkins := [
-		Vector3(-3.2, 0, 14.0), Vector3(3.4, 0, 13.0), Vector3(-3.6, 0, 8.5),
-		Vector3(3.2, 0, 7.5), Vector3(-9.5, 0, 12.0), Vector3(9.0, 0, 11.5),
+		Vector3(-3.4, 0, 15.5), Vector3(3.6, 0, 14.5), Vector3(-3.8, 0, 11.0),
+		Vector3(3.4, 0, 10.0), Vector3(-12.5, 0, 13.0), Vector3(12.0, 0, 12.5),
 	]
 	for i in pumpkins.size():
 		var prop := Decor.new()
@@ -552,13 +579,13 @@ func _build_yard() -> void:
 	# Lanterns down the path. The only warm thing outside, which is what makes
 	# the walk to the door read as arriving somewhere.
 	for i in 4:
-		var z: float = 16.0 - float(i) * 2.6
+		var z: float = 16.8 - float(i) * 2.2
 		for side in [-1.0, 1.0]:
 			var prop := Decor.new()
 			prop.name = "PathLantern%d_%d" % [i, int(side)]
 			prop.model_path = "res://assets/models/lantern.glb"
-			prop.height = 0.75
-			prop.position = Vector3(side * 1.9, 0.0, z)
+			prop.height = 0.8
+			prop.position = Vector3(side * 2.2, 0.0, z)
 			add_child(prop)
 
 
@@ -566,8 +593,8 @@ func _build_yard() -> void:
 ## from above rather than as an empty box, and they mark the doorway you came
 ## in through when the walls all look alike.
 func _build_interior_dressing() -> void:
-	var corners := [Vector2(-5.0, 3.5), Vector2(5.0, 3.5),
-		Vector2(-5.0, -4.5), Vector2(5.0, -4.5)]
+	var corners := [Vector2(-7.25, 6.0), Vector2(7.25, 6.0),
+		Vector2(-7.25, -7.75), Vector2(7.25, -7.75)]
 	var i := 0
 	for level in 2:
 		var y: float = 0.0 if level == 0 else UPPER_Y
@@ -575,10 +602,10 @@ func _build_interior_dressing() -> void:
 			var prop := Decor.new()
 			prop.name = "RoomLantern%d" % i
 			prop.model_path = "res://assets/models/lantern.glb"
-			prop.height = 0.7
+			prop.height = 0.8
 			# Tucked into the room's outer corner, clear of where a ghost floats.
-			prop.position = Vector3(c.x + (2.3 if c.x > 0 else -2.3), y,
-				c.y + (1.0 if c.y > 0 else -1.8))
+			prop.position = Vector3(c.x + (2.6 if c.x > 0 else -2.6), y,
+				c.y + (1.4 if c.y > 0 else -2.6))
 			add_child(prop)
 			if level == 1:
 				_upper_parts.append(prop)

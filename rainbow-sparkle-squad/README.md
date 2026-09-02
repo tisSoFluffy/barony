@@ -100,7 +100,7 @@ Expected, as of the last commit:
 ```
 playtest: 11/11    bunnytest: 5/5        butterflytest: 6/6    blocklandtest: 10/10
 shapecovetest: 11/11   letterlagoontest: 13/13   dinovalleytest: 14/14   safaritest: 14/14
-hauntedhousetest: 27/27
+hauntedhousetest: 28/28
 ```
 
 Every suite exits non-zero on failure. If you add an island, add a suite.
@@ -661,14 +661,34 @@ things holding it up was learned by building the other version first:
    step through the front door and the lid comes away; climb the stairs and it
    is back, with the ground floor open below.
 
-**Wall height is arithmetic, not taste.** A wall `d` metres away hides the
-player once it is taller than `0.75 + 0.58 * d` above the floor — that 0.58 is
-`FollowCamera`'s sight line at its default pitch. At the 1.5 m you can stand
-from a wall while still in a doorway, the ceiling is 1.62 m, which is why the
-walls are 1.60 and 1.55 and the corridors are 4 m wide rather than 3. It is not
-a low wall: the cast are 0.80–0.90 m tall, so 1.60 m is twice the height of the
-character walking past it. The first build used 2.6 m — three times player
-height — and read as a canyon.
+**Every dimension in this house is arithmetic, not taste**, and they chain:
+
+- **The ghosts set the ceiling.** A ghost is 2.13 m from the floor to the top of
+  its head — 0.4 m of hover, a 1.6 m body, 0.13 m of bob — and reaches 2.80 m
+  for a moment mid-cheer, because the squash spring stretches it to 1.42×. The
+  house first shipped with a 1.60 m ceiling, so every ghost downstairs had its
+  head through the floor above, plainly visible from the landing. The ceiling is
+  now 2.75 m: 0.62 m of clearance at rest, and a cheer overshoots by 5 cm for
+  about a third of a second, which nobody will ever see.
+- **The ceiling sets the corridor width.** A wall `d` metres away hides the
+  player once it is taller than `0.75 + 0.58 * d` above the floor — 0.58 being
+  `FollowCamera`'s sight line at its default pitch. A 2.75 m wall therefore
+  needs 3.45 m of clearance, so the corridors are 8 m across and the footprint
+  grew to 21 × 19.5 m to suit.
+- **The upper walls are shorter than the ground floor's**, at 1.90 m. Nothing
+  upstairs has a ceiling to clear, so the camera is the only constraint, and at
+  2.50 m the front wall filled two thirds of the screen. It buys something
+  besides: an upstairs ghost stands 5.13 m against 4.90 m walls, so their heads
+  show over the tops — on a floor whose whole point is hunting for them, seeing
+  where they are from the landing is the difference between searching and
+  wandering.
+- **The eave hangs so its top is flush with the wall top.** Perched on top it
+  adds 13 cm above every upper wall, which is enough to put it right back in the
+  way of the camera the wall height was just tuned to clear — a decorative trim
+  quietly undoing the arithmetic above it.
+
+> Fix the ghosts' size instead and you get the same house back one scale down,
+> with the same problem waiting the next time anything grows. Scale the house.
 
 **The stairs are a ramp**, with the visible treads sitting on it as dressing and
 no colliders of their own. `CharacterBody3D` has no step-up, so a staircase
@@ -750,7 +770,12 @@ and a full push runs. Jump has coyote time (0.12 s) and an input buffer (0.15 s)
 - **The upper storey pops rather than fades** when you step through the front
   door. Fading it would be nicer, and means giving every wall and slab a
   transparent material rather than toggling `visible`.
-- Standing at the front of the upper floor puts the front wall across the lower
-  half of the frame, because the camera is then outside the house looking in
-  over it. The right stick gets you out of it; a steeper default pitch indoors
-  would be the real fix.
+- Standing within about two metres of an upper-floor wall still puts it across
+  the bottom of the frame, because the camera is then outside the house looking
+  in over it. Much better since the upper walls came down to 1.90 m, and the
+  right stick gets you out of it, but a steeper default pitch indoors would be
+  the real fix.
+- **The house is big** — 21 × 19.5 m with 8 m corridors — because the ceiling
+  had to clear the ghosts and the corridor width follows from the ceiling. It
+  reads as a manor rather than a cottage, and the rooms have more floor than
+  they have things in them. More furniture would earn its keep here.

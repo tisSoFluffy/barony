@@ -192,6 +192,22 @@ func _setup() -> bool:
 			named = false
 	_check(named, "every hiding place has a room name for the hint")
 
+	# The ceiling has to clear a ghost's HEAD, which is not the same as clearing
+	# its nominal height: it hovers, it bobs, and the model is scaled to the top
+	# of all that. The house shipped once with a 1.60 m ceiling and 2.13 m
+	# ghosts, so every one of them downstairs had its head through the floor
+	# above - visible from the moment you walked in, and asserted by nothing.
+	var ceiling: float = HauntedHouse.UPPER_Y - HauntedHouse.SLAB_T
+	var tallest := 0.0
+	for g in ghosts:
+		if _house.is_upstairs(g.emotion):
+			continue      # nothing above them but sky
+		tallest = maxf(tallest,
+			g.position.y + GhostFigure.HOVER + GhostFigure.BOB_HEIGHT + g.height)
+	_check(tallest < ceiling,
+		"the ceiling clears a ghost's head downstairs (%.2f m under a %.2f m ceiling)"
+			% [tallest, ceiling])
+
 	_house.answered.connect(func(correct: bool, _e: String) -> void:
 		if not correct:
 			_wrong_seen = true)
