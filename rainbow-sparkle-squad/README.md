@@ -100,7 +100,7 @@ Expected, as of the last commit:
 ```
 playtest: 11/11    bunnytest: 5/5        butterflytest: 6/6    blocklandtest: 10/10
 shapecovetest: 11/11   letterlagoontest: 13/13   dinovalleytest: 14/14   safaritest: 14/14
-hauntedhousetest: 26/26
+hauntedhousetest: 27/27
 ```
 
 Every suite exits non-zero on failure. If you add an island, add a suite.
@@ -117,7 +117,7 @@ Every suite exits non-zero on failure. If you add an island, add a suite.
 
 1. Change code or add an asset.
 2. `--import` if any asset changed.
-3. Run the affected suite, then all eight.
+3. Run the affected suite, then all nine.
 4. **Render a screenshot and actually look at it.** Most of the bugs this
    project has hit were invisible to the tests and obvious in a render — a
    whole biome facing the wrong way, water drawn over an island, neighbours on
@@ -673,8 +673,24 @@ height — and read as a canyon.
 **The stairs are a ramp**, with the visible treads sitting on it as dressing and
 no colliders of their own. `CharacterBody3D` has no step-up, so a staircase
 built out of boxes is a row of walls: it would look perfect and stop a child
-dead at the first riser. `hauntedhousetest` walks the player up it rather than
-teleporting, because that is the only version of the check that would catch it.
+dead at the first riser.
+
+**And it is a switchback, for a reason worth remembering.** The flight first ran
+the full 3 m width of the 4 m corridor, from the back wall up to the cross
+corridor — which meant the only end you could reach was the *top*, presenting a
+1.78 m face, with its foot walled in behind it. The upper floor was unreachable
+in play, and the suite passed anyway, because the climb check *teleported the
+player onto the foot*: it proved the ramp was climbable while saying nothing
+about whether a child could get to it. Now the flight is narrow and pushed
+right, a walkway runs down the left of the corridor past it, and its foot stops
+short of the back wall to leave a bay to turn round in. There is no sideways
+step onto a raised surface anywhere on that route — meeting the flight side-on
+even 18 cm up the slope would stop the player dead.
+
+> The lesson generalises: **a check that teleports past the hard part is not a
+> check.** There are now two, and they only mean something together — one walks
+> the corridor from the front door to the foot of the stairs, the other climbs
+> them. Reinstating the old geometry fails the first one.
 
 ---
 

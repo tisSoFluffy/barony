@@ -96,9 +96,26 @@ const CORRIDOR := 2.0               # half-width of the corridors and the front 
 ## Stairs. A RAMP, not steps: CharacterBody3D has no step-up, so a staircase
 ## built from boxes is a row of walls a three-year-old would have to jump. The
 ## visible steps are dressing sitting on the ramp with no collider of their own.
-const STAIR_Z0 := -7.0              # bottom, at the back wall
+## The staircase is a SWITCHBACK, and it has to be.
+##
+## It first ran the full 3 m width of a 4 m corridor from the back wall up to
+## the cross corridor - which meant the only end you could reach was the TOP,
+## presenting a 1.78 m face, with its foot walled in behind it. The upper floor
+## was unreachable in play. (The test did not catch it because it teleported
+## the player onto the foot, proving the ramp was climbable while never proving
+## it could be got to. See hauntedhousetest.)
+##
+## So: the flight is narrow and pushed to the right, leaving a clear walkway
+## down the left of the corridor, and its foot stops short of the back wall to
+## leave a bay to turn round in. Walk down the left, turn round in the bay, walk
+## back up the right. There is no sideways step onto a raised surface anywhere
+## in that route - CharacterBody3D has no step-up, so meeting the flight side-on
+## even 18 cm up the slope would simply stop the player dead.
+const STAIR_Z0 := -5.0              # foot, with a turning bay behind it
 const STAIR_Z1 := -2.0              # top, where it meets the upper corridor
-const STAIR_W := 3.0
+const STAIR_W := 1.8
+const STAIR_X := 1.1                # pushed right; the walkway is left of it
+const STAIR_EDGE := STAIR_X - STAIR_W * 0.5   # left edge of the flight
 
 ## Walls shared by both floors, as [x1, z1, x2, z2] segments. Gaps between
 ## segments ARE the doorways - laying them out as explicit spans rather than
@@ -302,18 +319,26 @@ func _build_floors() -> void:
 	_box(Vector3(w, 0.08, d), Vector3(cx, 0.04, cz), boards, false, "Floorboards")
 
 	# Upper slab, in three pieces around the stairwell.
+	# The stairwell only has to be open over the FLIGHT, not over the whole
+	# corridor: the walkway beside it and the turning bay behind it are both
+	# walked at ground level, where a slab 1.6 m up is well over a 0.85 m
+	# player's head. Four pieces, cut around that one hole.
 	var slab_y: float = UPPER_Y - SLAB_T * 0.5
-	var left_w: float = -CORRIDOR - HOUSE_MIN.x
+	var left_w: float = STAIR_EDGE - HOUSE_MIN.x
 	_upper_parts.append(_box(Vector3(left_w, SLAB_T, d),
 		Vector3(HOUSE_MIN.x + left_w * 0.5, slab_y, cz),
 		boards, true, "UpperSlabLeft"))
-	var right_w: float = HOUSE_MAX.x - CORRIDOR
+	var right_w: float = HOUSE_MAX.x - (STAIR_X + STAIR_W * 0.5)
 	_upper_parts.append(_box(Vector3(right_w, SLAB_T, d),
-		Vector3(CORRIDOR + right_w * 0.5, slab_y, cz),
+		Vector3(STAIR_X + STAIR_W * 0.5 + right_w * 0.5, slab_y, cz),
 		boards, true, "UpperSlabRight"))
+	var back_d: float = STAIR_Z0 - HOUSE_MIN.y
+	_upper_parts.append(_box(Vector3(STAIR_W, SLAB_T, back_d),
+		Vector3(STAIR_X, slab_y, HOUSE_MIN.y + back_d * 0.5),
+		boards, true, "UpperSlabBay"))
 	var front_d: float = HOUSE_MAX.y - STAIR_Z1
-	_upper_parts.append(_box(Vector3(CORRIDOR * 2.0, SLAB_T, front_d),
-		Vector3(0.0, slab_y, STAIR_Z1 + front_d * 0.5),
+	_upper_parts.append(_box(Vector3(STAIR_W, SLAB_T, front_d),
+		Vector3(STAIR_X, slab_y, STAIR_Z1 + front_d * 0.5),
 		boards, true, "UpperSlabFront"))
 
 
@@ -365,7 +390,8 @@ func _build_stairs() -> void:
 	var length: float = sqrt(run * run + rise * rise)
 
 	var ramp := _box(Vector3(STAIR_W, 0.3, length),
-		Vector3(0.0, rise * 0.5 - 0.15 / cos(angle), (STAIR_Z0 + STAIR_Z1) * 0.5),
+		Vector3(STAIR_X, rise * 0.5 - 0.15 / cos(angle),
+			(STAIR_Z0 + STAIR_Z1) * 0.5),
 		Color("#3a2c24"), true, "Staircase")
 	# Rotating about +X tips +Z downward, so the rise wants the NEGATIVE angle.
 	ramp.rotation.x = -angle

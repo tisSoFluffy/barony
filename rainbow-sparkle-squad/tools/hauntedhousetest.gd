@@ -270,6 +270,28 @@ func _setup() -> bool:
 				return true,
 		},
 		{
+			# The bug this exists for: the flight once filled the corridor, so
+			# its foot could not be reached and the upper floor did not exist in
+			# play. The climb check below did not catch it, because teleporting
+			# onto the foot proves a ramp is CLIMBABLE while saying nothing
+			# about whether a child can get to it. This walks the route.
+			"what": "you can walk down the corridor past the stairs to their foot",
+			"act": func() -> void:
+				_player.velocity = Vector3.ZERO
+				# Just inside the front door, on the walkway side of the corridor.
+				_player.global_position = _house.global_position \
+					+ Vector3(-1.0, 0.6, HauntedHouse.HOUSE_MAX.y - 1.0)
+				Input.action_press("move_forward"),
+			"ready": func() -> bool:
+				var off: Vector3 = _player.global_position - _house.global_position
+				# Past the foot of the flight, and still on the ground - having
+				# walked BESIDE the stairs rather than up them.
+				if off.z < HauntedHouse.STAIR_Z0 - 0.5 and off.y < 0.5:
+					Input.action_release("move_forward")
+					return true
+				return false,
+		},
+		{
 			# The single most important thing on this island: if a child cannot
 			# get up the stairs, two of the five ghosts do not exist. Walked
 			# rather than teleported, because the ramp has to be climbable by
@@ -279,9 +301,10 @@ func _setup() -> bool:
 			"what": "the stairs actually carry the player to the upper floor",
 			"act": func() -> void:
 				_player.velocity = Vector3.ZERO
-				# At the foot of the ramp, in the corridor, facing the stairs.
+				# In the turning bay at the foot of the flight, lined up with it.
 				_player.global_position = _house.global_position \
-					+ Vector3(0, 0.6, HauntedHouse.STAIR_Z0 + 0.5)
+					+ Vector3(HauntedHouse.STAIR_X, 0.6,
+						HauntedHouse.STAIR_Z0 - 0.9)
 				Input.action_press("move_back"),
 			"ready": func() -> bool:
 				# -Z is "forward" for the stick; the ramp climbs towards +Z, so
