@@ -52,6 +52,12 @@ func _ready() -> void:
 	_shape.name = "Shape"
 	add_child(_shape)
 
+	# Also collide with layer 2, which the Haunted House's walls, floors and
+	# staircase live on. That layer is solid to the player but skipped by
+	# FollowCamera's obstruction ray - see the note there. Without this the
+	# player would walk straight through the whole building.
+	collision_mask |= FollowCamera.SEE_OVER_LAYER_BIT
+
 	_apply_character(Cast.ALL[_cast_index])
 
 

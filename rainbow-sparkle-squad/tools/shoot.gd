@@ -28,6 +28,7 @@ var _out := "user://shot.png"
 var _where := ""
 var _advance := 0.0
 var _cast := -1
+var _lift := 0.0
 var _travelled := false
 var _root: Node = null
 
@@ -44,6 +45,8 @@ func _initialize() -> void:
 		_advance = float(args[3])
 	if args.size() > 4:
 		_cast = int(args[4])
+	if args.size() > 5:
+		_lift = float(args[5])
 
 	_root = load("res://scenes/Main.tscn").instantiate()
 	get_root().add_child(_root)
@@ -81,10 +84,16 @@ func _process(_delta: float) -> bool:
 					to_middle.y = 0.0
 					if to_middle.length() > 0.01:
 						player.global_position += to_middle.normalized() * _advance
-						var cam := _root.get_node_or_null("FollowCamera")
-						if cam != null:
-							cam.snap_to_target()
-			print("[shoot] travelled to %s (advance %.1f)" % [_where, _advance])
+			# Dropped onto whatever is under them, so an upper floor can be
+			# photographed. The Haunted House has two, and half of that island
+			# is invisible to a tool that can only stand on the ground.
+			if _lift != 0.0 and player != null:
+				player.global_position.y += _lift
+			var cam := _root.get_node_or_null("FollowCamera")
+			if cam != null:
+				cam.snap_to_target()
+			print("[shoot] travelled to %s (advance %.1f, lift %.1f)"
+				% [_where, _advance, _lift])
 
 	if _frames < _limit:
 		return false

@@ -676,7 +676,17 @@ func _on_haunted_round(question: String) -> void:
 func _on_haunted_answered(correct: bool, _emotion: String) -> void:
 	if _where != "haunted" or correct:
 		return
-	_hud.set_prompt("Not that one - look at their faces!")
+	# After two wrong the island calls the answer out loud; naming the room here
+	# is the other half of that nudge. The ghost being looked for can be on the
+	# other floor, and "look at their faces" is no help at all when the face in
+	# question is upstairs behind a wall.
+	if _haunted.wrong_count() >= HauntedHouse.HINT_AFTER:
+		var want := _haunted.target()
+		var where := _haunted.room_of(want)
+		var floor_hint := "upstairs" if _haunted.is_upstairs(want) else "downstairs"
+		_hud.set_prompt("Listen! They are hiding in %s, %s" % [where, floor_hint])
+	else:
+		_hud.set_prompt("Not that one - keep looking!")
 
 
 func _on_haunted_completed() -> void:

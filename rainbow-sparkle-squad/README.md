@@ -100,7 +100,7 @@ Expected, as of the last commit:
 ```
 playtest: 11/11    bunnytest: 5/5        butterflytest: 6/6    blocklandtest: 10/10
 shapecovetest: 11/11   letterlagoontest: 13/13   dinovalleytest: 14/14   safaritest: 14/14
-hauntedhousetest: 22/22
+hauntedhousetest: 26/26
 ```
 
 Every suite exits non-zero on failure. If you add an island, add a suite.
@@ -602,14 +602,25 @@ Answers match by **species**, which is what lets any of the three lions answer
 
 ## Haunted House
 
-A crooked manor on a dark hill, a lantern-lit path up from the door, bare trees
-and gravestones and jack-o'-lanterns, and five friendly ghosts floating in the
-yard.
+A lantern-lit path across a dark graveyard to a **house you go inside** — two
+floors, four rooms on each, a staircase, and five friendly ghosts hiding in it.
 
-**The game is feelings** — who looks happy, sad, angry, scared, sleepy. Every
-other island asks about a property of the world; this one asks about a *face*,
-which is the first thing a three-year-old learns to read and the only subject
-here that is about people rather than things.
+**The game is feelings** — who looks happy, sad, angry, scared, sleepy — and it
+is played by **searching**. A round names a feeling and the ghost wearing it is
+somewhere in the house, so you walk room to room and up the stairs to find it.
+Every other island stands its subject in a ring and waits; this one hides them,
+and the name lands because a child had to go and look. Three ghosts are
+downstairs and two are up, so the first rounds can be won without the stairs and
+the later ones cannot.
+
+Getting it wrong twice makes the answer **call out from wherever it is hiding**,
+and the prompt line names the room and the floor. A bob on the spot is the hint
+everywhere else, and it is useless here — the ghost being looked for is usually
+behind a wall.
+
+Every other island asks about a property of the world; this one asks about a
+*face*, which is the first thing a three-year-old learns to read and the only
+subject here that is about people rather than things.
 
 The five ghosts **share one body and differ only in expression** — same prompt,
 same size, only the face changed. That is what makes the lesson honest: if the
@@ -627,7 +638,43 @@ close together to sort by.
 The whole game is **one scene with one sun**, so "haunted" could not be done
 with lighting without turning the meadow off too. It is done entirely in the
 palette instead — a near-black violet ground, bare silhouettes, cold stone, and
-the lanterns as the only warm thing on the island.
+the lit windows and lanterns as the only warm things on the island.
+
+### The house is an open-topped dollhouse, for three reasons at once
+
+It has real walls, real rooms and two real floors, and **no ceilings at all**.
+That is not a shortcut — it is the only shape that works, and each of the three
+things holding it up was learned by building the other version first:
+
+1. **No roof, because there is one sun.** A roofed interior is a black box.
+2. **The walls are on physics layer 2, which `FollowCamera` skips.** Obstruction
+   pull-in is right outdoors; indoors it is fatal, because the ray runs from the
+   player's chest to a camera spot beyond the wall, so *every* wall in the room
+   counts as an obstruction and the camera slams to its 1.2 m floor. The first
+   interior was a corridor filling the screen with plaster. `Player.gd` masks
+   layer 2 back in so the player still collides with all of it.
+3. **The upper storey hides while you are under it** — see `_update_storey`.
+   Skipping walls in the camera ray cannot help with the *floor*: an orbit
+   camera behind a player stood in a ground-floor room is underneath the slab,
+   and no wall height or camera pitch fixes that. So the top floor lifts off
+   exactly the way a dollhouse lid does. From the yard it is a two-storey house;
+   step through the front door and the lid comes away; climb the stairs and it
+   is back, with the ground floor open below.
+
+**Wall height is arithmetic, not taste.** A wall `d` metres away hides the
+player once it is taller than `0.75 + 0.58 * d` above the floor — that 0.58 is
+`FollowCamera`'s sight line at its default pitch. At the 1.5 m you can stand
+from a wall while still in a doorway, the ceiling is 1.62 m, which is why the
+walls are 1.60 and 1.55 and the corridors are 4 m wide rather than 3. It is not
+a low wall: the cast are 0.80–0.90 m tall, so 1.60 m is twice the height of the
+character walking past it. The first build used 2.6 m — three times player
+height — and read as a canyon.
+
+**The stairs are a ramp**, with the visible treads sitting on it as dressing and
+no colliders of their own. `CharacterBody3D` has no step-up, so a staircase
+built out of boxes is a row of walls: it would look perfect and stop a child
+dead at the first riser. `hauntedhousetest` walks the player up it rather than
+teleporting, because that is the only version of the check that would catch it.
 
 ---
 
@@ -676,9 +723,18 @@ and a full push runs. Jump has coyote time (0.12 s) and an input buffer (0.15 s)
   `Models.spawn` normalises the tallest axis, that bubble spends part of the
   1.6 m height budget, so its body is a little smaller than its neighbours. It
   still reads unmistakably as sleepy, which is what the round asks.
-- **The lanterns do not actually light anything.** The glow is painted into the
-  texture, so the path reads as lit without casting a single photon. Real
-  `OmniLight3D`s on the four pairs would be the cheapest big improvement this
-  island could get — the whole point of the palette is that it is dark.
-- The manor is scenery with a box collider. There is no inside, and nothing on
-  the island suggests there should be, but a child will try the door.
+- **The lanterns and the windows do not actually light anything.** The glow is
+  painted into the texture and the emission, so the house reads as lit without
+  casting a single photon. Real `OmniLight3D`s would be the cheapest big
+  improvement this island could get — the whole point of the palette is dark.
+- **`haunted_house.glb` is generated but no longer placed.** It was the manor
+  backdrop of the first version, before the house became something you walk
+  into. The asset and its source timestamp are kept because it is a good model
+  and a facade may want it again; nothing in the scene references it today.
+- **The upper storey pops rather than fades** when you step through the front
+  door. Fading it would be nicer, and means giving every wall and slab a
+  transparent material rather than toggling `visible`.
+- Standing at the front of the upper floor puts the front wall across the lower
+  half of the frame, because the camera is then outside the house looking in
+  over it. The right stick gets you out of it; a steeper default pitch indoors
+  would be the real fix.

@@ -156,15 +156,41 @@ func _setup() -> bool:
 	_check(HauntedHouse.ROUNDS.size() == feelings.size(),
 		"every feeling is asked about exactly once")
 
-	# The ring: evenly spaced and all well inside the ground, so no ghost is
-	# hiding behind the manor or off the edge of the island.
-	var on_ring := true
+	# Every ghost has to be INSIDE the house, or the search is not a search.
+	var inside := true
 	for g in ghosts:
 		var off: Vector3 = g.global_position - _house.global_position
-		var r: float = Vector2(off.x, off.z).length()
-		if absf(r - HauntedHouse.RING_R) > 0.5 or r > HauntedHouse.GROUND_R - 2.0:
-			on_ring = false
-	_check(on_ring, "the ghosts stand on the ring, inside the island")
+		if off.x < HauntedHouse.HOUSE_MIN.x or off.x > HauntedHouse.HOUSE_MAX.x \
+				or off.z < HauntedHouse.HOUSE_MIN.y or off.z > HauntedHouse.HOUSE_MAX.y:
+			inside = false
+	_check(inside, "every ghost is hiding inside the house")
+
+	# Split across the floors. All five on one floor would make the upstairs
+	# decorative and the stairs pointless.
+	var upstairs := 0
+	for e in HauntedHouse.EMOTIONS:
+		if _house.is_upstairs(e):
+			upstairs += 1
+	_check(upstairs > 0 and upstairs < HauntedHouse.EMOTIONS.size(),
+		"they are split across both floors (%d up, %d down)"
+			% [upstairs, HauntedHouse.EMOTIONS.size() - upstairs])
+
+	# And each one somewhere of its own - two in a room means one round can be
+	# answered by walking into the other one's room by accident.
+	var spots: Array[Vector3] = []
+	var shared := false
+	for g in ghosts:
+		for s in spots:
+			if s.distance_to(g.position) < 1.0:
+				shared = true
+		spots.append(g.position)
+	_check(not shared, "and no two of them share a hiding place")
+
+	var named := true
+	for e in HauntedHouse.EMOTIONS:
+		if _house.room_of(e) == "":
+			named = false
+	_check(named, "every hiding place has a room name for the hint")
 
 	_house.answered.connect(func(correct: bool, _e: String) -> void:
 		if not correct:
@@ -229,7 +255,7 @@ func _setup() -> bool:
 			"act": func() -> void:
 				_player.velocity = Vector3.ZERO
 				_player.global_position = _house.global_position \
-					+ Vector3(0, 1.0, HauntedHouse.RING_R + 6.0),
+					+ Vector3(0, 1.0, HauntedHouse.HOUSE_MAX.y + 6.0),
 			"ready": func() -> bool:
 				# Give the turn time to finish before judging it.
 				if _elapsed < 3.0:
@@ -244,6 +270,29 @@ func _setup() -> bool:
 				return true,
 		},
 		{
+			# The single most important thing on this island: if a child cannot
+			# get up the stairs, two of the five ghosts do not exist. Walked
+			# rather than teleported, because the ramp has to be climbable by
+			# holding forward - CharacterBody3D does not step up, so a
+			# staircase built from boxes would look perfect and stop the player
+			# dead at the first riser.
+			"what": "the stairs actually carry the player to the upper floor",
+			"act": func() -> void:
+				_player.velocity = Vector3.ZERO
+				# At the foot of the ramp, in the corridor, facing the stairs.
+				_player.global_position = _house.global_position \
+					+ Vector3(0, 0.6, HauntedHouse.STAIR_Z0 + 0.5)
+				Input.action_press("move_back"),
+			"ready": func() -> bool:
+				# -Z is "forward" for the stick; the ramp climbs towards +Z, so
+				# hold the key that drives that way and wait to gain height.
+				var y: float = _player.global_position.y - _house.global_position.y
+				if y > HauntedHouse.UPPER_Y - 0.35:
+					Input.action_release("move_back")
+					return true
+				return false,
+		},
+		{
 			# They float on the spot rather than roam. This is the guard for
 			# anyone who later gives them a wander.
 			"what": "after floating a while they are all still on their marks",
@@ -252,9 +301,13 @@ func _setup() -> bool:
 				if _elapsed < 6.0:
 					return false
 				for g in _all():
+					var spot: Dictionary = HauntedHouse.HIDING[g.emotion]
+					var want: Vector2 = spot["pos"]
 					var off: Vector3 = g.global_position - _house.global_position
-					var r: float = Vector2(off.x, off.z).length()
-					if absf(r - HauntedHouse.RING_R) > 0.5:
+					if Vector2(off.x, off.z).distance_to(want) > 0.5:
+						return false
+					var want_y: float = HauntedHouse.UPPER_Y if spot["upper"] else 0.0
+					if absf(off.y - want_y) > 0.5:
 						return false
 				return true,
 		},

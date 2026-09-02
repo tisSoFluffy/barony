@@ -18,6 +18,24 @@ const FOLLOW_LAG := 9.0
 ## volcano and a pastel meadow parked on the horizon.
 const FAR := 300.0
 
+## Physics layer 2 is "solid to the player, invisible to this camera".
+##
+## It exists for the Haunted House, which is a real two-floor building you walk
+## around inside. Obstruction pull-in is right outdoors - it stops the castle
+## wall eating the view - but indoors it is fatal: the ray runs from the
+## player's chest to a camera spot beyond the wall, so every wall in the room
+## registers as an obstruction and the camera slams to its 1.2 m floor. The
+## first build of that house was unplayable for exactly this reason, a corridor
+## filling the screen with plaster.
+##
+## Putting the house's walls and floors on their own layer and skipping them
+## here is what makes an open-topped dollhouse work: the camera rides ABOVE the
+## wall tops and looks down into whichever room the player is in, instead of
+## being shoved into their back. Player.gd masks layer 2 in so the player still
+## collides with all of it.
+const SEE_OVER_LAYER_BIT := 2
+const OBSTRUCTION_MASK := 0xFFFFFFFF & ~SEE_OVER_LAYER_BIT
+
 var target: Node3D
 var yaw := 0.0
 var pitch := 0.45
@@ -74,6 +92,7 @@ func _unobstructed(from: Vector3, to: Vector3) -> Vector3:
 	var space := get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.collide_with_areas = false
+	query.collision_mask = OBSTRUCTION_MASK
 	if target is CollisionObject3D:
 		query.exclude = [target.get_rid()]
 	var hit := space.intersect_ray(query)
