@@ -29,6 +29,7 @@ var _where := ""
 var _advance := 0.0
 var _cast := -1
 var _lift := 0.0
+var _strafe := 0.0
 var _travelled := false
 var _root: Node = null
 
@@ -47,6 +48,8 @@ func _initialize() -> void:
 		_cast = int(args[4])
 	if args.size() > 5:
 		_lift = float(args[5])
+	if args.size() > 6:
+		_strafe = float(args[6])
 
 	_root = load("res://scenes/Main.tscn").instantiate()
 	get_root().add_child(_root)
@@ -87,6 +90,13 @@ func _process(_delta: float) -> bool:
 			# Dropped onto whatever is under them, so an upper floor can be
 			# photographed. The Haunted House has two, and half of that island
 			# is invisible to a tool that can only stand on the ground.
+			# Sideways, so somewhere off the line between the door and the middle
+			# can be photographed - which is where all the rooms are. Together
+			# with advance and lift this can stand the player anywhere on an
+			# island, and being unable to look at what you just built is how
+			# most of the bugs in this project survived their tests.
+			if _strafe != 0.0 and player != null:
+				player.global_position.x += _strafe
 			if _lift != 0.0 and player != null:
 				player.global_position.y += _lift
 			var cam := _root.get_node_or_null("FollowCamera")

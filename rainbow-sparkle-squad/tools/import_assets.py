@@ -82,6 +82,22 @@ ASSETS = {
     # game gets a lot more scrutiny than a gravestone. Little Boo is not here:
     # it reuses ghost_happy and is told apart by its tint.
     "trellis2_20260901_122226.glb": ("skeleton", 26000),
+    # The Haunted House's furniture (see FURNISHINGS in HauntedHouse.gd). Every
+    # one of these came back usable first time, which is what asking for legs
+    # "clearly separated with visible gaps" and a LIGHT background buys you -
+    # furniture is nearly all legs, and both rules were learned the hard way on
+    # the ghosts.
+    "trellis2_20260902_092134.glb": ("armchair", 9000),
+    "trellis2_20260902_092426.glb": ("bookshelf", 9000),
+    "trellis2_20260902_092605.glb": ("grandfather_clock", 9000),
+    "trellis2_20260902_092917.glb": ("bed", 9000),
+    "trellis2_20260902_093101.glb": ("wardrobe", 8000),
+    "trellis2_20260902_093350.glb": ("round_table", 6000),
+    "trellis2_20260902_093456.glb": ("wooden_chair", 6000),
+    "trellis2_20260902_094038.glb": ("trunk", 5000),
+    "trellis2_20260902_094429.glb": ("barrel", 4500),
+    "trellis2_20260902_094812.glb": ("cauldron", 5500),
+    "trellis2_20260902_095327.glb": ("fireplace", 9000),
 }
 
 # Two of the ghosts are SECOND attempts, and the first ones are not listed above

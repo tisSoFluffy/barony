@@ -19,6 +19,11 @@ var yaw := 0.0
 var solid := false
 var solid_radius := 0.5
 var solid_height := 2.0
+## Which physics layer the collider sits on. Indoor props want layer 2, the
+## layer FollowCamera's obstruction ray skips - a solid wardrobe on the default
+## layer shoves the camera into the player's back exactly as a wall would, and
+## the Haunted House is full of them. See FollowCamera.SEE_OVER_LAYER_BIT.
+var solid_layer := 1
 var sway := 0.0              # radians of tilt amplitude
 var bob := 0.0               # metres of vertical drift
 var bob_hz := 0.12
@@ -26,6 +31,11 @@ var bob_hz := 0.12
 # texture - the clouds come off TRELLIS with a speckled UV-seam crackle, and a
 # plain matte white reads far cleaner for something that is pure white anyway.
 var repaint := Color(0, 0, 0, 0)
+## Multiplied into the albedo, KEEPING the texture - unlike `repaint`, which
+## throws it away. Components may exceed 1.0 to brighten as well as darken,
+## which is the point: the meadow sun blows pale props out to white and crushes
+## dark ones to silhouettes, and the two need opposite corrections.
+var tint := Color.WHITE
 
 var _visual: Node3D
 var _base_y := 0.0
@@ -38,6 +48,9 @@ func _ready() -> void:
 	_visual.rotation.y += yaw
 	add_child(_visual)
 
+	if tint != Color.WHITE:
+		Models.tint_albedo(_visual, tint)
+
 	if repaint.a > 0.0:
 		var mat := StandardMaterial3D.new()
 		mat.albedo_color = repaint
@@ -49,6 +62,7 @@ func _ready() -> void:
 
 	if solid:
 		var body := StaticBody3D.new()
+		body.collision_layer = solid_layer
 		var col := CollisionShape3D.new()
 		var shape := CylinderShape3D.new()
 		shape.radius = solid_radius

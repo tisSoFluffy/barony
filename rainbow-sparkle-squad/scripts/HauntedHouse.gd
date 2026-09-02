@@ -57,30 +57,13 @@ const GHOST_H := 1.6
 const HINT_AFTER := 2
 
 # -- the house -----------------------------------------------------------
-# Footprint x [-8, 8], z [-7, 5]. A corridor runs front to back at |x| < 1.5
-# and a cross corridor left to right at |z| < 1.5, which leaves four corner
-# rooms per floor, each reached through one doorway.
+# Footprint x [-10.5, 10.5], z [-11.5, 8]. A corridor runs front to back at
+# |x| < 4 and a cross corridor left to right at |z| < 4, which leaves four
+# corner rooms per floor, each reached through one doorway.
 
 const HOUSE_MIN := Vector2(-10.5, -11.5)
 const HOUSE_MAX := Vector2(10.5, 8.0)
 
-## Wall height and corridor width are both set by the CAMERA, not by taste.
-##
-## FollowCamera sits DISTANCE * cos(pitch) = 4.14 m behind the player and
-## 2.40 m above the focus point at its default pitch, so its sight line climbs
-## at about 0.58 for every metre back. A wall `d` metres away therefore blocks
-## the view of the player whenever it is taller than 0.75 + 0.58 * d above the
-## floor. At the half-width of a 4 m corridor that ceiling is 1.91 m, which is
-## why the walls are 1.72 and the corridor is 4 m and not 3.
-##
-## Layer 2 stops the camera being SHOVED INTO the player's back by these walls;
-## this is what stops them standing in front of the player instead. Both are
-## needed, and the first build of this house had neither.
-##
-## 1.72 m is not a low wall here. The cast are 0.80-0.90 m tall, so it is twice
-## the height of the character walking past it - the same as a 3.5 m wall to an
-## adult. The earlier 2.6 m walls were three times player height, which is why
-## the house read as a canyon.
 ## Ceiling height is set by the GHOSTS, and corridor width is then set by the
 ## ceiling. Both are arithmetic; neither is taste.
 ##
@@ -110,6 +93,7 @@ const WALL_H := 2.75                # ground floor walls, up to the slab
 const UPPER_WALL_H := 1.90          # upper floor walls, open above
 const SLAB_T := 0.25
 const WALL_T := 0.40
+const SKIRT_H := 0.34               # skirting band at the foot of every wall
 const CORRIDOR := 4.0               # half-width of the corridors
 ## The front doorway is NOT the corridor's width. An 8 m opening is a hole in
 ## the facade, not a door; this is a door that opens into a big hall.
@@ -176,6 +160,115 @@ const HIDING := {
 	"scared": {"pos": Vector2(-7.25, -7.75), "upper": true, "room": "the attic"},
 }
 
+## The eight rooms, four per floor, by the name the hint line uses. Furniture is
+## placed relative to a room's centre, so a room can be moved by editing one
+## number here.
+## `half` is the room's half-extent, so furniture placed relative to `pos` can be
+## checked against the walls it is supposed to be standing between. Front rooms
+## are 6.5 x 4 and back rooms 6.5 x 7.5, which is why the back ones hold the
+## clutter and the front ones hold one big piece each.
+const ROOMS := {
+	"the parlour": {"pos": Vector2(-7.25, 6.0), "half": Vector2(3.25, 2.0), "upper": false},
+	"the dining room": {"pos": Vector2(7.25, 6.0), "half": Vector2(3.25, 2.0), "upper": false},
+	"the pantry": {"pos": Vector2(-7.25, -7.75), "half": Vector2(3.25, 3.75), "upper": false},
+	"the kitchen": {"pos": Vector2(7.25, -7.75), "half": Vector2(3.25, 3.75), "upper": false},
+	"the bedroom": {"pos": Vector2(-7.25, 6.0), "half": Vector2(3.25, 2.0), "upper": true},
+	"the nursery": {"pos": Vector2(7.25, 6.0), "half": Vector2(3.25, 2.0), "upper": true},
+	"the attic": {"pos": Vector2(-7.25, -7.75), "half": Vector2(3.25, 3.75), "upper": true},
+	"the study": {"pos": Vector2(7.25, -7.75), "half": Vector2(3.25, 3.75), "upper": true},
+}
+
+## What stands in each room: model, height in metres, offset from the room's
+## centre, the direction it faces, and whether it is solid.
+##
+## Two rules run through all of it. Nothing sits within 1.4 m of a room centre,
+## because that is where the ghost floats and its touch box is 2.2 m across; and
+## every solid piece is on the see-over layer, because a wardrobe the camera
+## treats as an obstruction is just a wall that happens to have doors.
+##
+## Sizes are the HOUSE's scale, not the cast's. The rooms have 2.75 m ceilings
+## and 2.6 m doorways, so a 2.2 m wardrobe is right even though it towers over a
+## 0.85 m unicorn - the joke is that the toys are small, not that the house is.
+const FURNISHINGS := [
+	# -- the parlour: a fire, a chair pulled up to it, and the clock ---------
+	{"m": "fireplace", "h": 2.0, "room": "the parlour", "at": Vector2(-2.5, 0.0), "face": Vector2(1, 0), "solid": true},
+	{"m": "armchair", "h": 1.15, "room": "the parlour", "at": Vector2(-0.9, -1.5), "face": Vector2(-1, 0), "solid": true},
+	{"m": "grandfather_clock", "h": 2.3, "room": "the parlour", "at": Vector2(2.6, 1.2), "face": Vector2(0, -1), "solid": true},
+	{"m": "bookshelf", "h": 2.0, "room": "the parlour", "at": Vector2(2.6, -1.2), "face": Vector2(-1, 0), "solid": true},
+
+	# -- the dining room: the one ground room with no ghost, so it can use
+	#    its middle for the table ------------------------------------------
+	{"m": "round_table", "h": 0.85, "room": "the dining room", "at": Vector2(0.0, 0.0), "face": Vector2(0, -1), "solid": false},
+	{"m": "wooden_chair", "h": 1.0, "room": "the dining room", "at": Vector2(-1.4, 0.1), "face": Vector2(1, 0), "solid": false},
+	{"m": "wooden_chair", "h": 1.0, "room": "the dining room", "at": Vector2(1.4, -0.1), "face": Vector2(-1, 0), "solid": false},
+	{"m": "bookshelf", "h": 2.0, "room": "the dining room", "at": Vector2(2.6, 1.2), "face": Vector2(-1, 0), "solid": true},
+
+	# -- the pantry: barrels stacked in the corner ---------------------------
+	{"m": "barrel", "h": 1.05, "room": "the pantry", "at": Vector2(-2.5, 2.6), "face": Vector2(0, -1), "solid": false},
+	{"m": "barrel", "h": 1.0, "room": "the pantry", "at": Vector2(-1.5, 3.0), "face": Vector2(0, -1), "solid": false},
+	{"m": "barrel", "h": 0.95, "room": "the pantry", "at": Vector2(-2.7, 1.5), "face": Vector2(0, -1), "solid": false},
+	{"m": "bookshelf", "h": 2.0, "room": "the pantry", "at": Vector2(2.6, 1.4), "face": Vector2(-1, 0), "solid": true},
+	{"m": "trunk", "h": 0.7, "room": "the pantry", "at": Vector2(2.3, -2.7), "face": Vector2(0, 1), "solid": false},
+
+	# -- the kitchen: the cauldron on the hearth -----------------------------
+	{"m": "fireplace", "h": 2.0, "room": "the kitchen", "at": Vector2(2.5, 0.0), "face": Vector2(-1, 0), "solid": true},
+	{"m": "cauldron", "h": 0.9, "room": "the kitchen", "at": Vector2(1.6, -0.7), "face": Vector2(-1, 0), "solid": false},
+	{"m": "round_table", "h": 0.85, "room": "the kitchen", "at": Vector2(-2.2, -2.3), "face": Vector2(0, 1), "solid": false},
+	{"m": "wooden_chair", "h": 1.0, "room": "the kitchen", "at": Vector2(-2.3, -1.1), "face": Vector2(0, -1), "solid": false},
+	{"m": "barrel", "h": 1.0, "room": "the kitchen", "at": Vector2(-2.6, 2.7), "face": Vector2(0, -1), "solid": false},
+
+	# -- upstairs bedroom ----------------------------------------------------
+	{"m": "bed", "h": 1.05, "room": "the bedroom", "at": Vector2(-1.9, 0.0), "face": Vector2(1, 0), "solid": true},
+	{"m": "wardrobe", "h": 2.2, "room": "the bedroom", "at": Vector2(2.6, 1.1), "face": Vector2(0, -1), "solid": true},
+	{"m": "trunk", "h": 0.7, "room": "the bedroom", "at": Vector2(1.6, -1.4), "face": Vector2(0, 1), "solid": false},
+
+	# -- the nursery ---------------------------------------------------------
+	{"m": "bed", "h": 0.9, "room": "the nursery", "at": Vector2(2.4, 0.0), "face": Vector2(-1, 0), "solid": true},
+	{"m": "trunk", "h": 0.75, "room": "the nursery", "at": Vector2(-2.4, 1.2), "face": Vector2(1, 0), "solid": false},
+	{"m": "wooden_chair", "h": 1.0, "room": "the nursery", "at": Vector2(-2.3, -1.2), "face": Vector2(1, 0), "solid": false},
+
+	# -- the attic: where everything ended up --------------------------------
+	{"m": "trunk", "h": 0.7, "room": "the attic", "at": Vector2(-2.4, 2.7), "face": Vector2(0, -1), "solid": false},
+	{"m": "trunk", "h": 0.65, "room": "the attic", "at": Vector2(-2.2, 1.5), "face": Vector2(1, 0), "solid": false},
+	{"m": "barrel", "h": 1.0, "room": "the attic", "at": Vector2(2.5, 2.8), "face": Vector2(0, -1), "solid": false},
+	{"m": "barrel", "h": 0.95, "room": "the attic", "at": Vector2(2.6, 1.7), "face": Vector2(0, -1), "solid": false},
+	{"m": "wardrobe", "h": 2.2, "room": "the attic", "at": Vector2(0.2, -3.0), "face": Vector2(0, 1), "solid": true},
+
+	# -- the study -----------------------------------------------------------
+	{"m": "bookshelf", "h": 2.0, "room": "the study", "at": Vector2(2.6, 1.6), "face": Vector2(-1, 0), "solid": true},
+	{"m": "bookshelf", "h": 2.0, "room": "the study", "at": Vector2(2.6, -0.4), "face": Vector2(-1, 0), "solid": true},
+	{"m": "grandfather_clock", "h": 2.3, "room": "the study", "at": Vector2(0.4, -3.1), "face": Vector2(0, 1), "solid": true},
+	{"m": "armchair", "h": 1.15, "room": "the study", "at": Vector2(-2.2, -1.6), "face": Vector2(1, 0), "solid": true},
+	{"m": "round_table", "h": 0.8, "room": "the study", "at": Vector2(-2.4, 0.0), "face": Vector2(0, -1), "solid": false},
+]
+
+## Per-model exposure corrections, multiplied into the albedo (Decor.tint).
+##
+## Trap 4 cuts both ways indoors. The generated stone fireplace is so pale it
+## renders as a white slab under the meadow sun, and the dark-stained table and
+## chair crush to near-black silhouettes against floorboards that are already
+## dark. One needs pulling down and the others need lifting, so these values sit
+## on both sides of 1.0 - the texture survives either way, which `repaint` would
+## not allow.
+const FURNITURE_TINT := {
+	"fireplace": Color(0.42, 0.41, 0.48),
+	"round_table": Color(1.55, 1.32, 1.05),
+	"wooden_chair": Color(1.75, 1.55, 1.35),
+	"cauldron": Color(1.35, 1.35, 1.40),
+	"grandfather_clock": Color(1.30, 1.20, 1.10),
+	"wardrobe": Color(1.25, 1.15, 1.05),
+}
+
+## Rugs, built in code rather than generated. A flat disc reconstructs badly -
+## it is exactly the wide, wafer-thin shape the pipeline treats as a floor
+## plane - and a coloured circle is two lines here anyway.
+const RUGS := [
+	{"room": "the parlour", "at": Vector2(-0.2, -0.6), "r": 1.9, "c": Color("#5c2f3a")},
+	{"room": "the dining room", "at": Vector2(0.0, 0.0), "r": 2.1, "c": Color("#39405e")},
+	{"room": "the bedroom", "at": Vector2(0.4, -0.4), "r": 1.8, "c": Color("#3d4a3a")},
+	{"room": "the study", "at": Vector2(-0.6, 0.6), "r": 1.8, "c": Color("#553a2c")},
+]
+
 ## Set by Game.gd before this enters the tree, and handed to every ghost so
 ## they can turn to watch - see GhostFigure.player.
 var player: Node3D
@@ -210,6 +303,8 @@ func _ready() -> void:
 	_build_exterior_detail()
 	_build_yard()
 	_build_interior_dressing()
+	_build_rugs()
+	_build_furniture()
 	_build_ghosts()
 
 	_voice = AudioStreamPlayer.new()
@@ -396,7 +491,27 @@ func _wall_segment(seg: Array, base_y: float, h: float, colour: Color,
 	var mid: Vector2 = (a + b) * 0.5
 	var span: Vector2 = b - a
 	var size := Vector3(maxf(absf(span.x), WALL_T), h, maxf(absf(span.y), WALL_T))
-	return _box(size, Vector3(mid.x, base_y + h * 0.5, mid.y), colour, true, node_name)
+	var wall := _box(size, Vector3(mid.x, base_y + h * 0.5, mid.y), colour, true,
+		node_name)
+
+	# A darker skirting band round the foot of every wall. Plaster running flat
+	# from floor to ceiling reads as a box; one horizontal line along the bottom
+	# reads as a room. Parented to the wall so it follows it when the upper
+	# storey lifts away, and no collider of its own - it is 4 cm of trim, and a
+	# lip at ankle height is exactly the sort of thing CharacterBody3D would
+	# refuse to step over.
+	var skirt := MeshInstance3D.new()
+	skirt.name = "Skirt"
+	var band := BoxMesh.new()
+	band.size = Vector3(size.x + 0.08, SKIRT_H, size.z + 0.08)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color("#2b2135")
+	mat.roughness = 1.0
+	band.material = mat
+	skirt.mesh = band
+	skirt.position = Vector3(0.0, -h * 0.5 + SKIRT_H * 0.5, 0.0)
+	wall.add_child(skirt)
+	return wall
 
 
 ## The staircase: one inclined slab that the player actually walks on, with
@@ -610,6 +725,68 @@ func _build_interior_dressing() -> void:
 			if level == 1:
 				_upper_parts.append(prop)
 			i += 1
+
+
+## Furnish every room from FURNISHINGS.
+##
+## Upstairs pieces join _upper_parts, so they lift away with their floor. Left
+## behind they would hang in the air over a ground-floor room with its own
+## storey removed, which reads as a bug rather than as a haunting.
+func _build_furniture() -> void:
+	for i in FURNISHINGS.size():
+		var spec: Dictionary = FURNISHINGS[i]
+		var room: Dictionary = ROOMS[spec["room"]]
+		var centre: Vector2 = room["pos"]
+		var at: Vector2 = spec["at"]
+		var face: Vector2 = spec["face"]
+
+		var prop := Decor.new()
+		prop.name = "Furniture%d_%s" % [i, spec["m"]]
+		prop.model_path = "res://assets/models/%s.glb" % spec["m"]
+		prop.height = float(spec["h"])
+		prop.tint = FURNITURE_TINT.get(spec["m"], Color.WHITE)
+		# -Z is forward, so aiming it along `face` takes the negated components
+		# - the same sign trap as GhostFigure._face_player and RoamingAnimal.
+		prop.yaw = atan2(-face.x, -face.y)
+		if bool(spec["solid"]):
+			prop.solid = true
+			prop.solid_radius = 0.45
+			prop.solid_height = float(spec["h"])
+			prop.solid_layer = FollowCamera.SEE_OVER_LAYER_BIT
+		prop.position = Vector3(centre.x + at.x,
+			UPPER_Y if room["upper"] else 0.0, centre.y + at.y)
+		add_child(prop)
+		if room["upper"]:
+			_upper_parts.append(prop)
+
+
+## A rug in the rooms that want one. Thin discs laid just above the boards, for
+## the same reason the ground planes are darker than their swatch: a whole floor
+## of one flat brown reads as a warehouse.
+func _build_rugs() -> void:
+	for i in RUGS.size():
+		var spec: Dictionary = RUGS[i]
+		var room: Dictionary = ROOMS[spec["room"]]
+		var centre: Vector2 = room["pos"]
+		var at: Vector2 = spec["at"]
+		var y: float = (UPPER_Y if room["upper"] else 0.0) + 0.06
+
+		var mesh := MeshInstance3D.new()
+		var disc := CylinderMesh.new()
+		disc.top_radius = float(spec["r"])
+		disc.bottom_radius = float(spec["r"])
+		disc.height = 0.04
+		disc.radial_segments = 28
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = spec["c"]
+		mat.roughness = 1.0
+		disc.material = mat
+		mesh.mesh = disc
+		mesh.name = "Rug%d" % i
+		mesh.position = Vector3(centre.x + at.x, y, centre.y + at.y)
+		add_child(mesh)
+		if room["upper"]:
+			_upper_parts.append(mesh)
 
 
 # -- the ghosts ----------------------------------------------------------

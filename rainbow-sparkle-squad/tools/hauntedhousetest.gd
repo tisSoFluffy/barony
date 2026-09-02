@@ -208,6 +208,66 @@ func _setup() -> bool:
 		"the ceiling clears a ghost's head downstairs (%.2f m under a %.2f m ceiling)"
 			% [tallest, ceiling])
 
+	# -- the furniture ----------------------------------------------------
+	var missing_models: Array[String] = []
+	var too_tall: Array[String] = []
+	var crowding: Array[String] = []
+	for spec in HauntedHouse.FURNISHINGS:
+		var model := String(spec["m"])
+		if not ResourceLoader.exists("res://assets/models/%s.glb" % model):
+			if not missing_models.has(model):
+				missing_models.append(model)
+		# Nothing may be taller than the room it stands in.
+		if float(spec["h"]) > ceiling:
+			too_tall.append(model)
+		# The centre of a room WITH A GHOST IN IT is where that ghost floats, and
+		# its touch box is 2.2 m across - a wardrobe parked there would be
+		# answering the round. Three rooms hold no ghost at all, and their
+		# middles are the best spot in them: the dining table wants to be
+		# centred, not shoved against a wall to satisfy a rule about ghosts.
+		var at: Vector2 = spec["at"]
+		if at.length() < 1.4 and _holds_a_ghost(String(spec["room"])):
+			crowding.append("%s in %s" % [model, spec["room"]])
+	_check(missing_models.is_empty(),
+		"every piece of furniture has a model" if missing_models.is_empty()
+			else "but these furniture models are MISSING: %s" % ", ".join(missing_models))
+	_check(too_tall.is_empty(), "and none of it is taller than the ceiling")
+
+	# Inside the room's own four walls. An offset past the half-extent puts a
+	# wardrobe through a wall and into the corridor, where it is both wrong and
+	# in the way.
+	var escaped: Array[String] = []
+	for spec in HauntedHouse.FURNISHINGS:
+		var room: Dictionary = HauntedHouse.ROOMS[spec["room"]]
+		var half: Vector2 = room["half"]
+		var at: Vector2 = spec["at"]
+		if absf(at.x) > half.x - 0.3 or absf(at.y) > half.y - 0.3:
+			escaped.append("%s in %s" % [spec["m"], spec["room"]])
+	_check(escaped.is_empty(),
+		"and all of it stands inside its own room" if escaped.is_empty()
+			else "but these are through a wall: %s" % ", ".join(escaped))
+	_check(crowding.is_empty(),
+		"and none of it stands where a ghost floats" if crowding.is_empty()
+			else "but these crowd the ghost: %s" % ", ".join(crowding))
+
+	var furnished: Array[String] = []
+	for spec in HauntedHouse.FURNISHINGS:
+		if not furnished.has(String(spec["room"])):
+			furnished.append(String(spec["room"]))
+	_check(furnished.size() == HauntedHouse.ROOMS.size(),
+		"every one of the %d rooms is furnished (%d are)"
+			% [HauntedHouse.ROOMS.size(), furnished.size()])
+
+	var rooms_real := true
+	for spec in HauntedHouse.FURNISHINGS:
+		if not HauntedHouse.ROOMS.has(spec["room"]):
+			rooms_real = false
+	for e in HauntedHouse.EMOTIONS:
+		if not HauntedHouse.ROOMS.has(_house.room_of(e)):
+			rooms_real = false
+	_check(rooms_real,
+		"and every room named by the furniture and the hints is a real room")
+
 	_house.answered.connect(func(correct: bool, _e: String) -> void:
 		if not correct:
 			_wrong_seen = true)
@@ -400,6 +460,13 @@ func _touch_wrong() -> void:
 			_player.velocity = Vector3.ZERO
 			_player.global_position = g.global_position + Vector3(0, 0.5, 0)
 			return
+
+
+func _holds_a_ghost(room: String) -> bool:
+	for e in HauntedHouse.EMOTIONS:
+		if _house.room_of(e) == room:
+			return true
+	return false
 
 
 func _all() -> Array:

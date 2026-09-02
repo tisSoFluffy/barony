@@ -100,7 +100,7 @@ Expected, as of the last commit:
 ```
 playtest: 11/11    bunnytest: 5/5        butterflytest: 6/6    blocklandtest: 10/10
 shapecovetest: 11/11   letterlagoontest: 13/13   dinovalleytest: 14/14   safaritest: 14/14
-hauntedhousetest: 28/28
+hauntedhousetest: 34/34
 ```
 
 Every suite exits non-zero on failure. If you add an island, add a suite.
@@ -690,6 +690,30 @@ things holding it up was learned by building the other version first:
 > Fix the ghosts' size instead and you get the same house back one scale down,
 > with the same problem waiting the next time anything grows. Scale the house.
 
+### The rooms are furnished, from a table
+
+Eight rooms, four per floor, each with a name the hint line uses: the parlour,
+dining room, pantry and kitchen downstairs; the bedroom, nursery, attic and
+study up. `ROOMS` holds their centres and `FURNISHINGS` is a flat list of
+model, height, room, offset from that centre, facing, and whether it is solid —
+so moving a room is one number and redressing one is a few lines.
+
+Two rules run through all of it, and `hauntedhousetest` holds them:
+
+- **Nothing stands within 1.4 m of a room's centre.** That is where the ghost
+  floats and its touch box is 2.2 m across — a wardrobe parked in it would be
+  answering the round.
+- **Every solid piece is on the see-over layer.** A wardrobe the camera treats
+  as an obstruction is just a wall that happens to have doors, and there are
+  eleven of them in here. `Decor.solid_layer` exists for exactly this.
+
+Furniture is sized to the **house**, not to the cast. The rooms have 2.75 m
+ceilings and 2.6 m doorways, so a 2.2 m wardrobe is right even though it towers
+over a 0.85 m unicorn — the joke is that the toys are small, not that the house
+is. The rugs and the skirting boards are built in code rather than generated: a
+rug is a flat disc, which is the exact wide wafer-thin shape the pipeline treats
+as a floor plane and mangles, and both are a couple of lines here anyway.
+
 **The stairs are a ramp**, with the visible treads sitting on it as dressing and
 no colliders of their own. `CharacterBody3D` has no step-up, so a staircase
 built out of boxes is a row of walls: it would look perfect and stop a child
@@ -777,5 +801,9 @@ and a full push runs. Jump has coyote time (0.12 s) and an input buffer (0.15 s)
   the real fix.
 - **The house is big** — 21 × 19.5 m with 8 m corridors — because the ceiling
   had to clear the ghosts and the corridor width follows from the ceiling. It
-  reads as a manor rather than a cottage, and the rooms have more floor than
-  they have things in them. More furniture would earn its keep here.
+  reads as a manor rather than a cottage, which the furniture now carries, but
+  the corridors themselves are still bare.
+- **You can walk through most of the furniture.** Only the big pieces are
+  solid — wardrobes, bookcases, beds, clocks, fireplaces — and everything small
+  is scenery you pass straight through. That is deliberate for a three-year-old
+  who steers approximately, but a chair you walk through does look wrong.
